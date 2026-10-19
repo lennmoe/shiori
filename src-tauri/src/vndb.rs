@@ -442,7 +442,8 @@ pub fn push_list_status(
     let Some((_, label)) = LIST_LABELS.iter().find(|(name, _)| *name == status) else {
         return Err(format!("unknown status {status}"));
     };
-    let others: Vec<i64> = all_labels.iter().copied().filter(|l| l != label).collect();
+    let mut others: Vec<i64> = all_labels.iter().copied().filter(|l| l != label).collect();
+    others.push(WISHLIST_LABEL);
 
     let mut changes = json!({"labels_set": [label], "labels_unset": others});
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
