@@ -45,6 +45,7 @@ fn defaults() -> Map<String, Value> {
         "mascot_pos": null,
         "vndb_token": "",
         "vndb_sync": false,
+        "vndb_mark_playing": true,
         "screenshot_hotkey": "PrintScreen",
         "screenshot_volume": 30,
         "screenshot_dir": "",

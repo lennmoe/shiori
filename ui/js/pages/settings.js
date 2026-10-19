@@ -259,8 +259,13 @@ function vndbSection() {
     setting(
       "vndb_sync",
       "Sync reading status to my VNDB list",
-      "VNs you start are marked Playing, and statuses set in the Library are sent too. " +
-        "Only VNs whose VNDB entry you picked or confirmed are synced.",
+      "Statuses set in the Library are sent to VNDB, and a VN you start reading leaves your " +
+        "wishlist. Only VNs whose VNDB entry you picked or confirmed are synced.",
+    ),
+    setting(
+      "vndb_mark_playing",
+      "Mark VNs as Playing on VNDB when I start them",
+      "Only when the VN has no status on your list yet. Needs the option above.",
     ),
   ];
 }

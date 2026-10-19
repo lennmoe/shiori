@@ -494,7 +494,8 @@ impl Engine {
         };
 
         let vn_id = text(&entry, "vndb_id");
-        if !vn_id.is_empty() && text(&entry, "vndb_synced") != vn_id {
+        let mark_playing = self.shared.config.lock().unwrap().bool("vndb_mark_playing");
+        if mark_playing && !vn_id.is_empty() && text(&entry, "vndb_synced") != vn_id {
             let status = Some(text(&entry, "status"))
                 .filter(|s| !s.is_empty())
                 .unwrap_or("playing".into());
