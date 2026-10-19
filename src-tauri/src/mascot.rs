@@ -1,20 +1,29 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use image::imageops::FilterType;
-use image::RgbaImage;
+use image::{DynamicImage, RgbaImage};
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindowBuilder,
+};
 
+use crate::config::safe_filename;
 use crate::state::{Shared, Snapshot};
 use crate::ui_windows;
 use crate::winapi;
 
 const BUILT_IN: &[u8] = include_bytes!("../assets/mascot.png");
+const BUILT_IN_ID: &str = "default";
+const IMAGE_EXTS: [&str; 3] = ["png", "webp", "gif"];
+
+pub const WINDOW_PREFIX: &str = "mascot-";
+pub const HIDE_MENU_PREFIX: &str = "mascot-hide:";
 
 const POKES: [&str; 3] = [
     "Need something to read? Right-click me for a random pick from your wishlist!",
@@ -27,7 +36,8 @@ struct Character {
     alpha: RgbaImage,
 }
 
-static CHARACTER: Mutex<Option<Character>> = Mutex::new(None);
+static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
+static SPEAKER: Mutex<Option<String>> = Mutex::new(None);
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 
@@ -35,17 +45,49 @@ fn shared(app: &AppHandle) -> Arc<Shared> {
     Arc::clone(&app.state::<Arc<Shared>>())
 }
 
-fn load_character(custom: &str, height: u32) -> RgbaImage {
-    let custom_image = Some(custom)
-        .filter(|path| !path.trim().is_empty())
-        .and_then(|path| image::open(path.trim()).ok());
-    let img = match custom_image {
-        Some(img) => img,
-        None => image::load_from_memory(BUILT_IN).expect("built-in mascot"),
-    };
-    let img = img.to_rgba8();
+fn with_characters<T>(f: impl FnOnce(&mut HashMap<String, Character>) -> T) -> T {
+    let mut characters = CHARACTERS.lock().unwrap();
+    f(characters.get_or_insert_with(HashMap::new))
+}
 
-    let cropped = crop_transparent_margins(&img);
+fn id_of(label: &str) -> &str {
+    label.strip_prefix(WINDOW_PREFIX).unwrap_or(label)
+}
+
+fn gallery_dir(shared: &Shared) -> PathBuf {
+    shared.data_dir.join("mascots")
+}
+
+fn gallery_files(shared: &Shared) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = std::fs::read_dir(gallery_dir(shared))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| {
+            let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase());
+            ext.is_some_and(|ext| IMAGE_EXTS.contains(&ext.as_str()))
+        })
+        .collect();
+    files.sort();
+    files
+}
+
+fn file_for(shared: &Shared, id: &str) -> Option<PathBuf> {
+    gallery_files(shared)
+        .into_iter()
+        .find(|path| path.file_stem().is_some_and(|stem| stem.to_string_lossy() == id))
+}
+
+fn image_for(shared: &Shared, id: &str) -> Option<DynamicImage> {
+    if id == BUILT_IN_ID {
+        return image::load_from_memory(BUILT_IN).ok();
+    }
+    image::open(file_for(shared, id)?).ok()
+}
+
+fn fit(img: DynamicImage, height: u32) -> RgbaImage {
+    let cropped = crop_transparent_margins(&img.to_rgba8());
     let height = height.clamp(80, 2000);
     let width =
         ((cropped.width() as f64 * height as f64 / cropped.height() as f64).round() as u32).max(1);
@@ -68,9 +110,138 @@ fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
     image::imageops::crop_imm(img, left, top, right - left + 1, bottom - top + 1).to_image()
 }
 
-fn default_position(width: u32, height: u32) -> (i32, i32) {
+fn shown_ids(shared: &Shared) -> Vec<String> {
+    let ids: Vec<String> = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_shown")
+        .and_then(Value::as_array)
+        .map(|list| list.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .unwrap_or_default();
+    if ids.is_empty() {
+        vec![BUILT_IN_ID.to_string()]
+    } else {
+        ids
+    }
+}
+
+fn save_settings(shared: &Shared, changes: Map<String, Value>) {
+    let _ = shared.config.lock().unwrap().update(changes);
+}
+
+#[derive(Serialize)]
+pub struct GalleryItem {
+    id: String,
+    name: String,
+    file: String,
+    shown: bool,
+    built_in: bool,
+}
+
+pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
+    let enabled = shared.config.lock().unwrap().bool("mascot_enabled");
+    let shown = shown_ids(shared);
+    let is_shown = |id: &str| enabled && shown.iter().any(|s| s == id);
+
+    let mut items = vec![GalleryItem {
+        id: BUILT_IN_ID.into(),
+        name: "Default".into(),
+        file: String::new(),
+        shown: is_shown(BUILT_IN_ID),
+        built_in: true,
+    }];
+    for path in gallery_files(shared) {
+        let id = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
+        items.push(GalleryItem {
+            name: id.replace('_', " "),
+            file: path.to_string_lossy().to_string(),
+            shown: is_shown(&id),
+            built_in: false,
+            id,
+        });
+    }
+    items
+}
+
+pub fn add_to_gallery(shared: &Shared, source: &Path) -> Result<String, String> {
+    image::open(source).map_err(|_| "That file isn't an image.".to_string())?;
+    let ext = source
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .filter(|ext| IMAGE_EXTS.contains(&ext.as_str()))
+        .ok_or("Use a PNG, WebP or GIF image.")?;
+
+    let stem = source.file_stem().unwrap_or_default().to_string_lossy().to_lowercase();
+    let base = safe_filename(&stem);
+    let (mut id, mut n) = (base.clone(), 2);
+    while id == BUILT_IN_ID || file_for(shared, &id).is_some() {
+        id = format!("{base}_{n}");
+        n += 1;
+    }
+
+    let dir = gallery_dir(shared);
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    std::fs::copy(source, dir.join(format!("{id}.{ext}"))).map_err(|e| e.to_string())?;
+    Ok(id)
+}
+
+pub fn remove_from_gallery(shared: &Shared, id: &str) -> Result<(), String> {
+    if id == BUILT_IN_ID {
+        return Err("The default mascot can't be removed.".into());
+    }
+    set_shown(shared, id, false);
+    if let Some(file) = file_for(shared, id) {
+        std::fs::remove_file(file).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+pub fn set_shown(shared: &Shared, id: &str, show: bool) {
+    let enabled = shared.config.lock().unwrap().bool("mascot_enabled");
+    let mut ids = if enabled { shown_ids(shared) } else { vec![] };
+    ids.retain(|s| s != id);
+    if show {
+        ids.push(id.to_string());
+    }
+    let mut changes = Map::new();
+    changes.insert("mascot_enabled".into(), json!(!ids.is_empty()));
+    if !ids.is_empty() {
+        changes.insert("mascot_shown".into(), json!(ids));
+    }
+    save_settings(shared, changes);
+}
+
+fn migrate_custom_image(shared: &Shared) {
+    let (legacy, legacy_pos) = {
+        let cfg = shared.config.lock().unwrap();
+        (cfg.str("mascot_image"), cfg.get("mascot_pos").cloned())
+    };
+    let legacy = legacy.trim().to_string();
+    let mut changes = Map::new();
+
+    if !legacy.is_empty() {
+        if let Ok(id) = add_to_gallery(shared, Path::new(&legacy)) {
+            changes.insert("mascot_shown".into(), json!([id.clone()]));
+            if let Some(pos) = legacy_pos.clone().filter(|p| !p.is_null()) {
+                changes.insert("mascot_positions".into(), json!({ id: pos }));
+            }
+        }
+        changes.insert("mascot_image".into(), json!(""));
+    } else if let Some(pos) = legacy_pos.filter(|p| !p.is_null()) {
+        changes.insert("mascot_positions".into(), json!({ BUILT_IN_ID: pos }));
+    }
+    if !changes.is_empty() {
+        changes.insert("mascot_pos".into(), Value::Null);
+        save_settings(shared, changes);
+    }
+}
+
+fn default_position(width: u32, height: u32, offset: &mut i32) -> (i32, i32) {
     let (_, _, right, bottom) = winapi::work_area();
-    (right - width as i32 - 40, bottom - height as i32)
+    let x = right - width as i32 - 40 - *offset;
+    *offset += width as i32 + 20;
+    (x, bottom - height as i32)
 }
 
 fn saved_position(value: Option<&Value>, width: u32, height: u32) -> Option<(i32, i32)> {
@@ -92,58 +263,76 @@ pub struct MascotInfo {
     pub height: u32,
 }
 
-pub fn info() -> Option<MascotInfo> {
-    let character = CHARACTER.lock().unwrap();
-    let character = character.as_ref()?;
-    Some(MascotInfo {
-        file: character.file.to_string_lossy().to_string(),
-        width: character.alpha.width(),
-        height: character.alpha.height(),
+pub fn info(label: &str) -> Option<MascotInfo> {
+    with_characters(|characters| {
+        let character = characters.get(label)?;
+        Some(MascotInfo {
+            file: character.file.to_string_lossy().to_string(),
+            width: character.alpha.width(),
+            height: character.alpha.height(),
+        })
     })
 }
 
 pub fn apply_settings(app: &AppHandle) {
     let shared = shared(app);
-    let (enabled, image_path, height, topmost, saved) = {
+    migrate_custom_image(&shared);
+
+    let (enabled, height, topmost, positions) = {
         let cfg = shared.config.lock().unwrap();
         (
             cfg.bool("mascot_enabled"),
-            cfg.str("mascot_image"),
             cfg.num("mascot_height") as u32,
             cfg.bool("mascot_topmost"),
-            cfg.get("mascot_pos").cloned(),
+            cfg.get("mascot_positions").cloned().unwrap_or(json!({})),
         )
     };
 
     GENERATION.fetch_add(1, Ordering::SeqCst);
     ui_windows::hide_balloon(app);
-    if let Some(window) = app.get_webview_window("mascot") {
-        let _ = window.destroy();
+    for (label, window) in app.webview_windows() {
+        if label.starts_with(WINDOW_PREFIX) {
+            let _ = window.destroy();
+        }
     }
+    with_characters(HashMap::clear);
     if !enabled {
         return;
     }
 
-    let character = load_character(&image_path, if height == 0 { 420 } else { height });
-    let (width, height) = (character.width(), character.height());
+    let cache = shared.data_dir.join("cache");
+    remove_old_pictures(&cache);
+    let generation = GENERATION.load(Ordering::SeqCst);
+    let height = if height == 0 { 420 } else { height };
+    let mut offset = 0;
+    let mut placements = Vec::new();
 
-    let file = shared
-        .data_dir
-        .join("cache")
-        .join(format!("mascot_{}.png", GENERATION.load(Ordering::SeqCst)));
-    remove_old_pictures(&shared.data_dir.join("cache"));
-    if character.save(&file).is_err() {
-        return;
+    for id in shown_ids(&shared) {
+        let Some(img) = image_for(&shared, &id) else {
+            continue;
+        };
+        let character = fit(img, height);
+        let (width, height) = (character.width(), character.height());
+        let file = cache.join(format!("mascot_{generation}_{id}.png"));
+        if character.save(&file).is_err() {
+            continue;
+        }
+
+        let (x, y) = saved_position(positions.get(&id), width, height)
+            .unwrap_or_else(|| default_position(width, height, &mut offset));
+        let label = format!("{WINDOW_PREFIX}{id}");
+        with_characters(|characters| {
+            characters.insert(label.clone(), Character { file, alpha: character })
+        });
+        placements.push((label, x, y, width, height));
     }
-    *CHARACTER.lock().unwrap() = Some(Character {
-        file,
-        alpha: character,
-    });
 
-    let (x, y) = saved_position(saved.as_ref(), width, height)
-        .unwrap_or_else(|| default_position(width, height));
     let app = app.clone();
-    std::thread::spawn(move || build_window(&app, x, y, width, height, topmost));
+    std::thread::spawn(move || {
+        for (label, x, y, width, height) in placements {
+            build_window(&app, &label, x, y, width, height, topmost);
+        }
+    });
 }
 
 fn remove_old_pictures(cache: &Path) {
@@ -155,8 +344,8 @@ fn remove_old_pictures(cache: &Path) {
     }
 }
 
-fn build_window(app: &AppHandle, x: i32, y: i32, width: u32, height: u32, topmost: bool) {
-    let built = WebviewWindowBuilder::new(app, "mascot", WebviewUrl::App("mascot.html".into()))
+fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height: u32, topmost: bool) {
+    let built = WebviewWindowBuilder::new(app, label, WebviewUrl::App("mascot.html".into()))
         .title("Visual Novel RPC mascot")
         .decorations(false)
         .transparent(true)
@@ -179,34 +368,35 @@ fn build_window(app: &AppHandle, x: i32, y: i32, width: u32, height: u32, topmos
     let _ = window.show();
 
     let app = app.clone();
+    let label = label.to_string();
     let generation = GENERATION.load(Ordering::SeqCst);
-    std::thread::spawn(move || click_through_loop(&app, generation));
+    std::thread::spawn(move || click_through_loop(&app, &label, generation));
 }
 
-fn click_through_loop(app: &AppHandle, generation: u64) {
+fn click_through_loop(app: &AppHandle, label: &str, generation: u64) {
     let mut ignoring: Option<bool> = None;
 
     while GENERATION.load(Ordering::SeqCst) == generation {
         std::thread::sleep(Duration::from_millis(40));
 
-        let Some(window) = app.get_webview_window("mascot") else {
+        let Some(window) = app.get_webview_window(label) else {
             return;
         };
         let (Some((cx, cy)), Ok(pos)) = (winapi::cursor_pos(), window.outer_position()) else {
             continue;
         };
 
-        let over_character = {
-            let character = CHARACTER.lock().unwrap();
-            let Some(character) = character.as_ref() else {
-                return;
-            };
+        let over_character = with_characters(|characters| {
+            let character = characters.get(label)?;
             let (x, y) = (cx - pos.x, cy - pos.y);
             let inside = x >= 0
                 && y >= 0
                 && (x as u32) < character.alpha.width()
                 && (y as u32) < character.alpha.height();
-            inside && character.alpha.get_pixel(x as u32, y as u32).0[3] > 10
+            Some(inside && character.alpha.get_pixel(x as u32, y as u32).0[3] > 10)
+        });
+        let Some(over_character) = over_character else {
+            return;
         };
 
         let ignore = !over_character;
@@ -225,31 +415,49 @@ pub fn moved(app: &AppHandle) {
     std::thread::spawn(move || {
         std::thread::sleep(Duration::from_millis(500));
         if MOVES.load(Ordering::SeqCst) == mine {
-            save_position(&app);
+            save_positions(&app);
         }
     });
 }
 
-fn save_position(app: &AppHandle) {
-    let Some(window) = app.get_webview_window("mascot") else {
-        return;
-    };
-    let Ok(pos) = window.outer_position() else {
-        return;
-    };
-
+fn save_positions(app: &AppHandle) {
     let shared = shared(app);
-    let mut cfg = shared.config.lock().unwrap();
-    let _ = cfg.update(serde_json::Map::from_iter([(
-        "mascot_pos".into(),
-        json!([pos.x, pos.y]),
-    )]));
+    let mut positions = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_positions")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+
+    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+    for label in labels {
+        let Some(window) = app.get_webview_window(&label) else {
+            continue;
+        };
+        if let Ok(pos) = window.outer_position() {
+            positions.insert(id_of(&label).to_string(), json!([pos.x, pos.y]));
+        }
+    }
+    save_settings(&shared, Map::from_iter([("mascot_positions".into(), Value::Object(positions))]));
 }
 
-pub fn say(app: &AppHandle, text: &str, seconds: u64) {
-    if app.get_webview_window("mascot").is_none() {
-        return;
-    }
+pub fn speaker() -> Option<String> {
+    SPEAKER.lock().unwrap().clone()
+}
+
+fn say_as(app: &AppHandle, label: Option<&str>, text: &str, seconds: u64) {
+    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+    let label = match label {
+        Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
+        _ if labels.is_empty() => return,
+        _ => {
+            let pick = chrono::Utc::now().timestamp_subsec_nanos() as usize % labels.len();
+            labels[pick].clone()
+        }
+    };
+
     let talks = shared(app)
         .config
         .lock()
@@ -258,13 +466,18 @@ pub fn say(app: &AppHandle, text: &str, seconds: u64) {
         .and_then(Value::as_bool)
         .unwrap_or(true);
     if talks {
+        *SPEAKER.lock().unwrap() = Some(label);
         ui_windows::show_balloon(app, text, seconds as f64);
     }
 }
 
-pub fn poke(app: &AppHandle) {
+pub fn say(app: &AppHandle, text: &str, seconds: u64) {
+    say_as(app, None, text, seconds);
+}
+
+pub fn poke(app: &AppHandle, label: &str) {
     let pick = (chrono::Utc::now().timestamp_subsec_nanos() as usize) % POKES.len();
-    say(app, POKES[pick], 6);
+    say_as(app, Some(label), POKES[pick], 6);
 }
 
 pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
@@ -290,8 +503,8 @@ pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
     }
 }
 
-pub fn show_menu(app: &AppHandle) {
-    let Some(window) = app.get_webview_window("mascot") else {
+pub fn show_menu(app: &AppHandle, label: &str) {
+    let Some(window) = app.get_webview_window(label) else {
         return;
     };
 
@@ -311,7 +524,13 @@ pub fn show_menu(app: &AppHandle) {
             None::<&str>,
         )?;
         let separator = PredefinedMenuItem::separator(app)?;
-        let hide = MenuItem::with_id(app, "mascot-hide", "Hide the mascot", true, None::<&str>)?;
+        let hide = MenuItem::with_id(
+            app,
+            format!("{HIDE_MENU_PREFIX}{label}"),
+            "Hide this mascot",
+            true,
+            None::<&str>,
+        )?;
         Menu::with_items(app, &[&open, &pick, &separator, &hide])
     })();
 
@@ -320,14 +539,13 @@ pub fn show_menu(app: &AppHandle) {
     }
 }
 
-pub fn hide(app: &AppHandle) {
-    {
-        let shared = shared(app);
-        let mut cfg = shared.config.lock().unwrap();
-        let _ = cfg.update(serde_json::Map::from_iter([(
-            "mascot_enabled".into(),
-            json!(false),
-        )]));
-    }
+pub fn refresh(app: &AppHandle) {
     apply_settings(app);
+    let settings = shared(app).config.lock().unwrap().data().clone();
+    let _ = app.emit("settings-changed", settings);
+}
+
+pub fn hide(app: &AppHandle, label: &str) {
+    set_shown(&shared(app), id_of(label), false);
+    refresh(app);
 }

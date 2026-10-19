@@ -172,7 +172,6 @@ function generalTab() {
     ...screenshotsSection(),
     ...localeSection(),
     ...appSection(),
-    ...mascotSection(),
     ...dataSection(),
     ...advancedSection(),
   ];
@@ -358,38 +357,6 @@ function appSection() {
         `Version ${store.version}: the notes of the last few releases.`,
       ),
     ),
-  ];
-}
-
-function mascotSection() {
-  const backToCorner = el("button", { class: "btn secondary" }, "Put it back in the corner");
-  backToCorner.onclick = () => save({ mascot_pos: null });
-
-  return [
-    section("Desktop mascot"),
-    setting(
-      "mascot_enabled",
-      "Show a desktop mascot (ukagaka)",
-      "A character standing on your desktop who comments on what you read. Drag it anywhere, click it, " +
-        "double-click to open the app, right-click for more.",
-    ),
-    el(
-      "div",
-      { class: "field-label" },
-      "Character image  (a PNG with a transparent background; empty = the built-in one)",
-    ),
-    pathRow("mascot_image", {
-      title: "Character image",
-      filters: [{ name: "Images", extensions: ["png", "webp", "gif"] }],
-    }),
-    numberField("mascot_height", "Height in pixels", { min: 80, max: 2000, fallback: 420 }),
-    setting("mascot_talk", "Speech balloons"),
-    setting(
-      "mascot_topmost",
-      "Keep it above other windows",
-      "Off: it stays on the desktop, behind your windows.",
-    ),
-    el("div", { class: "row" }, backToCorner),
   ];
 }
 

@@ -39,6 +39,8 @@ fn defaults() -> Map<String, Value> {
         "last_seen_version": "",
         "mascot_enabled": false,
         "mascot_image": "",
+        "mascot_shown": [],
+        "mascot_positions": {},
         "mascot_height": 420,
         "mascot_talk": true,
         "mascot_topmost": false,

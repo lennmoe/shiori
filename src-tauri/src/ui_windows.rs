@@ -163,9 +163,12 @@ pub fn balloon_text() -> String {
 }
 
 pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
+    let Some(speaker) = crate::mascot::speaker() else {
+        return;
+    };
     let (Some(balloon), Some(mascot)) = (
         app.get_webview_window("balloon"),
-        app.get_webview_window("mascot"),
+        app.get_webview_window(&speaker),
     ) else {
         return;
     };

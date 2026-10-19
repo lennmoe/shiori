@@ -13,6 +13,7 @@ import "./pages/game.js";
 import "./pages/wishlist.js";
 import "./pages/screenshots.js";
 import "./pages/share.js";
+import "./pages/mascots.js";
 import "./pages/settings.js";
 import "./pages/whatsnew.js";
 

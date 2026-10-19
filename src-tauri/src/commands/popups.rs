@@ -1,16 +1,19 @@
-use tauri::AppHandle;
+use std::path::Path;
 
-use crate::mascot::{self, MascotInfo};
+use tauri::{AppHandle, WebviewWindow};
+
+use super::SharedState;
+use crate::mascot::{self, GalleryItem, MascotInfo};
 use crate::ui_windows::{self, Toast};
 
 #[tauri::command]
-pub fn mascot_info() -> Option<MascotInfo> {
-    mascot::info()
+pub fn mascot_info(window: WebviewWindow) -> Option<MascotInfo> {
+    mascot::info(window.label())
 }
 
 #[tauri::command]
-pub fn mascot_poke(app: AppHandle) {
-    mascot::poke(&app);
+pub fn mascot_poke(app: AppHandle, window: WebviewWindow) {
+    mascot::poke(&app, window.label());
 }
 
 #[tauri::command]
@@ -19,8 +22,34 @@ pub fn mascot_open_app(app: AppHandle) {
 }
 
 #[tauri::command]
-pub fn mascot_menu(app: AppHandle) {
-    mascot::show_menu(&app);
+pub fn mascot_menu(app: AppHandle, window: WebviewWindow) {
+    mascot::show_menu(&app, window.label());
+}
+
+#[tauri::command(async)]
+pub fn list_mascots(shared: SharedState) -> Vec<GalleryItem> {
+    mascot::gallery(&shared)
+}
+
+#[tauri::command(async)]
+pub fn add_mascot(app: AppHandle, shared: SharedState, path: String) -> Result<(), String> {
+    let id = mascot::add_to_gallery(&shared, Path::new(&path))?;
+    mascot::set_shown(&shared, &id, true);
+    mascot::refresh(&app);
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub fn remove_mascot(app: AppHandle, shared: SharedState, id: String) -> Result<(), String> {
+    mascot::remove_from_gallery(&shared, &id)?;
+    mascot::refresh(&app);
+    Ok(())
+}
+
+#[tauri::command(async)]
+pub fn show_mascot(app: AppHandle, shared: SharedState, id: String, shown: bool) {
+    mascot::set_shown(&shared, &id, shown);
+    mascot::refresh(&app);
 }
 
 #[tauri::command]

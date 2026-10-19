@@ -126,7 +126,7 @@ fn main() {
         .setup(setup)
         .on_menu_event(tray::handle_menu)
         .on_window_event(|window, event| {
-            if window.label() == "mascot" && matches!(event, WindowEvent::Moved(_)) {
+            if window.label().starts_with(mascot::WINDOW_PREFIX) && matches!(event, WindowEvent::Moved(_)) {
                 mascot::moved(window.app_handle());
             }
         })
@@ -187,6 +187,10 @@ fn main() {
             commands::popups::mascot_poke,
             commands::popups::mascot_open_app,
             commands::popups::mascot_menu,
+            commands::popups::list_mascots,
+            commands::popups::add_mascot,
+            commands::popups::remove_mascot,
+            commands::popups::show_mascot,
             commands::popups::balloon_text,
             commands::popups::place_balloon,
             commands::popups::hide_balloon,

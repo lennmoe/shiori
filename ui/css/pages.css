@@ -984,3 +984,75 @@
     overflow-x: auto;
   }
 }
+
+.mascot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.mascot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    transform 0.15s var(--ease);
+}
+
+.mascot-card:hover,
+.mascot-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.mascot-card.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.mascot-pic {
+  height: 200px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.mascot-pic img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mascot-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.mascot-meta b {
+  color: var(--text);
+}
+
+.mascot-card.on .mascot-meta span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mascot-meta .btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.mascot-options {
+  margin-top: 18px;
+}

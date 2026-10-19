@@ -52,7 +52,9 @@ pub fn handle_menu(app: &AppHandle, event: MenuEvent) {
         }
         "quit" => quit_app(app, &shared),
         "mascot-pick" => ui_windows::open_page(app, "wishlist"),
-        "mascot-hide" => mascot::hide(app),
+        id if id.starts_with(mascot::HIDE_MENU_PREFIX) => {
+            mascot::hide(app, &id[mascot::HIDE_MENU_PREFIX.len()..])
+        }
         _ => {}
     }
 }
