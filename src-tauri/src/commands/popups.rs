@@ -46,6 +46,11 @@ pub fn remove_mascot(app: AppHandle, shared: SharedState, id: String) -> Result<
     Ok(())
 }
 
+#[tauri::command]
+pub async fn set_mascot_size(app: AppHandle, id: String, height: u32) -> Result<(), String> {
+    super::blocking(move || mascot::resize(&app, &id, height)).await
+}
+
 #[tauri::command(async)]
 pub fn show_mascot(app: AppHandle, shared: SharedState, id: String, shown: bool) {
     mascot::set_shown(&shared, &id, shown);

@@ -40,6 +40,12 @@ static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
 static SPEAKER: Mutex<Option<String>> = Mutex::new(None);
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
+static REQUESTS: AtomicU64 = AtomicU64::new(0);
+static RESIZES: AtomicU64 = AtomicU64::new(0);
+static APPLYING: Mutex<()> = Mutex::new(());
+
+const MIN_HEIGHT: u32 = 80;
+const MAX_HEIGHT: u32 = 1500;
 
 fn shared(app: &AppHandle) -> Arc<Shared> {
     Arc::clone(&app.state::<Arc<Shared>>())
@@ -88,10 +94,10 @@ fn image_for(shared: &Shared, id: &str) -> Option<DynamicImage> {
 
 fn fit(img: DynamicImage, height: u32) -> RgbaImage {
     let cropped = crop_transparent_margins(&img.to_rgba8());
-    let height = height.clamp(80, 2000);
+    let height = height.clamp(MIN_HEIGHT, MAX_HEIGHT);
     let width =
         ((cropped.width() as f64 * height as f64 / cropped.height() as f64).round() as u32).max(1);
-    image::imageops::resize(&cropped, width, height, FilterType::Lanczos3)
+    image::imageops::resize(&cropped, width, height, FilterType::CatmullRom)
 }
 
 fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
@@ -130,6 +136,19 @@ fn save_settings(shared: &Shared, changes: Map<String, Value>) {
     let _ = shared.config.lock().unwrap().update(changes);
 }
 
+fn height_for(shared: &Shared, id: &str) -> u32 {
+    let cfg = shared.config.lock().unwrap();
+    let default = match cfg.num("mascot_height") as u32 {
+        0 => 420,
+        height => height,
+    };
+    cfg.get("mascot_sizes")
+        .and_then(|sizes| sizes.get(id))
+        .and_then(Value::as_u64)
+        .map_or(default, |height| height as u32)
+        .clamp(MIN_HEIGHT, MAX_HEIGHT)
+}
+
 #[derive(Serialize)]
 pub struct GalleryItem {
     id: String,
@@ -137,6 +156,7 @@ pub struct GalleryItem {
     file: String,
     shown: bool,
     built_in: bool,
+    height: u32,
 }
 
 pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
@@ -150,6 +170,7 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
         file: String::new(),
         shown: is_shown(BUILT_IN_ID),
         built_in: true,
+        height: height_for(shared, BUILT_IN_ID),
     }];
     for path in gallery_files(shared) {
         let id = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
@@ -158,6 +179,7 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
             file: path.to_string_lossy().to_string(),
             shown: is_shown(&id),
             built_in: false,
+            height: height_for(shared, &id),
             id,
         });
     }
@@ -275,14 +297,26 @@ pub fn info(label: &str) -> Option<MascotInfo> {
 }
 
 pub fn apply_settings(app: &AppHandle) {
+    let mine = REQUESTS.fetch_add(1, Ordering::SeqCst) + 1;
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(150));
+        if REQUESTS.load(Ordering::SeqCst) != mine {
+            return;
+        }
+        let _applying = APPLYING.lock().unwrap();
+        apply_now(&app);
+    });
+}
+
+fn apply_now(app: &AppHandle) {
     let shared = shared(app);
     migrate_custom_image(&shared);
 
-    let (enabled, height, topmost, positions) = {
+    let (enabled, topmost, positions) = {
         let cfg = shared.config.lock().unwrap();
         (
             cfg.bool("mascot_enabled"),
-            cfg.num("mascot_height") as u32,
             cfg.bool("mascot_topmost"),
             cfg.get("mascot_positions").cloned().unwrap_or(json!({})),
         )
@@ -303,7 +337,6 @@ pub fn apply_settings(app: &AppHandle) {
     let cache = shared.data_dir.join("cache");
     remove_old_pictures(&cache);
     let generation = GENERATION.load(Ordering::SeqCst);
-    let height = if height == 0 { 420 } else { height };
     let mut offset = 0;
     let mut placements = Vec::new();
 
@@ -311,7 +344,7 @@ pub fn apply_settings(app: &AppHandle) {
         let Some(img) = image_for(&shared, &id) else {
             continue;
         };
-        let character = fit(img, height);
+        let character = fit(img, height_for(&shared, &id));
         let (width, height) = (character.width(), character.height());
         let file = cache.join(format!("mascot_{generation}_{id}.png"));
         if character.save(&file).is_err() {
@@ -327,12 +360,48 @@ pub fn apply_settings(app: &AppHandle) {
         placements.push((label, x, y, width, height));
     }
 
-    let app = app.clone();
-    std::thread::spawn(move || {
-        for (label, x, y, width, height) in placements {
-            build_window(&app, &label, x, y, width, height, topmost);
-        }
+    for (label, x, y, width, height) in placements {
+        build_window(app, &label, x, y, width, height, topmost);
+    }
+}
+
+pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
+    let shared = shared(app);
+    let height = height.clamp(MIN_HEIGHT, MAX_HEIGHT);
+    let mut sizes = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_sizes")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    sizes.insert(id.to_string(), json!(height));
+    save_settings(&shared, Map::from_iter([("mascot_sizes".into(), Value::Object(sizes))]));
+
+    let _applying = APPLYING.lock().unwrap();
+    let label = format!("{WINDOW_PREFIX}{id}");
+    let Some(window) = app.get_webview_window(&label) else {
+        return Ok(());
+    };
+    let img = image_for(&shared, id).ok_or("That mascot's image is gone.")?;
+    let character = fit(img, height);
+    let (width, new_height) = (character.width(), character.height());
+
+    let n = RESIZES.fetch_add(1, Ordering::SeqCst);
+    let file = shared.data_dir.join("cache").join(format!("mascot_r{n}_{id}.png"));
+    character.save(&file).map_err(|e| e.to_string())?;
+    with_characters(|characters| {
+        characters.insert(label.clone(), Character { file, alpha: character })
     });
+
+    if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
+        let bottom = pos.y + size.height as i32;
+        let _ = window.set_size(PhysicalSize::new(width, new_height));
+        let _ = window.set_position(PhysicalPosition::new(pos.x, bottom - new_height as i32));
+    }
+    let _ = app.emit_to(label.as_str(), "mascot-refresh", ());
+    Ok(())
 }
 
 fn remove_old_pictures(cache: &Path) {

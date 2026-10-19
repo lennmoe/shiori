@@ -1,4 +1,4 @@
-import { invoke, fileUrl, currentWindow } from "../tauri.js";
+import { invoke, fileUrl, currentWindow, listen } from "../tauri.js";
 
 const DRAG_SLOP = 4;
 const DOUBLE_CLICK_MS = 280;
@@ -61,4 +61,5 @@ character.addEventListener("contextmenu", (event) => {
   invoke("mascot_menu");
 });
 
+listen("mascot-refresh", start);
 start();

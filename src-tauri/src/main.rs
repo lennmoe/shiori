@@ -191,6 +191,7 @@ fn main() {
             commands::popups::add_mascot,
             commands::popups::remove_mascot,
             commands::popups::show_mascot,
+            commands::popups::set_mascot_size,
             commands::popups::balloon_text,
             commands::popups::place_balloon,
             commands::popups::hide_balloon,
