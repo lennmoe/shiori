@@ -42,17 +42,10 @@ const save = (changes) => call("update_settings", { changes });
 
 function options() {
   const settings = store.settings;
-  const height = el("input", { type: "number", min: 80, max: 2000, value: settings.mascot_height });
-  height.onchange = () => {
-    const value = Math.min(2000, Math.max(80, Math.round(Number(height.value) || 420)));
-    height.value = value;
-    save({ mascot_height: value });
-  };
   const backToCorner = el("button", { class: "btn secondary" }, "Put them back in the corner");
   backToCorner.onclick = () => save({ mascot_positions: {}, mascot_pos: null });
 
   return [
-    el("div", { class: "field" }, el("span", {}, "Height in pixels"), height),
     toggle("Speech balloons", settings.mascot_talk, (on) => save({ mascot_talk: on })),
     toggle(
       "Keep them above other windows",
@@ -88,6 +81,19 @@ function card(item) {
 
   const flip = () => call("show_mascot", { id: item.id, shown: !item.shown });
 
+  const sizeLabel = el("span", { class: "small-text" }, `Size: ${item.height}px`);
+  const size = el("input", {
+    type: "range",
+    min: 120,
+    max: 1200,
+    step: 10,
+    value: item.height,
+    title: "Size",
+  });
+  size.onclick = (event) => event.stopPropagation();
+  size.oninput = () => (sizeLabel.textContent = `Size: ${size.value}px`);
+  size.onchange = () => call("set_mascot_size", { id: item.id, height: Number(size.value) });
+
   return el(
     "div",
     {
@@ -103,6 +109,7 @@ function card(item) {
       { class: "mascot-meta" },
       el("b", {}, item.name),
       el("span", { class: "small-text" }, item.shown ? "On your desktop" : "Click to show"),
+      el("div", { class: "mascot-size" }, sizeLabel, size),
       remove,
     ),
   );
