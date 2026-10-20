@@ -1,3 +1,7 @@
+import { t } from "./i18n.js";
+
+export { plural } from "./i18n.js";
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const LONG_MONTHS = [
   "January",
@@ -55,19 +59,23 @@ export function exactDuration(seconds) {
 }
 
 export function monthName(date) {
-  return LONG_MONTHS[date.getMonth()];
+  return t(LONG_MONTHS[date.getMonth()]);
 }
 
 export function shortMonth(date) {
-  return MONTHS[date.getMonth()];
+  return t(MONTHS[date.getMonth()]);
 }
 
 export function weekday(date) {
-  return WEEKDAYS[date.getDay()];
+  return t(WEEKDAYS[date.getDay()]);
+}
+
+export function dayMonth(date) {
+  return t("{day} {month}", { day: date.getDate(), month: shortMonth(date) });
 }
 
 export function shortDate(date, today = new Date()) {
-  const label = `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  const label = dayMonth(date);
   return date.getFullYear() === today.getFullYear() ? label : `${label} ${date.getFullYear()}`;
 }
 
@@ -101,13 +109,13 @@ export function lastPlayed(timestamp) {
   const delta = Math.round((today - day) / 86400000);
 
   if (delta <= 0) {
-    return "today";
+    return t("today");
   }
   if (delta === 1) {
-    return "yesterday";
+    return t("yesterday");
   }
   if (delta < 7) {
-    return `${delta} days ago`;
+    return t("{n} days ago", { n: delta });
   }
   return shortDate(day, today);
 }
@@ -116,6 +124,3 @@ export function capitalize(text) {
   return text ? text[0].toUpperCase() + text.slice(1) : "";
 }
 
-export function plural(count, word) {
-  return `${count} ${word}${count === 1 ? "" : "s"}`;
-}

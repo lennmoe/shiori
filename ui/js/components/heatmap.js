@@ -1,5 +1,6 @@
 import { el, svg } from "../dom.js";
 import { addDays, exactDuration, isoDay, midnight, shortDate, shortMonth, weekday } from "../format.js";
+import { t } from "../i18n.js";
 
 const WEEKS = 53;
 const CELL = 11;
@@ -19,7 +20,7 @@ function level(seconds) {
 function tipText(day, info, today) {
   const date = `${weekday(day)} ${shortDate(day, today)}`;
   if (!info) {
-    return `${date}  ·  nothing read`;
+    return `${date}  ·  ${t("nothing read")}`;
   }
   const names = info.names.slice(0, MAX_NAMES).join(", ");
   const more = info.names.length > MAX_NAMES ? ` +${info.names.length - MAX_NAMES}` : "";
@@ -38,7 +39,7 @@ export function drawHeatmap(container, days) {
 
   ["Mon", "Wed", "Fri"].forEach((label, i) => {
     const y = PAD_TOP + i * 2 * (CELL + GAP) + CELL - 2;
-    map.append(svg("text", { x: 0, y }, label));
+    map.append(svg("text", { x: 0, y }, t(label)));
   });
 
   for (let week = 0; week < WEEKS; week++) {

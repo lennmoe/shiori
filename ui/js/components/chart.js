@@ -1,5 +1,6 @@
 import { el, svg } from "../dom.js";
 import { exactDuration, shortDuration } from "../format.js";
+import { t } from "../i18n.js";
 
 const HEIGHT = 190;
 const PAD_LEFT = 46;
@@ -98,7 +99,7 @@ function render(container, points) {
       fill: "transparent",
     });
     hit.addEventListener("mouseenter", () => {
-      const read = point.seconds ? exactDuration(point.seconds) : "nothing read";
+      const read = point.seconds ? exactDuration(point.seconds) : t("nothing read");
       tip.textContent = `${point.tip}  ·  ${read}`;
       tip.style.left = `${(center / WIDTH) * 100}%`;
       tip.hidden = false;

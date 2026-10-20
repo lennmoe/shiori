@@ -127,9 +127,13 @@ The engine is in Rust (`src-tauri/src`). The interface is plain HTML, CSS and Ja
 | `ui/js` | |
 |---|---|
 | `pages/` | one file per page: home, cover, library, game, wishlist, screenshots, share, settings, what's new |
-| `components/` | chart, share card, theme tab, hotkey input, Play, release notes, update, Discord button |
+| `components/` | chart, share card, theme tab, hotkey input, language picker, Play, release notes, update, Discord button |
 | `popups/` | the mascot, its speech balloon, the screenshot toast |
 | `app.js`, `router.js`, `store.js`, `ui.js` | startup, navigation, shared state, small widgets |
+
+## Languages
+
+The app is available in English, French, Spanish, Portuguese (Brazil), Russian, Japanese and Vietnamese. Pick one at the top of Settings, or let it follow your Windows language. Each language lives in a single file, `ui/locales/<code>.json`: the interface, the Discord status and the mascot lines.
 
 ## Where your data is
 
@@ -137,6 +141,7 @@ Everything is in `%APPDATA%\moe.lenn.vnrpc-tauri\`: `config.yaml` (settings), `g
 
 The 1.x versions kept their data in `%APPDATA%\VisualNovelRPC\`. Version 2.0 copies it on its first launch and leaves the original folder untouched.
 
----
+## Credits
 
-<sub>Covers and game screenshots in these images come from [VNDB](https://vndb.org) and belong to their publishers.</sub>
+- **[VNDB](https://vndb.org)**: visual novel data, covers, lengths and list sync come from the VNDB API. Covers and game screenshots in these images come from VNDB and belong to their publishers.
+- **Flags**: the language flags come from [osu-resources](https://github.com/ppy/osu-resources) by ppy, licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).

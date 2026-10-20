@@ -2,6 +2,7 @@ import { el } from "../dom.js";
 import { invoke } from "../tauri.js";
 import { store } from "../store.js";
 import { openDialog, toast } from "../ui.js";
+import { t } from "../i18n.js";
 
 export async function offerUpdate({ quiet = true } = {}) {
   let release;
@@ -16,7 +17,7 @@ export async function offerUpdate({ quiet = true } = {}) {
 
   if (!release) {
     if (!quiet) {
-      toast(`You're up to date (version ${store.version}).`);
+      toast(t("You're up to date (version {version}).", { version: store.version }));
     }
     return "up-to-date";
   }
@@ -26,7 +27,10 @@ export async function offerUpdate({ quiet = true } = {}) {
     body: el(
       "p",
       { class: "muted" },
-      `Visual Novel RPC ${release.version} is out (you have ${store.version}). Download it and restart now?`,
+      t("Visual Novel RPC {latest} is out (you have {version}). Download it and restart now?", {
+        latest: release.version,
+        version: store.version,
+      }),
     ),
     actions: [
       { label: "Later", kind: "secondary", value: false },
@@ -37,11 +41,11 @@ export async function offerUpdate({ quiet = true } = {}) {
     return "update";
   }
 
-  toast(`Downloading version ${release.version}…`);
+  toast(t("Downloading version {version}…", { version: release.version }));
   try {
     await invoke("install_update", { release });
   } catch (error) {
-    toast(`Update failed: ${error}`, { error: true });
+    toast(t("Update failed: {error}", { error }), { error: true });
   }
   return "update";
 }

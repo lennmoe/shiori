@@ -30,6 +30,7 @@ pub fn get_state(shared: SharedState) -> Value {
         "screenshot_root": screenshots::root(&cfg).to_string_lossy(),
         "default_screenshot_root": screenshots::default_root().to_string_lossy(),
         "pending_page": ui_windows::take_pending_page(),
+        "language": crate::lang::resolve(&cfg.str("language")),
     })
 }
 
@@ -44,6 +45,7 @@ pub fn update_settings(
         changes.insert("screenshot_hotkey".into(), json!(normalized));
     }
     let mascot_changed = changes.keys().any(|k| k.starts_with("mascot_"));
+    let language_changed = changes.contains_key("language");
 
     shared
         .config
@@ -56,6 +58,9 @@ pub fn update_settings(
     allow_screenshot_folder(&shared);
     if mascot_changed {
         mascot::apply_settings(&app);
+    }
+    if language_changed {
+        crate::tray::refresh(&app);
     }
     let settings = shared.config.lock().unwrap().data().clone();
     shared.emit("settings-changed", settings);

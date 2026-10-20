@@ -5,6 +5,7 @@ import { show } from "./router.js";
 import { resolveTheme, applyPalette } from "./themes.js";
 import { call, toast } from "./ui.js";
 import { offerUpdate } from "./components/update.js";
+import { loadLanguage, t, translateTree } from "./i18n.js";
 
 import "./pages/home.js";
 import "./pages/cover.js";
@@ -41,7 +42,7 @@ $("#pause-btn").onclick = () => call("set_paused", { paused: !store.snapshot.pau
 
 function renderSidebar() {
   const snap = store.snapshot;
-  $("#pause-btn").textContent = snap.paused ? "Resume" : "Pause";
+  $("#pause-btn").textContent = snap.paused ? t("Resume") : t("Pause");
   $("#pill-game").className = "pill" + (snap.detected ? " ok" : "");
 }
 
@@ -72,6 +73,9 @@ async function showWhatsNewOnce() {
 
 async function start() {
   const state = await invoke("get_state");
+  store.language = state.language;
+  await loadLanguage(state.language);
+  translateTree(document.body);
 
   store.version = state.version;
   store.dataDir = state.data_dir;

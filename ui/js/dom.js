@@ -1,3 +1,7 @@
+import { t, translateTree } from "./i18n.js";
+
+const TRANSLATED = new Set(["title", "placeholder", "aria-label"]);
+
 export const $ = (selector, root = document) => root.querySelector(selector);
 
 export const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -16,13 +20,14 @@ export function el(tag, attrs = {}, ...children) {
     } else if (name.startsWith("on")) {
       node.addEventListener(name.slice(2), value);
     } else {
-      node.setAttribute(name, value === true ? "" : value);
+      const text = TRANSLATED.has(name) && typeof value === "string" ? t(value) : value;
+      node.setAttribute(name, text === true ? "" : text);
     }
   }
 
   for (const child of children.flat()) {
     if (child !== null && child !== undefined && child !== false) {
-      node.append(child);
+      node.append(typeof child === "string" ? t(child) : child);
     }
   }
   return node;
@@ -42,5 +47,5 @@ export function svg(tag, attrs = {}, text = "") {
 export function html(markup) {
   const template = document.createElement("template");
   template.innerHTML = markup.trim();
-  return template.content;
+  return translateTree(template.content);
 }

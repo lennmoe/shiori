@@ -7,6 +7,8 @@ import { hotkeyInput } from "../components/hotkey-input.js";
 import { renderThemeTab } from "../components/theme-tab.js";
 import { offerUpdate } from "../components/update.js";
 import { discordButton } from "../components/discord-button.js";
+import { languagePicker } from "../components/language-picker.js";
+import { plural, t } from "../i18n.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -72,10 +74,10 @@ function buildFooter() {
   const check = part("check-update");
   check.onclick = async () => {
     check.disabled = true;
-    check.textContent = "Checking…";
+    check.textContent = t("Checking…");
     await offerUpdate({ quiet: false });
     check.disabled = false;
-    check.textContent = "Check for updates";
+    check.textContent = t("Check for updates");
   };
 
   part("discord-slot").append(discordButton());
@@ -149,22 +151,31 @@ function testedField(input, test) {
 
   button.onclick = async () => {
     result.className = "hint-text";
-    result.textContent = "Testing…";
+    result.textContent = t("Testing…");
     try {
       const message = await test(input.value.trim());
       result.className = "hint-text ok-text";
-      result.textContent = message;
+      result.textContent = t(message);
     } catch (error) {
       result.className = "hint-text error-text";
-      result.textContent = `Failed: ${error}`;
+      result.textContent = t("Failed: {error}", { error: t(String(error)) });
     }
   };
 
   return [el("div", { class: "row" }, input, button), result];
 }
 
+function languageSection() {
+  const picker = languagePicker(async (language) => {
+    await save({ language });
+    location.reload();
+  });
+  return [section("Language"), el("div", { class: "row" }, picker)];
+}
+
 function generalTab() {
   return [
+    ...languageSection(),
     ...discordSection(),
     ...presenceSection(),
     ...coversSection(),
@@ -244,7 +255,7 @@ function vndbSection() {
       throw "Paste a token first.";
     }
     const name = await invoke("check_vndb_token", { token: value });
-    return `Connected as ${name}.`;
+    return t("Connected as {name}.", { name });
   };
 
   return [
@@ -345,7 +356,9 @@ function appSection() {
     setting(
       "check_updates",
       "Check for updates at launch",
-      `Version ${store.version}. New GitHub releases are offered when the app starts.`,
+      t("Version {version}. New GitHub releases are offered when the app starts.", {
+        version: store.version,
+      }),
     ),
     el(
       "div",
@@ -354,7 +367,7 @@ function appSection() {
       el(
         "span",
         { class: "muted small-text" },
-        `Version ${store.version}: the notes of the last few releases.`,
+        t("Version {version}: the notes of the last few releases.", { version: store.version }),
       ),
     ),
   ];
@@ -384,7 +397,7 @@ async function exportData() {
     return;
   }
   const count = await call("export_data", { path });
-  toast(`Saved ${count} VN${count === 1 ? "" : "s"} and your settings`);
+  toast(t("Saved {vns} and your settings", { vns: plural(count, "VN") }));
 }
 
 async function importData() {
@@ -399,7 +412,10 @@ async function importData() {
   const folder = await invoke("backup_folder");
   const sure = await ask(
     "Import data",
-    `Replace your settings and Library with the ones in this file? What you have now is saved first in ${folder}.`,
+    t(
+      "Replace your settings and Library with the ones in this file? What you have now is saved first in {folder}.",
+      { folder },
+    ),
     { yes: "Replace", danger: true },
   );
   if (!sure) {
@@ -407,7 +423,7 @@ async function importData() {
   }
 
   const count = await call("import_data", { path });
-  toast(`Loaded ${count} VN${count === 1 ? "" : "s"} and the settings`);
+  toast(t("Loaded {vns} and the settings", { vns: plural(count, "VN") }));
 }
 
 function advancedSection() {
@@ -454,7 +470,7 @@ function rulesTab() {
         checkPattern(rule.pattern);
         rules.push(rule);
       } catch (problem) {
-        error.textContent = `Line ${i + 1}: ${problem.message}`;
+        error.textContent = t("Line {n}: {problem}", { n: i + 1, problem: t(problem.message) });
         return;
       }
     }

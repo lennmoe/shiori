@@ -1,4 +1,5 @@
 import { $, el } from "./dom.js";
+import { t } from "./i18n.js";
 import { invoke, fileUrl } from "./tauri.js";
 import { store } from "./store.js";
 
@@ -6,7 +7,7 @@ let toastTimer = null;
 
 export function toast(text, { error = false } = {}) {
   const box = $("#toast");
-  box.textContent = text;
+  box.textContent = t(text);
   box.classList.toggle("error", error);
   box.classList.add("show");
 
@@ -47,7 +48,7 @@ export function toggle(label, checked, onChange, hint = "") {
 }
 
 export function confirmButton(button, label, action) {
-  button.textContent = label;
+  button.textContent = t(label);
   delete button.dataset.armed;
 
   button.onclick = (event) => {
@@ -57,17 +58,17 @@ export function confirmButton(button, label, action) {
       return action();
     }
     button.dataset.armed = "1";
-    button.textContent = "Click again to confirm";
+    button.textContent = t("Click again to confirm");
     setTimeout(() => {
       delete button.dataset.armed;
-      button.textContent = label;
+      button.textContent = t(label);
     }, 3000);
   };
 }
 
 export function flashLabel(button, text, label) {
-  button.textContent = text;
-  setTimeout(() => (button.textContent = label), 1400);
+  button.textContent = t(text);
+  setTimeout(() => (button.textContent = t(label)), 1400);
 }
 
 export function setCover(box, { path = "", url = "", nsfw = false, label = "" } = {}) {

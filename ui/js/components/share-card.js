@@ -1,12 +1,13 @@
 import {
   addDays,
+  dayMonth,
   formatPlaytime,
   isoDay,
   midnight,
   monthName,
   parseDay,
-  shortMonth,
 } from "../format.js";
+import { t } from "../i18n.js";
 
 export const PERIODS = {
   this_week: "This week",
@@ -60,11 +61,10 @@ export function collect(games, kind, today = midnight(new Date())) {
   const last = end < today ? end : today;
   const weekly = kind === "this_week" || kind === "last_week";
 
-  const title = weekly ? "My week in visual novels" : `My ${monthName(start)} in visual novels`;
-  const subtitle =
-    start.getMonth() === end.getMonth()
-      ? `${start.getDate()} – ${end.getDate()} ${shortMonth(end)} ${end.getFullYear()}`
-      : `${start.getDate()} ${shortMonth(start)} – ${end.getDate()} ${shortMonth(end)} ${end.getFullYear()}`;
+  const title = weekly
+    ? t("My week in visual novels")
+    : t("My {month} in visual novels", { month: monthName(start) });
+  const subtitle = `${dayMonth(start)} – ${dayMonth(end)} ${end.getFullYear()}`;
 
   const days = [];
   for (let day = start; day <= end; day = addDays(day, 1)) {
@@ -191,10 +191,10 @@ function drawHeader(ctx, data, p, icon) {
 function drawTiles(ctx, data, p) {
   const finished = data.vns.filter((vn) => vn.finished).length;
   const tiles = [
-    ["TIME READ", formatPlaytime(data.totalSeconds), p.TEXT],
-    ["VISUAL NOVELS", String(data.vns.filter((vn) => vn.seconds).length), p.TEXT],
-    ["FINISHED", String(finished), finished ? p.GREEN : p.TEXT],
-    ["DAYS READ", `${data.daysRead} / ${data.daysSoFar}`, p.TEXT],
+    [t("TIME READ"), formatPlaytime(data.totalSeconds), p.TEXT],
+    [t("VISUAL NOVELS"), String(data.vns.filter((vn) => vn.seconds).length), p.TEXT],
+    [t("FINISHED"), String(finished), finished ? p.GREEN : p.TEXT],
+    [t("DAYS READ"), `${data.daysRead} / ${data.daysSoFar}`, p.TEXT],
   ];
 
   const gap = 20;
@@ -232,7 +232,7 @@ function drawCovers(ctx, data, p, covers, allowNsfw) {
     ctx.font = font(26, 600);
     ctx.textAlign = "center";
     ctx.fillText(
-      `Nothing read this ${data.weekly ? "week" : "month"}`,
+      data.weekly ? t("Nothing read this week") : t("Nothing read this month"),
       PAD + leftWidth / 2,
       top + 136,
     );
@@ -251,13 +251,13 @@ function drawCovers(ctx, data, p, covers, allowNsfw) {
       ctx.stroke();
 
       ctx.font = font(12, 700);
-      const badge = ctx.measureText("FINISHED").width + 16;
+      const badge = ctx.measureText(t("FINISHED")).width + 16;
       roundRect(ctx, x + 8, top + 8, badge, 24, 12);
       ctx.fillStyle = p.GREEN;
       ctx.fill();
       ctx.fillStyle = p.BG;
       ctx.textBaseline = "middle";
-      ctx.fillText("FINISHED", x + 16, top + 20);
+      ctx.fillText(t("FINISHED"), x + 16, top + 20);
       ctx.textBaseline = "top";
     }
 
@@ -308,7 +308,7 @@ function drawChart(ctx, data, p, x, y, w, h) {
 
   ctx.fillStyle = p.SUBTLE;
   ctx.font = font(14, 700);
-  ctx.fillText("PER DAY", x + 20, y + 20);
+  ctx.fillText(t("PER DAY"), x + 20, y + 20);
 
   const left = x + 20;
   const right = x + w - 20;
@@ -335,7 +335,7 @@ function drawChart(ctx, data, p, x, y, w, h) {
     if (data.weekly || [1, 8, 15, 22, 29].includes(day.getDate())) {
       ctx.fillStyle = p.MUTED;
       ctx.font = font(13);
-      ctx.fillText(data.weekly ? "MTWTFSS"[i] : String(day.getDate()), center, base + 18);
+      ctx.fillText(data.weekly ? t("MTWTFSS")[i] : String(day.getDate()), center, base + 18);
     }
     if (seconds <= 0 || !peak) {
       return;
@@ -359,7 +359,7 @@ function drawChart(ctx, data, p, x, y, w, h) {
   if (!peak) {
     ctx.fillStyle = p.MUTED;
     ctx.font = font(15);
-    ctx.fillText("No reading yet", (left + right) / 2, (top + base) / 2);
+    ctx.fillText(t("No reading yet"), (left + right) / 2, (top + base) / 2);
   }
 
   ctx.textAlign = "left";

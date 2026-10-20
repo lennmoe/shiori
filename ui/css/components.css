@@ -624,3 +624,43 @@ button.chip:hover,
 .btn.help:hover:not(:disabled) {
   color: var(--text);
 }
+
+.lang-picker {
+  position: relative;
+}
+
+.lang-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-button span,
+.lang-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+}
+
+.lang-menu button {
+  justify-content: flex-start;
+}
+
+.lang-menu button.on::after {
+  margin-left: auto;
+}
+
+.flag {
+  width: 24px;
+  height: 17px;
+  border-radius: 3px;
+  flex: none;
+}

@@ -1,4 +1,5 @@
 import { el } from "../dom.js";
+import { t } from "../i18n.js";
 
 const NAMED = {
   PrintScreen: "PrintScreen",
@@ -62,7 +63,7 @@ export function hotkeyInput(value, onChange) {
 
   const showValue = () => {
     button.classList.toggle("listening", listening);
-    button.textContent = listening ? "Press a key…" : current || "Off";
+    button.textContent = listening ? t("Press a key…") : current || t("Off");
   };
 
   const stop = (newValue) => {

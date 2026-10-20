@@ -1,9 +1,10 @@
 import { $, el, html } from "../dom.js";
-import { plural, shortMonth } from "../format.js";
+import { dayMonth, plural } from "../format.js";
 import { fileUrl, invoke } from "../tauri.js";
 import { register, show } from "../router.js";
 import { subscribe } from "../store.js";
 import { call, flashLabel } from "../ui.js";
+import { t } from "../i18n.js";
 
 const BATCH = 60;
 const ALL = "";
@@ -157,7 +158,7 @@ function fillStrip(visible, upto) {
 
   if (n < shots.length) {
     const rest = Math.min(shots.length - n, BATCH);
-    const more = el("button", { class: "btn secondary small" }, `Show ${rest} more`);
+    const more = el("button", { class: "btn secondary small" }, t("Show {count} more", { count: rest }));
     more.onclick = () => {
       fillStrip(visible, shownCount + BATCH);
       highlight();
@@ -193,8 +194,8 @@ function highlight() {
 
 function emptyViewer() {
   const hint = hotkey
-    ? `Press ${hotkey} while reading to capture the game's window.`
-    : "Pick a screenshot key in Settings to capture the game's window.";
+    ? t("Press {key} while reading to capture the game's window.", { key: hotkey })
+    : t("Pick a screenshot key in Settings to capture the game's window.");
 
   part("image").replaceChildren(
     el(
@@ -214,7 +215,7 @@ function formatTaken(text) {
     return text;
   }
   const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  return `${date.getDate()} ${shortMonth(date)} ${date.getFullYear()}, ${time}`;
+  return `${dayMonth(date)} ${date.getFullYear()}, ${time}`;
 }
 
 async function selectShot(i) {

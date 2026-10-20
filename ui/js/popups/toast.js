@@ -1,6 +1,7 @@
 import { el } from "../dom.js";
 import { invoke, listen, fileUrl } from "../tauri.js";
 import { followTheme } from "./theme.js";
+import { loadLanguage } from "../i18n.js";
 
 const box = document.getElementById("toast");
 
@@ -22,6 +23,7 @@ function render(toast) {
 }
 
 async function start() {
+  await loadLanguage(await invoke("ui_language"));
   await followTheme();
   await listen("toast", (event) => render(event.payload));
   render(await invoke("toast_content"));

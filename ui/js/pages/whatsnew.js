@@ -6,6 +6,7 @@ import { call } from "../ui.js";
 import { clean, pick, renderMarkdown } from "../components/release-notes.js";
 import { RELEASES_PAGE, bugReportUrl, suggestionUrl } from "../links.js";
 import { discordButton } from "../components/discord-button.js";
+import { t } from "../i18n.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -53,7 +54,7 @@ function build(container) {
 async function showPage({ since = null, recent = 0 } = {}) {
   const job = ++loading;
   const version = store.version;
-  part("sub").textContent = "Loading the release notes…";
+  part("sub").textContent = t("Loading the release notes…");
   part("notes").replaceChildren();
   part("notes").hidden = true;
 
@@ -62,8 +63,9 @@ async function showPage({ since = null, recent = 0 } = {}) {
     notes = pick(await invoke("release_notes"), version, { since, recent });
   } catch {
     if (job === loading) {
-      part("sub").textContent =
-        "Couldn't load the release notes (are you offline?). They're on GitHub too: “All releases on GitHub”.";
+      part("sub").textContent = t(
+        "Couldn't load the release notes (are you offline?). They're on GitHub too: “All releases on GitHub”.",
+      );
     }
     return;
   }
@@ -72,16 +74,20 @@ async function showPage({ since = null, recent = 0 } = {}) {
   }
 
   if (!notes.length) {
-    part("sub").textContent = `You're on version ${version}. No release notes were found for it.`;
+    part("sub").textContent = t("You're on version {version}. No release notes were found for it.", {
+      version,
+    });
     return;
   }
   if (since && notes.length > 1) {
-    part("sub").textContent =
-      `Updated from ${since} to ${version}. Here's everything that changed.`;
+    part("sub").textContent = t("Updated from {since} to {version}. Here's everything that changed.", {
+      since,
+      version,
+    });
   } else if (since || notes.length === 1) {
-    part("sub").textContent = `You're now on version ${version}.`;
+    part("sub").textContent = t("You're now on version {version}.", { version });
   } else {
-    part("sub").textContent = `You're on version ${version}. The latest releases:`;
+    part("sub").textContent = t("You're on version {version}. The latest releases:", { version });
   }
 
   const blocks = notes.flatMap((note, i) => {

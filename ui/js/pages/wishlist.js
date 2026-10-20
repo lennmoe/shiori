@@ -3,6 +3,7 @@ import { lengthText } from "../format.js";
 import { register, show } from "../router.js";
 import { store } from "../store.js";
 import { call, setCover } from "../ui.js";
+import { t } from "../i18n.js";
 
 const STALE_AFTER_MS = 10 * 60 * 1000;
 
@@ -75,7 +76,7 @@ async function load() {
   loading = true;
   if (!order.length) {
     part("title").textContent = "";
-    part("status").textContent = "Loading your wishlist…";
+    part("status").textContent = t("Loading your wishlist…");
   }
 
   try {
@@ -85,8 +86,8 @@ async function load() {
     if (!wishlist.length) {
       order = [];
       setReady(false);
-      part("title").textContent = "Your wishlist is empty";
-      part("status").textContent = "Add VNs to your Wishlist on vndb.org, then come back.";
+      part("title").textContent = t("Your wishlist is empty");
+      part("status").textContent = t("Add VNs to your Wishlist on vndb.org, then come back.");
       return;
     }
 
@@ -105,7 +106,7 @@ async function load() {
     }
   } catch (error) {
     if (!order.length) {
-      part("title").textContent = "Couldn't load your wishlist";
+      part("title").textContent = t("Couldn't load your wishlist");
       part("status").textContent = String(error);
     }
   } finally {
@@ -138,7 +139,7 @@ function render() {
   const rating = vn.rating > 10 ? vn.rating / 10 : vn.rating;
   const chips = [
     vn.year,
-    vn.rating > 0 && `Rating ${rating.toFixed(1)}`,
+    vn.rating > 0 && t("Rating {rating}", { rating: rating.toFixed(1) }),
     lengthText(vn.length_minutes),
   ];
   part("chips").replaceChildren(
@@ -147,8 +148,8 @@ function render() {
 
   const skipped = total - order.length;
   part("status").textContent =
-    `${position + 1} / ${order.length} on your wishlist` +
-    (skipped ? `  ·  ${skipped} already in your Library skipped` : "");
+    t("{position} / {count} on your wishlist", { position: position + 1, count: order.length }) +
+    (skipped ? "  ·  " + t("{count} already in your Library skipped", { count: skipped }) : "");
 
   setCover(part("cover"), {
     url: vn.image_url,

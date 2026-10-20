@@ -4,6 +4,7 @@ import { fileUrl } from "../tauri.js";
 import { register, show } from "../router.js";
 import { store, subscribe } from "../store.js";
 import { call, confirmButton, openDialog, segmented, setCover, toast, toggle } from "../ui.js";
+import { t } from "../i18n.js";
 
 const TEMPLATE = `
   <div class="banner warn" data-id="paused" hidden>
@@ -127,19 +128,23 @@ function renderSnapshot(snap) {
   const newGame = !!snap.emulator && !snap.vn;
   part("emu-hint").hidden = !newGame;
   part("emu-hint").textContent = newGame
-    ? `New ${snap.emulator} game: pick it with “Change VN / cover…” to give it its name and cover.`
+    ? t("New {emulator} game: pick it with “Change VN / cover…” to give it its name and cover.", {
+        emulator: snap.emulator,
+      })
     : "";
   const manual = snap.section_type === "manual";
   part("section").hidden = !snap.section_label;
   part("section").textContent = snap.section_label;
   part("section").classList.toggle("editable", manual);
-  part("section").title = manual ? "Set by you — click to change" : "Read from the window title";
+  part("section").title = manual ? t("Set by you — click to change") : t("Read from the window title");
   part("set-section").hidden = !!snap.section_label;
   const length = snap.vn?.length_minutes;
   const percent = readingProgress(snap.playtime_seconds, length);
   const shownPercent = percent !== null && percent < 100 ? `  ·  ${percent}%` : "";
-  part("time").textContent = `${formatPlaytime(snap.playtime_seconds)} read${shownPercent}`;
-  part("time").title = percent === null ? "" : `Average length on VNDB: ${lengthText(length)}`;
+  part("time").textContent =
+    t("{time} read", { time: formatPlaytime(snap.playtime_seconds) }) + shownPercent;
+  part("time").title =
+    percent === null ? "" : t("Average length on VNDB: {length}", { length: lengthText(length) });
 
   const cover = snap.cover || {};
   setCover(part("cover"), { path: cover.local_path, nsfw: cover.nsfw, label: snap.game_name });
@@ -219,7 +224,7 @@ async function explainWrongVn() {
         "Click “Change VN / cover…”, search VNDB and pick the right entry: the name, " +
           "cover and VNDB link all switch to it. Your choice is remembered for this game.",
       ),
-      paragraph("Only the picture is wrong? Use the Image link or File tabs on the same page."),
+      paragraph("Only the picture is wrong? Use the Image link tab on the same page."),
     ),
     actions: [
       { label: "Close", kind: "secondary", value: null },
@@ -241,7 +246,7 @@ function renderProcess(snap) {
   part("process-name").textContent = snap.exe;
   confirmButton(part("not-vn"), "Not a VN", async () => {
     await call("not_a_vn", { exe: snap.exe });
-    toast(`${snap.exe} won't be detected again`);
+    toast(t("{exe} won't be detected again", { exe: snap.exe }));
   });
 }
 
@@ -298,14 +303,15 @@ function tickElapsed() {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const clock = hours ? `${hours}:${pad(minutes)}` : `${minutes}`;
-    node.textContent = `${clock}:${pad(seconds % 60)} elapsed`;
+    node.textContent = t("{clock} elapsed", { clock: `${clock}:${pad(seconds % 60)}` });
   }
 }
 
 setInterval(tickElapsed, 1000);
 
 function renderStatus(status) {
-  const lines = [status.vndb_msg, `Discord: ${status.discord_msg || "connecting…"}`];
+  const discord = t(status.discord_msg || "connecting…");
+  const lines = [status.vndb_msg, `Discord: ${discord}`];
   part("status").textContent = lines.filter(Boolean).join("   ·   ");
 }
 
@@ -316,16 +322,17 @@ function renderDetection() {
     call("update_settings", { changes: { detection_mode: value } }),
   );
   part("mode-hint").textContent =
-    mode === "auto" ? "Finds running VN engines by itself" : "Uses the window you pick";
+    mode === "auto" ? t("Finds running VN engines by itself") : t("Uses the window you pick");
   part("window").hidden = mode !== "manual";
   part("refresh").hidden = mode !== "manual";
   part("split").hidden = mode !== "manual";
   const split = toggle("Separate games by window title", store.settings.split_by_title, (on) =>
     call("update_settings", { changes: { split_by_title: on } }),
   );
-  split.title =
+  split.title = t(
     "For emulators: each game gets its own time read, cover and VNDB entry. " +
-    "Known emulators (Ryujinx, yuzu, PPSSPP…) already do it by themselves.";
+      "Known emulators (Ryujinx, yuzu, PPSSPP…) already do it by themselves.",
+  );
   part("split").replaceChildren(split);
 
   if (mode === "manual") {
@@ -350,7 +357,7 @@ async function fillWindows() {
   }
 
   if (current && !seen.has(current.toLowerCase())) {
-    options.push(el("option", { value: current, selected: true }, `${current} (not running)`));
+    options.push(el("option", { value: current, selected: true }, t("{exe} (not running)", { exe: current })));
   }
   part("window").replaceChildren(...options);
 }

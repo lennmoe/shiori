@@ -9,6 +9,7 @@ use serde_json::{json, Map, Value};
 use crate::config::{game_key, url_cache_key, Config};
 use crate::discord::{self, Activity};
 use crate::emulators;
+use crate::lang;
 use crate::engines::{
     blacklist_set, clean_title, detect_engine, is_helper_exe, is_windows_app, normalize_exe,
 };
@@ -661,6 +662,8 @@ impl Engine {
         }
 
         let cfg = self.shared.config.lock().unwrap();
+        let language = lang::resolve(&cfg.str("language"));
+        let reading = lang::tr("Reading", language);
         let asset = cfg.str("default_asset_key");
         let start = cfg
             .bool("show_elapsed")
@@ -670,7 +673,7 @@ impl Engine {
         if snap.privacy == "private" {
             return Some(Activity {
                 name: "Visual Novel".into(),
-                details: "Reading".into(),
+                details: reading.into(),
                 large_image: asset,
                 large_text: "Visual Novel".into(),
                 small_text: "via Visual Novel RPC".into(),
@@ -682,7 +685,7 @@ impl Engine {
         let mut buttons = vec![];
         if cfg.bool("show_vndb_button") && snap.privacy != "partial" {
             if let Some(vn) = &snap.vn {
-                buttons.push(("View on VNDB".to_string(), vn.url()));
+                buttons.push((lang::tr("View on VNDB", language).to_string(), vn.url()));
             }
         }
 
@@ -692,7 +695,8 @@ impl Engine {
             .and_then(|vn| reading_progress(snap.playtime_seconds, vn.length_minutes))
             .filter(|_| cfg.bool("show_progress"));
         let state = if cfg.bool("show_total_read") && snap.playtime_seconds > 0 {
-            let total = format!("Total read: {}", format_playtime(snap.playtime_seconds));
+            let total = lang::tr("Total read: {}", language)
+                .replace("{}", &format_playtime(snap.playtime_seconds));
             match progress {
                 Some(percent) => format!("{total} · {percent}%"),
                 None => total,
@@ -705,9 +709,9 @@ impl Engine {
         let details = if !show_section {
             String::new()
         } else if snap.section_label.is_empty() {
-            "Reading".into()
+            reading.into()
         } else {
-            format!("Reading・{}", snap.section_label)
+            format!("{reading}・{}", snap.section_label)
         };
 
         let name = [&snap.game_name, &snap.raw_title]

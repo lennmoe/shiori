@@ -2,6 +2,7 @@ import { $, el, html } from "../dom.js";
 import { register, show } from "../router.js";
 import { store } from "../store.js";
 import { ask, call, openDialog, segmented, setCover, toast } from "../ui.js";
+import { plural, t } from "../i18n.js";
 
 const PRIVACY_HELP = {
   full: "Discord shows the name, the current section and the cover.",
@@ -102,7 +103,7 @@ async function showPage({ key: wanted, back = "home" }) {
   backTo = back;
 
   const game = await call("get_game", { key });
-  part("title").textContent = `Cover & privacy — ${game.name}`;
+  part("title").textContent = t("Cover & privacy — {name}", { name: game.name });
 
   renderPrivacy(game.entry.privacy || "full");
   openTab("vndb");
@@ -132,7 +133,7 @@ function openTab(name) {
 }
 
 function renderPrivacy(value) {
-  part("privacy-help").textContent = PRIVACY_HELP[value] || "";
+  part("privacy-help").textContent = t(PRIVACY_HELP[value] || "");
   segmented(part("privacy"), value, async (picked) => {
     await call("update_game", { key, fields: { privacy: picked } });
     renderPrivacy(picked);
@@ -162,20 +163,20 @@ async function search() {
     return;
   }
 
-  part("search-status").textContent = "Searching…";
+  part("search-status").textContent = t("Searching…");
   part("results").replaceChildren();
 
   let results;
   try {
     results = await call("search_vndb", { query });
   } catch {
-    part("search-status").textContent = "Search failed.";
+    part("search-status").textContent = t("Search failed.");
     return;
   }
 
   part("search-status").textContent = results.length
-    ? `${results.length} result${results.length === 1 ? "" : "s"}`
-    : "No results — try the original (Japanese) or a shorter title.";
+    ? plural(results.length, "result")
+    : t("No results — try the original (Japanese) or a shorter title.");
   part("results").replaceChildren(...results.map(resultRow));
 }
 
@@ -223,7 +224,7 @@ async function useVn(vn) {
     return;
   }
   await call("set_game_vn", { key, vnId: vn.id, title: vn.title });
-  done(`Now using ${vn.title}`);
+  done(t("Now using {title}", { title: vn.title }));
 }
 
 async function releaseCovers(vn) {
@@ -235,7 +236,7 @@ async function releaseCovers(vn) {
   let closeDialog = () => {};
 
   const dialog = openDialog({
-    title: `Release covers — ${vn.title}`,
+    title: t("Release covers — {title}", { title: vn.title }),
     body: grid,
     wide: true,
     actions: [{ label: "Close", kind: "secondary", value: null }],
@@ -294,17 +295,17 @@ function linkIsValid(url) {
 async function previewUrl() {
   const url = part("url").value.trim();
   if (!linkIsValid(url)) {
-    part("url-status").textContent = "Enter a http(s) image link.";
+    part("url-status").textContent = t("Enter a http(s) image link.");
     return;
   }
 
-  part("url-status").textContent = "Loading preview…";
+  part("url-status").textContent = t("Loading preview…");
   try {
     const image = await call("prepare_image", { source: url });
     setCover(part("url-preview"), { path: image.path });
     part("url-status").textContent = "";
   } catch {
-    part("url-status").textContent = "Couldn't load an image from that link.";
+    part("url-status").textContent = t("Couldn't load an image from that link.");
   }
 }
 

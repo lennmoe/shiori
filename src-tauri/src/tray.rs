@@ -6,15 +6,32 @@ use tauri::{AppHandle, Manager};
 
 use crate::commands::app::quit_app;
 use crate::state::{Cmd, Shared};
-use crate::{mascot, screenshots, ui_windows};
+use crate::{lang, mascot, screenshots, ui_windows};
+
+fn menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let language = {
+        let shared = app.state::<Arc<Shared>>();
+        let setting = shared.config.lock().unwrap().str("language");
+        lang::resolve(&setting)
+    };
+    let label = |text| lang::tr(text, language);
+    let open = MenuItem::with_id(app, "open", label("Show"), true, None::<&str>)?;
+    let pause = MenuItem::with_id(app, "pause", label("Pause / resume presence"), true, None::<&str>)?;
+    let screenshot =
+        MenuItem::with_id(app, "screenshot", label("Take screenshot"), true, None::<&str>)?;
+    let separator = PredefinedMenuItem::separator(app)?;
+    let quit = MenuItem::with_id(app, "quit", label("Quit"), true, None::<&str>)?;
+    Menu::with_items(app, &[&open, &pause, &screenshot, &separator, &quit])
+}
+
+pub fn refresh(app: &AppHandle) {
+    if let (Some(tray), Ok(menu)) = (app.tray_by_id("main"), menu(app)) {
+        let _ = tray.set_menu(Some(menu));
+    }
+}
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Show", true, None::<&str>)?;
-    let pause = MenuItem::with_id(app, "pause", "Pause / resume presence", true, None::<&str>)?;
-    let screenshot = MenuItem::with_id(app, "screenshot", "Take screenshot", true, None::<&str>)?;
-    let separator = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &pause, &screenshot, &separator, &quit])?;
+    let menu = menu(app)?;
 
     TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().cloned().expect("app icon"))

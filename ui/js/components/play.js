@@ -1,5 +1,6 @@
 import { invoke, pickFile } from "../tauri.js";
 import { ask, call, toast } from "../ui.js";
+import { t } from "../i18n.js";
 
 export const LAUNCHERS = {
   "": { label: "Normal" },
@@ -56,7 +57,8 @@ async function launchFailed(key, error) {
 
   if (error?.kind === "ToolMissing") {
     const tool = LAUNCHERS[error.detail];
-    const locate = await ask("Play", `${tool.label} (${tool.exe}) wasn't found. Locate it?`, {
+    const message = t("{tool} ({exe}) wasn't found. Locate it?", { tool: tool.label, exe: tool.exe });
+    const locate = await ask("Play", message, {
       yes: "Locate…",
     });
     if (locate && (await locateTool(error.detail))) {
@@ -65,5 +67,5 @@ async function launchFailed(key, error) {
     return;
   }
 
-  toast(`Couldn't launch it: ${error?.detail || error}`, { error: true });
+  toast(t("Couldn't launch it: {error}", { error: error?.detail || error }), { error: true });
 }
