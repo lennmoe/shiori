@@ -20,6 +20,7 @@ fn defaults() -> Map<String, Value> {
         "show_total_read": true,
         "show_progress": false,
         "library_view": "list",
+        "library_sort": "most",
         "split_by_title": false,
         "clear_on_close": true,
         "idle_when_unfocused": false,

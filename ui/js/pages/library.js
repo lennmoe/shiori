@@ -14,6 +14,7 @@ import { store, subscribe } from "../store.js";
 import { call, confirmButton, segmented, setCover, toast } from "../ui.js";
 import { playGame } from "../components/play.js";
 import { drawHeatmap } from "../components/heatmap.js";
+import { t } from "../i18n.js";
 
 const TEMPLATE = `
   <div class="page-head lib-head">
@@ -88,7 +89,6 @@ const VIEWS = {
 
 let root;
 let games = [];
-let sort = "most";
 
 const part = (id) => $(`[data-id="${id}"]`, root);
 
@@ -169,9 +169,9 @@ function renderActivity() {
 
   const { current, longest } = streaks(days);
   part("streaks").textContent = [
-    `${plural(lastYear, "day")} in the last year`,
-    current && `streak: ${plural(current, "day")}`,
-    `best: ${plural(longest, "day")}`,
+    t("{days} in the last year", { days: plural(lastYear, "day") }),
+    current && t("streak: {days}", { days: plural(current, "day") }),
+    t("best: {days}", { days: plural(longest, "day") }),
   ]
     .filter(Boolean)
     .join("  ·  ");
@@ -189,9 +189,11 @@ function weekSeconds(daily) {
 }
 
 function render() {
+  const sort = SORTERS[store.settings.library_sort] ? store.settings.library_sort : "most";
   segmented(part("sort"), sort, (value) => {
-    sort = value;
+    store.settings.library_sort = value;
     render();
+    call("update_settings", { changes: { library_sort: value } });
   });
   const view = VIEWS[store.settings.library_view] ? store.settings.library_view : "list";
   for (const item of part("view-list").children) {
@@ -210,8 +212,11 @@ function render() {
 
   const total = games.reduce((sum, game) => sum + game.playtime, 0);
   const week = games.reduce((sum, game) => sum + weekSeconds(game.daily), 0);
-  part("summary").textContent =
-    `${plural(games.length, "game")}  ·  ${formatPlaytime(total)} read in total  ·  ${formatPlaytime(week)} this week`;
+  part("summary").textContent = [
+    plural(games.length, "game"),
+    t("{time} read in total", { time: formatPlaytime(total) }),
+    t("{time} this week", { time: formatPlaytime(week) }),
+  ].join("  ·  ");
 
   if (!shown.length) {
     const message = games.length ? "Nothing matches." : "The VNs you read will show up here.";
@@ -260,7 +265,7 @@ function row(game, most) {
     "div",
     { class: "meta" },
     statusChip(game),
-    el("span", {}, `${formatPlaytime(game.playtime)} read`),
+    el("span", {}, t("{time} read", { time: formatPlaytime(game.playtime) })),
     game.last_played > 0 && el("span", {}, `·  ${lastPlayed(game.last_played)}`),
     game.vndb_id && el("span", {}, `·  ${game.vndb_id}`),
   );
@@ -274,7 +279,7 @@ function row(game, most) {
   const remove = el("button", { class: "btn danger small" });
   confirmButton(remove, "Remove", async () => {
     await call("remove_game", { key: game.key });
-    toast(`${game.name} was removed (its screenshots are kept)`);
+    toast(t("{name} was removed (its screenshots are kept)", { name: game.name }));
   });
 
   return el(
@@ -292,7 +297,7 @@ function tile(game) {
     { class: "lib-tile", ...opener(game) },
     el("div", { class: "tile-cover" }, coverOf(game), statusChip(game), playButton(game, "▶")),
     el("div", { class: "name" }, game.name),
-    el("div", { class: "muted small-text" }, `${formatPlaytime(game.playtime)} read`),
+    el("div", { class: "muted small-text" }, t("{time} read", { time: formatPlaytime(game.playtime) })),
   );
 }
 
