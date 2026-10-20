@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
@@ -7,6 +8,7 @@ use crate::config::{Config, Entry, STATUSES};
 use crate::engines::{blacklist_set, is_windows_app, normalize_exe};
 use crate::launcher::{self, LaunchError};
 use crate::screenshots;
+use crate::shell;
 use crate::state::{Cmd, Shared};
 use crate::vndb::VnResult;
 use crate::vndb_list;
@@ -241,6 +243,35 @@ pub fn set_tool_path(shared: SharedState, launcher: String, path: String) -> Res
     };
     shared.emit("settings-changed", settings);
     Ok(())
+}
+
+#[tauri::command(async)]
+pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, String> {
+    let entry = shared.config.lock().unwrap().game(&key);
+    let name = screenshots::display_name(&key, &entry);
+    let app_exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let game_exe = PathBuf::from(text(&entry, "path"));
+    let icon = if game_exe.is_file() { game_exe.as_path() } else { app_exe.as_path() };
+
+    let file_name: String = name
+        .chars()
+        .map(|c| if "\\/:*?\"<>|".contains(c) { '_' } else { c })
+        .collect();
+    let dest = shell::desktop_folder().join(format!("{}.lnk", file_name.trim()));
+    let shortcut = shell::Shortcut {
+        target: &app_exe,
+        arguments: &format!("--play \"{key}\""),
+        icon,
+        description: &format!("Play {name} with Visual Novel RPC"),
+    };
+    shell::create_shortcut(&dest, &shortcut)?;
+    Ok(dest.to_string_lossy().to_string())
+}
+
+pub fn play_from_shortcut(shared: &Shared, key: &str) -> bool {
+    let cfg = shared.config.lock().unwrap();
+    let entry = cfg.game(key);
+    !entry.is_empty() && launcher::launch(&cfg, &entry).is_ok()
 }
 
 #[tauri::command(async)]

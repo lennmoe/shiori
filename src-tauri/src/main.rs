@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![recursion_limit = "256"]
 
 mod config;
 mod discord;
@@ -22,7 +23,9 @@ mod autostart;
 mod backup;
 mod images;
 mod launcher;
+mod lang;
 mod mascot;
+mod personalities;
 mod screenshots;
 mod updater;
 
@@ -38,6 +41,27 @@ use tauri::{App, Manager, RunEvent, WindowEvent};
 use config::Config;
 use engine::Engine;
 use state::Shared;
+
+fn play_arg(args: impl IntoIterator<Item = String>) -> Option<String> {
+    let mut args = args.into_iter();
+    while let Some(arg) = args.next() {
+        if arg == "--play" {
+            return args.next();
+        }
+    }
+    None
+}
+
+fn play_from_shortcut(app: &tauri::AppHandle, key: &str) {
+    let shared = Arc::clone(&app.state::<Arc<Shared>>());
+    if !commands::library::play_from_shortcut(&shared, key) {
+        ui_windows::open_page(app, "library");
+        shared.emit(
+            "toast",
+            serde_json::json!({ "title": "Couldn't start the game from its shortcut", "ok": false }),
+        );
+    }
+}
 
 fn data_dir_override() -> Option<PathBuf> {
     std::env::var_os("VNRPC_DATA_DIR").map(PathBuf::from)
@@ -58,8 +82,10 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let cfg = Config::load(&data_dir);
     let client_id = cfg.str("discord_client_id");
     let interval = cfg.num("update_min_interval");
-    let start_minimized =
-        cfg.bool("start_minimized") || std::env::args().any(|a| a == "--minimized");
+    let play = play_arg(std::env::args());
+    let start_minimized = cfg.bool("start_minimized")
+        || play.is_some()
+        || std::env::args().any(|a| a == "--minimized");
 
     let (commands, command_queue) = std::sync::mpsc::channel();
     let shared = Arc::new(Shared::new(app.handle().clone(), data_dir, cfg, commands));
@@ -99,6 +125,9 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     if !start_minimized {
         ui_windows::show_main(app.handle());
     }
+    if let Some(key) = play {
+        play_from_shortcut(app.handle(), &key);
+    }
     Ok(())
 }
 
@@ -116,8 +145,11 @@ fn main() {
     let mut builder = tauri::Builder::default();
 
     if data_dir_override().is_none() {
-        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            ui_windows::show_main(app)
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            match play_arg(args) {
+                Some(key) => play_from_shortcut(app, &key),
+                None => ui_windows::show_main(app),
+            }
         }));
     }
 
@@ -154,6 +186,7 @@ fn main() {
             commands::library::set_game_path,
             commands::library::set_tool_path,
             commands::library::play_game,
+            commands::library::create_shortcut,
             commands::library::get_vote,
             commands::library::set_vote,
             commands::library::get_wishlist,
@@ -192,6 +225,12 @@ fn main() {
             commands::popups::remove_mascot,
             commands::popups::show_mascot,
             commands::popups::set_mascot_size,
+            commands::popups::mascot_personalities,
+            commands::popups::ui_language,
+            commands::popups::languages,
+            commands::popups::set_mascot_personality,
+            commands::popups::personality_lines,
+            commands::popups::set_mascot_custom_lines,
             commands::popups::balloon_text,
             commands::popups::place_balloon,
             commands::popups::hide_balloon,

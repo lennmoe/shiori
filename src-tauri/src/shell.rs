@@ -2,11 +2,14 @@ use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use windows::core::{HSTRING, PCWSTR};
-use windows::Win32::System::Com::CoTaskMemFree;
+use windows::core::{Interface, GUID, HSTRING, PCWSTR};
+use windows::Win32::System::Com::{
+    CoCreateInstance, CoInitializeEx, CoTaskMemFree, IPersistFile, CLSCTX_INPROC_SERVER,
+    COINIT_APARTMENTTHREADED,
+};
 use windows::Win32::UI::Shell::{
-    FOLDERID_Pictures, SHFileOperationW, SHGetKnownFolderPath, ShellExecuteW, KNOWN_FOLDER_FLAG,
-    SHFILEOPSTRUCTW,
+    FOLDERID_Desktop, FOLDERID_Pictures, IShellLinkW, SHFileOperationW, SHGetKnownFolderPath,
+    ShellExecuteW, ShellLink, KNOWN_FOLDER_FLAG, SHFILEOPSTRUCTW,
 };
 use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
@@ -89,9 +92,9 @@ pub fn send_to_recycle_bin(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn pictures_folder() -> PathBuf {
+fn known_folder(id: &GUID, fallback: &str) -> PathBuf {
     unsafe {
-        if let Ok(ptr) = SHGetKnownFolderPath(&FOLDERID_Pictures, KNOWN_FOLDER_FLAG(0), None) {
+        if let Ok(ptr) = SHGetKnownFolderPath(id, KNOWN_FOLDER_FLAG(0), None) {
             let path = ptr.to_string().unwrap_or_default();
             CoTaskMemFree(Some(ptr.0 as *const _));
             if !path.is_empty() {
@@ -101,5 +104,38 @@ pub fn pictures_folder() -> PathBuf {
     }
 
     let home = std::env::var("USERPROFILE").unwrap_or_default();
-    PathBuf::from(home).join("Pictures")
+    PathBuf::from(home).join(fallback)
+}
+
+pub fn pictures_folder() -> PathBuf {
+    known_folder(&FOLDERID_Pictures, "Pictures")
+}
+
+pub fn desktop_folder() -> PathBuf {
+    known_folder(&FOLDERID_Desktop, "Desktop")
+}
+
+pub struct Shortcut<'a> {
+    pub target: &'a Path,
+    pub arguments: &'a str,
+    pub icon: &'a Path,
+    pub description: &'a str,
+}
+
+pub fn create_shortcut(dest: &Path, shortcut: &Shortcut) -> Result<(), String> {
+    let folder = shortcut.target.parent().unwrap_or(Path::new("."));
+    unsafe {
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        let link: IShellLinkW =
+            CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER).map_err(|e| e.to_string())?;
+        link.SetPath(&HSTRING::from(shortcut.target.as_os_str()))
+            .and_then(|_| link.SetArguments(&HSTRING::from(shortcut.arguments)))
+            .and_then(|_| link.SetWorkingDirectory(&HSTRING::from(folder.as_os_str())))
+            .and_then(|_| link.SetIconLocation(&HSTRING::from(shortcut.icon.as_os_str()), 0))
+            .and_then(|_| link.SetDescription(&HSTRING::from(shortcut.description)))
+            .map_err(|e| e.to_string())?;
+        let file: IPersistFile = link.cast().map_err(|e| e.to_string())?;
+        file.Save(&HSTRING::from(dest.as_os_str()), true)
+            .map_err(|e| e.to_string())
+    }
 }

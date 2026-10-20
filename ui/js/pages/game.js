@@ -17,6 +17,7 @@ import { store, subscribe } from "../store.js";
 import { ask, call, confirmButton, openDialog, segmented, setCover, toast } from "../ui.js";
 import { drawChart } from "../components/chart.js";
 import { LAUNCHERS, locateGame, locateTool, playGame } from "../components/play.js";
+import { t } from "../i18n.js";
 
 const TEMPLATE = `
   <button class="back" data-id="back">← Library</button>
@@ -119,6 +120,13 @@ const TEMPLATE = `
   <div class="game-footer">
     <button class="btn" data-id="play">▶  Play</button>
     <button class="btn secondary" data-id="locate">Locate…</button>
+    <button
+      class="btn secondary"
+      data-id="shortcut"
+      title="Starts the game with the options above (Locale Emulator, Steam…) and Visual Novel RPC"
+    >
+      Desktop shortcut
+    </button>
     <button class="btn danger" data-id="remove"></button>
   </div>
 `;
@@ -143,6 +151,10 @@ function build(container) {
   part("change-cover").onclick = () => show("cover", { key, back: "game" });
   part("all-shots").onclick = () => show("screenshots", { key, back: "game" });
   part("play").onclick = () => playGame(key);
+  part("shortcut").onclick = async () => {
+    await call("create_shortcut", { key });
+    toast(t("Shortcut to {name} added to your desktop", { name: game.name }));
+  };
   part("locate").onclick = async () => (await locateGame(key)) && load();
   part("vote").onchange = saveVote;
 
@@ -169,7 +181,7 @@ async function load() {
   const entry = game.entry;
 
   part("name").textContent = game.name;
-  part("path").textContent = entry.path || "Executable not located yet";
+  part("path").textContent = entry.path || t("Executable not located yet");
   part("path").disabled = !entry.path;
   part("path").onclick = () => call("show_in_folder", { path: entry.path });
   setCover(part("cover"), { path: game.cover, nsfw: entry.cover_nsfw, label: game.name });
@@ -185,10 +197,11 @@ async function load() {
   renderShots();
 
   part("play").hidden = !entry.path;
+  part("shortcut").hidden = !entry.path;
   part("locate").hidden = !!entry.path;
   confirmButton(part("remove"), "Remove", async () => {
     await call("remove_game", { key });
-    toast(`${game.name} was removed (its screenshots are kept)`);
+    toast(t("{name} was removed (its screenshots are kept)", { name: game.name }));
     show("library");
   });
 }
@@ -267,7 +280,7 @@ function renderVote(entry) {
     note =
       "The rating is sent to your VNDB list. Turn on list sync in Settings for the status too.";
   }
-  part("vndb-note").textContent = note;
+  part("vndb-note").textContent = t(note);
   part("vote-state").textContent = "";
 
   if (canRate) {
@@ -277,7 +290,7 @@ function renderVote(entry) {
 
 async function refreshVote() {
   const forKey = key;
-  part("vote-state").textContent = "Checking VNDB…";
+  part("vote-state").textContent = t("Checking VNDB…");
   try {
     const vote = await invoke("get_vote", { key: forKey });
     if (forKey === key && (vote || 0) !== (game.entry.vndb_vote || 0)) {
@@ -293,11 +306,11 @@ async function refreshVote() {
 async function saveVote() {
   const vote = Number(part("vote").value) || null;
   part("vote").disabled = true;
-  part("vote-state").textContent = "Saving…";
+  part("vote-state").textContent = t("Saving…");
   try {
     await invoke("set_vote", { key, vote });
     game.entry.vndb_vote = vote || 0;
-    part("vote-state").textContent = "Saved on VNDB ✓";
+    part("vote-state").textContent = t("Saved on VNDB ✓");
   } catch (error) {
     part("vote-state").textContent = String(error);
     renderVote(game.entry);
@@ -316,13 +329,15 @@ function renderLauncher(entry) {
   });
 
   if (!launcher) {
-    part("launcher-note").textContent =
-      "For Japanese VNs with garbled text or that won't start: Play can go through Locale Emulator or NTLEA.";
+    part("launcher-note").textContent = t(
+      "For Japanese VNs with garbled text or that won't start: Play can go through Locale Emulator or NTLEA.",
+    );
   } else if (game.tool) {
-    part("launcher-note").textContent = `Play starts it through ${game.tool}.`;
+    part("launcher-note").textContent = t("Play starts it through {tool}.", { tool: game.tool });
   } else {
-    part("launcher-note").textContent =
-      `${LAUNCHERS[launcher].exe} can't be found anymore — Play will ask where it is.`;
+    part("launcher-note").textContent = t("{exe} can't be found anymore — Play will ask where it is.", {
+      exe: LAUNCHERS[launcher].exe,
+    });
   }
 }
 
@@ -355,8 +370,10 @@ function renderDuplicates() {
   if (!other) {
     return;
   }
-  part("dupe-text").textContent =
-    `Looks like the same game as “${other.name}” (${formatPlaytime(other.playtime)} read).`;
+  part("dupe-text").textContent = t("Looks like the same game as “{name}” ({time} read).", {
+    name: other.name,
+    time: formatPlaytime(other.playtime),
+  });
   part("dupe-merge").onclick = () => mergeWith(other);
 }
 
@@ -368,14 +385,16 @@ async function mergeWith(other) {
 
   const sure = await ask(
     "Merge these entries?",
-    `Time read, history, sessions and screenshots are combined into “${name}”. This can't be undone.`,
+    t("Time read, history, sessions and screenshots are combined into “{name}”. This can't be undone.", {
+      name,
+    }),
     { yes: "Merge" },
   );
   if (!sure) {
     return;
   }
   await call("merge_games", { from, into });
-  toast(`Merged into ${name}`);
+  toast(t("Merged into {name}", { name }));
   show("game", { key: into });
 }
 
@@ -395,8 +414,8 @@ async function renderProgress(entry) {
   part("progress-bar").style.width = `${Math.min(percent, 100)}%`;
   part("progress-text").textContent =
     percent < 100
-      ? `${percent}% · average ${lengthText(minutes)}`
-      : `Past the average (${lengthText(minutes)})`;
+      ? t("{percent}% · average {length}", { percent, length: lengthText(minutes) })
+      : t("Past the average ({length})", { length: lengthText(minutes) });
 }
 
 function dailyPoints(today) {
@@ -420,7 +439,7 @@ function weeklyPoints(today) {
         seconds += daySeconds(day);
       }
     }
-    points.push({ day: monday, seconds, tip: `Week of ${shortDate(monday, today)}` });
+    points.push({ day: monday, seconds, tip: t("Week of {date}", { date: shortDate(monday, today) }) });
   }
   return points;
 }
@@ -442,8 +461,10 @@ function renderChart() {
 
   const days = Object.keys(game.entry.daily || {}).sort();
   part("history-note").textContent = days.length
-    ? `History since ${shortDate(parseDay(days[0]), today)}. Time read before that only counts in the total.`
-    : "History fills in as you read — time read before it was tracked only counts in the total.";
+    ? t("History since {date}. Time read before that only counts in the total.", {
+        date: shortDate(parseDay(days[0]), today),
+      })
+    : t("History fills in as you read — time read before it was tracked only counts in the total.");
 }
 
 async function editTotal() {
@@ -506,8 +527,8 @@ async function renderShots() {
   const hotkey = game.hotkey;
   part("shots-hint").hidden = game.shot_count > 0;
   part("shots-hint").textContent = hotkey
-    ? `Press ${hotkey} while reading to capture the game's window.`
-    : "Pick a screenshot key in Settings to capture the game's window.";
+    ? t("Press {key} while reading to capture the game's window.", { key: hotkey })
+    : t("Pick a screenshot key in Settings to capture the game's window.");
 
   strip.replaceChildren();
   for (const path of game.shots) {
