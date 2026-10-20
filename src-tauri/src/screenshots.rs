@@ -302,7 +302,7 @@ pub fn take(shared: &Arc<Shared>) {
                 },
                 Some(area),
             );
-            mascot::say(&shared.app, "Got it! Screenshot saved.", 3);
+            mascot::screenshot_saved(&shared.app);
         }
         Err(message) => {
             let toast = Toast {

@@ -1068,3 +1068,23 @@
   width: 100%;
   accent-color: var(--accent);
 }
+
+.mascot-size .btn {
+  margin-top: 6px;
+}
+
+.line-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.line-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.line-field textarea {
+  font-family: inherit;
+  resize: vertical;
+}

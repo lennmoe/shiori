@@ -46,6 +46,38 @@ pub fn remove_mascot(app: AppHandle, shared: SharedState, id: String) -> Result<
     Ok(())
 }
 
+#[tauri::command(async)]
+pub fn ui_language(shared: SharedState) -> &'static str {
+    crate::lang::resolve(&shared.config.lock().unwrap().str("language"))
+}
+
+#[tauri::command(async)]
+pub fn languages() -> Vec<crate::lang::Language> {
+    crate::lang::list()
+}
+
+#[tauri::command(async)]
+pub fn mascot_personalities(shared: SharedState) -> Vec<crate::personalities::Choice> {
+    let language = crate::lang::resolve(&shared.config.lock().unwrap().str("language"));
+    crate::personalities::choices(language)
+}
+
+#[tauri::command(async)]
+pub fn set_mascot_personality(shared: SharedState, id: String, personality: String) {
+    mascot::set_personality(&shared, &id, &personality);
+}
+
+#[tauri::command(async)]
+pub fn personality_lines(shared: SharedState, personality: String) -> crate::personalities::Lines {
+    let language = crate::lang::resolve(&shared.config.lock().unwrap().str("language"));
+    crate::personalities::lines(&personality, language)
+}
+
+#[tauri::command(async)]
+pub fn set_mascot_custom_lines(shared: SharedState, id: String, lines: serde_json::Value) {
+    mascot::set_custom_lines(&shared, &id, lines);
+}
+
 #[tauri::command]
 pub async fn set_mascot_size(app: AppHandle, id: String, height: u32) -> Result<(), String> {
     super::blocking(move || mascot::resize(&app, &id, height)).await

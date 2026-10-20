@@ -14,6 +14,8 @@ use tauri::{
 };
 
 use crate::config::safe_filename;
+use crate::lang;
+use crate::personalities::{self, Lines};
 use crate::state::{Shared, Snapshot};
 use crate::ui_windows;
 use crate::winapi;
@@ -24,12 +26,6 @@ const IMAGE_EXTS: [&str; 3] = ["png", "webp", "gif"];
 
 pub const WINDOW_PREFIX: &str = "mascot-";
 pub const HIDE_MENU_PREFIX: &str = "mascot-hide:";
-
-const POKES: [&str; 3] = [
-    "Need something to read? Right-click me for a random pick from your wishlist!",
-    "I'm keeping an eye on your reading time~",
-    "Hehe, that tickles!",
-];
 
 struct Character {
     file: PathBuf,
@@ -157,6 +153,8 @@ pub struct GalleryItem {
     shown: bool,
     built_in: bool,
     height: u32,
+    personality: String,
+    custom: Value,
 }
 
 pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
@@ -171,6 +169,8 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
         shown: is_shown(BUILT_IN_ID),
         built_in: true,
         height: height_for(shared, BUILT_IN_ID),
+        personality: personality_of(shared, BUILT_IN_ID),
+        custom: custom_lines_of(shared, BUILT_IN_ID),
     }];
     for path in gallery_files(shared) {
         let id = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
@@ -180,6 +180,8 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
             shown: is_shown(&id),
             built_in: false,
             height: height_for(shared, &id),
+            personality: personality_of(shared, &id),
+            custom: custom_lines_of(shared, &id),
             id,
         });
     }
@@ -516,59 +518,120 @@ pub fn speaker() -> Option<String> {
     SPEAKER.lock().unwrap().clone()
 }
 
-fn say_as(app: &AppHandle, label: Option<&str>, text: &str, seconds: u64) {
+fn personality_of(shared: &Shared, id: &str) -> String {
+    shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_personalities")
+        .and_then(|all| all.get(id))
+        .and_then(Value::as_str)
+        .unwrap_or(personalities::DEFAULT)
+        .to_string()
+}
+
+pub fn set_personality(shared: &Shared, id: &str, personality: &str) {
+    let mut all = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_personalities")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    all.insert(id.to_string(), json!(personality));
+    save_settings(shared, Map::from_iter([("mascot_personalities".into(), Value::Object(all))]));
+}
+
+fn custom_lines_of(shared: &Shared, id: &str) -> Value {
+    shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_custom_lines")
+        .and_then(|all| all.get(id))
+        .cloned()
+        .unwrap_or_else(|| json!({}))
+}
+
+pub fn set_custom_lines(shared: &Shared, id: &str, lines: Value) {
+    let mut all = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_custom_lines")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    all.insert(id.to_string(), lines);
+    save_settings(shared, Map::from_iter([("mascot_custom_lines".into(), Value::Object(all))]));
+}
+
+fn lines_for(shared: &Shared, id: &str, language: &str) -> Lines {
+    let personality = personality_of(shared, id);
+    if personality == personalities::CUSTOM {
+        let base = personalities::lines(personalities::DEFAULT, language);
+        personalities::custom(base, &custom_lines_of(shared, id))
+    } else {
+        personalities::lines(&personality, language)
+    }
+}
+
+fn say_as(app: &AppHandle, label: Option<&str>, line: impl Fn(&Lines) -> String, seconds: u64) {
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
         _ if labels.is_empty() => return,
-        _ => {
-            let pick = chrono::Utc::now().timestamp_subsec_nanos() as usize % labels.len();
-            labels[pick].clone()
-        }
+        _ => labels[random(labels.len())].clone(),
     };
 
-    let talks = shared(app)
-        .config
-        .lock()
-        .unwrap()
-        .get("mascot_talk")
-        .and_then(Value::as_bool)
-        .unwrap_or(true);
-    if talks {
-        *SPEAKER.lock().unwrap() = Some(label);
-        ui_windows::show_balloon(app, text, seconds as f64);
+    let shared = shared(app);
+    let (talks, language) = {
+        let cfg = shared.config.lock().unwrap();
+        (
+            cfg.get("mascot_talk").and_then(Value::as_bool).unwrap_or(true),
+            lang::resolve(&cfg.str("language")),
+        )
+    };
+    if !talks {
+        return;
     }
+    let text = line(&lines_for(&shared, id_of(&label), language));
+    *SPEAKER.lock().unwrap() = Some(label);
+    ui_windows::show_balloon(app, &text, seconds as f64);
 }
 
-pub fn say(app: &AppHandle, text: &str, seconds: u64) {
-    say_as(app, None, text, seconds);
+fn random(len: usize) -> usize {
+    chrono::Utc::now().timestamp_subsec_nanos() as usize % len.max(1)
+}
+
+pub fn screenshot_saved(app: &AppHandle) {
+    say_as(app, None, |lines| lines.screenshot.clone(), 3);
 }
 
 pub fn poke(app: &AppHandle, label: &str) {
-    let pick = (chrono::Utc::now().timestamp_subsec_nanos() as usize) % POKES.len();
-    say_as(app, Some(label), POKES[pick], 6);
+    say_as(
+        app,
+        Some(label),
+        |lines| lines.pokes.get(random(lines.pokes.len())).cloned().unwrap_or_default(),
+        6,
+    );
 }
 
 pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
-    let name = if new.game_name.is_empty() {
-        "this one"
-    } else {
-        &new.game_name
-    };
+    let name = new.game_name.clone();
+    let section = new.section_label.clone();
 
     if new.detected && (!old.detected || old.key != new.key) {
-        say(app, &format!("Ooh, {name}! Enjoy your reading~"), 6);
+        say_as(app, None, |lines| lines.start.replace("{name}", &name), 6);
     } else if old.detected && !new.detected {
-        say(app, "Done for today? Good reading session!", 6);
+        say_as(app, None, |lines| lines.stop.clone(), 6);
     } else if new.detected && new.idle && !old.idle {
-        say(app, "Taking a break? I'll pause the timer for you.", 6);
+        say_as(app, None, |lines| lines.idle.clone(), 6);
     } else if new.detected && old.idle && !new.idle {
-        say(app, "Welcome back!", 3);
-    } else if new.detected
-        && !new.section_label.is_empty()
-        && new.section_label != old.section_label
-    {
-        say(app, &format!("{}... here we go!", new.section_label), 4);
+        say_as(app, None, |lines| lines.back.clone(), 3);
+    } else if new.detected && !section.is_empty() && section != old.section_label {
+        say_as(app, None, |lines| lines.section.replace("{section}", &section), 4);
     }
 }
 
@@ -577,18 +640,19 @@ pub fn show_menu(app: &AppHandle, label: &str) {
         return;
     };
 
+    let language = lang::resolve(&shared(app).config.lock().unwrap().str("language"));
     let menu = (|| -> tauri::Result<Menu<tauri::Wry>> {
         let open = MenuItem::with_id(
             app,
             "mascot-open",
-            "Open Visual Novel RPC",
+            lang::tr("Open Visual Novel RPC", language),
             true,
             None::<&str>,
         )?;
         let pick = MenuItem::with_id(
             app,
             "mascot-pick",
-            "Random VN from my wishlist",
+            lang::tr("Random VN from my wishlist", language),
             true,
             None::<&str>,
         )?;
@@ -596,7 +660,7 @@ pub fn show_menu(app: &AppHandle, label: &str) {
         let hide = MenuItem::with_id(
             app,
             format!("{HIDE_MENU_PREFIX}{label}"),
-            "Hide this mascot",
+            lang::tr("Hide this mascot", language),
             true,
             None::<&str>,
         )?;
