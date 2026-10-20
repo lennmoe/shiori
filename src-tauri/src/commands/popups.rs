@@ -57,6 +57,11 @@ pub fn languages() -> Vec<crate::lang::Language> {
 }
 
 #[tauri::command(async)]
+pub fn language_strings(code: String) -> serde_json::Value {
+    crate::lang::data(&code)["ui"].clone()
+}
+
+#[tauri::command(async)]
 pub fn mascot_personalities(shared: SharedState) -> Vec<crate::personalities::Choice> {
     let language = crate::lang::resolve(&shared.config.lock().unwrap().str("language"));
     crate::personalities::choices(language)

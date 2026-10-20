@@ -1,3 +1,5 @@
+import { invoke } from "./tauri.js";
+
 const ATTRIBUTES = ["title", "placeholder", "aria-label"];
 
 let dictionary = null;
@@ -8,8 +10,7 @@ export async function loadLanguage(code) {
   dictionary = null;
   if (code && code !== "en") {
     try {
-      const response = await fetch(`locales/${code}.json`);
-      dictionary = (await response.json()).ui || null;
+      dictionary = await invoke("language_strings", { code });
       language = code;
     } catch {
       dictionary = null;

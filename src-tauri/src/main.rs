@@ -228,6 +228,7 @@ fn main() {
             commands::popups::mascot_personalities,
             commands::popups::ui_language,
             commands::popups::languages,
+            commands::popups::language_strings,
             commands::popups::set_mascot_personality,
             commands::popups::personality_lines,
             commands::popups::set_mascot_custom_lines,
