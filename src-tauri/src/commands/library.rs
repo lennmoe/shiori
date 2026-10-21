@@ -75,7 +75,7 @@ pub fn get_library(shared: SharedState) -> Vec<Value> {
                 "last_played": entry.get("last_played").and_then(Value::as_i64).unwrap_or(0),
                 "finished_at": entry.get("finished_at").and_then(Value::as_i64).unwrap_or(0),
                 "nsfw": entry.get("cover_nsfw").and_then(Value::as_bool).unwrap_or(false),
-                "has_path": !text(&entry, "path").is_empty(),
+                "has_path": !launcher::launch_exe(&entry).is_empty(),
                 "vndb_id": vn_id,
                 "cover": cover_of(&cfg, &entry),
             })
@@ -225,7 +225,7 @@ pub fn set_game_path(shared: SharedState, key: String, path: String) {
         .config
         .lock()
         .unwrap()
-        .set_game(&key, Map::from_iter([("path".into(), json!(path))]));
+        .set_game(&key, Map::from_iter([("launch_path".into(), json!(path))]));
     changed(&shared, &key);
 }
 
@@ -250,7 +250,7 @@ pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, Launc
     let entry = shared.config.lock().unwrap().game(&key);
     let name = screenshots::display_name(&key, &entry);
     let app_exe = std::env::current_exe().map_err(|e| LaunchError::Failed(e.to_string()))?;
-    let game_exe = PathBuf::from(text(&entry, "path"));
+    let game_exe = PathBuf::from(launcher::launch_exe(&entry));
     if !game_exe.is_file() {
         return Err(LaunchError::GameMissing);
     }

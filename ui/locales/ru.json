@@ -580,6 +580,7 @@
     "Original": "Оригинал",
     "Same as the app": "Как в приложении",
     "Language on Discord": "Язык в Discord",
-    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "Звуки играют вместе с тем, что говорит маскот. Для «Когда ты на неё нажимаешь» и «Время от времени» они идут по порядку реплик: 1-й звук (по имени файла) с 1-й репликой и так далее. В остальных случаях звук выбирается случайно."
+    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "Звуки играют вместе с тем, что говорит маскот. Для «Когда ты на неё нажимаешь» и «Время от времени» они идут по порядку реплик: 1-й звук (по имени файла) с 1-й репликой и так далее. В остальных случаях звук выбирается случайно.",
+    "Pick the program Play starts, like the game's launcher. The app won't change it.": "Выбери программу, которую запускает «Играть», например лаунчер игры. Приложение её не изменит."
   }
 }

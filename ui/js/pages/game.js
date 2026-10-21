@@ -119,7 +119,13 @@ const TEMPLATE = `
 
   <div class="game-footer">
     <button class="btn" data-id="play">▶  Play</button>
-    <button class="btn secondary" data-id="locate">Locate…</button>
+    <button
+      class="btn secondary"
+      data-id="locate"
+      title="Pick the program Play starts, like the game's launcher. The app won't change it."
+    >
+      Locate…
+    </button>
     <button
       class="btn secondary"
       data-id="shortcut"
@@ -178,9 +184,10 @@ async function load() {
   const entry = game.entry;
 
   part("name").textContent = game.name;
-  part("path").textContent = entry.path || t("Executable not located yet");
-  part("path").disabled = !entry.path;
-  part("path").onclick = () => call("show_in_folder", { path: entry.path });
+  const exe = entry.launch_path || entry.path;
+  part("path").textContent = exe || t("Executable not located yet");
+  part("path").disabled = !exe;
+  part("path").onclick = () => call("show_in_folder", { path: exe });
   setCover(part("cover"), { path: game.cover, nsfw: entry.cover_nsfw, label: game.name });
 
   renderVndb(entry);
@@ -193,9 +200,8 @@ async function load() {
   renderChart();
   renderShots();
 
-  part("play").hidden = !entry.path;
-  part("shortcut").hidden = !entry.path;
-  part("locate").hidden = !!entry.path;
+  part("play").hidden = !exe;
+  part("shortcut").hidden = !exe;
   confirmButton(part("remove"), "Remove", async () => {
     await call("remove_game", { key });
     toast(t("{name} was removed (its screenshots are kept)", { name: game.name }));

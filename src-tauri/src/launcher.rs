@@ -33,9 +33,19 @@ pub enum LaunchError {
     Failed(String),
 }
 
+pub fn launch_exe(entry: &Map<String, Value>) -> String {
+    let text = |key: &str| entry.get(key).and_then(Value::as_str).unwrap_or("").to_string();
+    let picked = text("launch_path");
+    if !picked.is_empty() && Path::new(&picked).is_file() {
+        picked
+    } else {
+        text("path")
+    }
+}
+
 pub fn launch(cfg: &Config, entry: &Map<String, Value>) -> Result<(), LaunchError> {
-    let exe = entry.get("path").and_then(Value::as_str).unwrap_or("");
-    let exe = Path::new(exe);
+    let exe = launch_exe(entry);
+    let exe = Path::new(&exe);
     if exe.as_os_str().is_empty() || !exe.is_file() {
         return Err(LaunchError::GameMissing);
     }
@@ -62,4 +72,23 @@ pub fn launch(cfg: &Config, entry: &Map<String, Value>) -> Result<(), LaunchErro
         format!("\"{}\" C932 L1041", exe.display())
     };
     shell::start_program(&tool, &params, folder).map_err(LaunchError::Failed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_picked_launcher_wins_over_the_detected_exe() {
+        let launcher = std::env::current_exe().unwrap().to_string_lossy().to_string();
+        let entry = |picked: &str| {
+            Map::from_iter([
+                ("path".into(), Value::from(r"C:\Games\Iroseka\engine\engine.exe")),
+                ("launch_path".into(), Value::from(picked)),
+            ])
+        };
+        assert_eq!(launch_exe(&entry(&launcher)), launcher);
+        assert_eq!(launch_exe(&entry("")), r"C:\Games\Iroseka\engine\engine.exe");
+        assert_eq!(launch_exe(&entry(r"C:\gone\launcher.exe")), r"C:\Games\Iroseka\engine\engine.exe");
+    }
 }
