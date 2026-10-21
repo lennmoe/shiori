@@ -18,6 +18,16 @@ import "./pages/mascots.js";
 import "./pages/settings.js";
 import "./pages/whatsnew.js";
 
+// F11: full screen, like a browser.
+document.addEventListener("keydown", async (event) => {
+  if (event.key !== "F11") {
+    return;
+  }
+  event.preventDefault();
+  const window = currentWindow();
+  await window.setFullscreen(!(await window.isFullscreen()));
+});
+
 function applyTheme() {
   const palette = resolveTheme(store.settings.theme || "system", store.settings.custom_theme);
   applyPalette(palette);
