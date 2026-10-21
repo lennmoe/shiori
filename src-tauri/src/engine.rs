@@ -662,7 +662,10 @@ impl Engine {
         }
 
         let cfg = self.shared.config.lock().unwrap();
-        let language = lang::resolve(&cfg.str("language"));
+        let language = match cfg.str("presence_language").as_str() {
+            "" | "app" => lang::resolve(&cfg.str("language")),
+            fixed => lang::resolve(fixed),
+        };
         let reading = lang::tr("Reading", language);
         let asset = cfg.str("default_asset_key");
         let start = cfg
@@ -714,11 +717,21 @@ impl Engine {
             format!("{reading}・{}", snap.section_label)
         };
 
-        let name = [&snap.game_name, &snap.raw_title]
+        let romanized = [&snap.game_name, &snap.raw_title]
             .into_iter()
             .find(|n| !n.is_empty())
             .cloned()
             .unwrap_or_else(|| "Visual Novel".into());
+        let original = snap
+            .vn
+            .as_ref()
+            .map(|vn| vn.alt_title.trim().to_string())
+            .filter(|title| !title.is_empty() && cfg.str("title_language") == "original");
+        // The other title shows when hovering the cover.
+        let (name, hover) = match original {
+            Some(original) => (original, romanized),
+            None => (romanized.clone(), romanized),
+        };
         let large_image = if snap.cover.discord_image.is_empty() {
             asset
         } else {
@@ -730,7 +743,7 @@ impl Engine {
             details,
             state,
             large_image,
-            large_text: name,
+            large_text: hover,
             small_text: "via Visual Novel RPC".into(),
             start,
             buttons,

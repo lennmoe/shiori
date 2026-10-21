@@ -206,9 +206,34 @@ function discordSection() {
   ];
 }
 
+function presenceLanguageField() {
+  const select = el("select", {}, el("option", { value: "app" }, t("Same as the app")));
+  select.onchange = () => save({ presence_language: select.value });
+  call("languages").then((languages) => {
+    select.append(...languages.map(({ code, name }) => el("option", { value: code }, name)));
+    select.value = store.settings.presence_language || "app";
+  });
+  return el("div", { class: "field" }, el("span", {}, "Language on Discord"), select);
+}
+
+function titleLanguageField() {
+  const select = el(
+    "select",
+    {},
+    el("option", { value: "romanized" }, t("Romanized")),
+    el("option", { value: "original" }, t("Original")),
+  );
+  select.value = store.settings.title_language || "romanized";
+  select.onchange = () => save({ title_language: select.value });
+  return el("div", { class: "field" }, el("span", {}, "Title on Discord"), select);
+}
+
 function presenceSection() {
   return [
     section("Presence"),
+    presenceLanguageField(),
+    titleLanguageField(),
+    hint("The original title comes from VNDB. VNs without one keep the romanized title."),
     setting("show_section", "Show where you are in the story", "The “Reading・Chapter 1” line."),
     setting("show_total_read", "Show total time read", "The “Total read: 3h 40m” line."),
     setting(
