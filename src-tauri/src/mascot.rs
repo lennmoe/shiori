@@ -648,7 +648,6 @@ fn now() -> u64 {
     chrono::Utc::now().timestamp().max(0) as u64
 }
 
-/// Says a "now and then" line every `mascot_chatter_minutes` of silence (0 = never).
 pub fn start_chatter(app: &AppHandle) {
     LAST_SAID.store(now(), Ordering::SeqCst);
     let app = app.clone();
@@ -750,7 +749,6 @@ fn audio_files(dir: &Path) -> Vec<PathBuf> {
     files
 }
 
-/// Sorts "quote2" before "quote10": each run of digits is padded to the same width.
 fn natural_key(name: &str) -> String {
     let mut key = String::new();
     let mut digits = String::new();

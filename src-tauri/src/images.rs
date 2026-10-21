@@ -52,8 +52,6 @@ pub fn thumbnail(thumbs_dir: &Path, path: &Path, w: u32, h: u32) -> Result<PathB
     Ok(cached)
 }
 
-/// The image resized for a canvas, as a data URL (an asset:// image would taint the canvas).
-/// Goes through the thumbnail cache, so each cover is only resized once.
 pub fn data_url(thumbs_dir: &Path, path: &Path, w: u32, h: u32) -> Result<String, String> {
     let jpeg = fs::read(thumbnail(thumbs_dir, path, w, h)?).map_err(|e| e.to_string())?;
     let encoded = base64::engine::general_purpose::STANDARD.encode(jpeg);

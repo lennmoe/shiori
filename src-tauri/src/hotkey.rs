@@ -134,7 +134,6 @@ fn unregister(id: i32) {
     }
 }
 
-/// Keeps one hotkey registered as `wanted`; returns false when another app owns the key.
 fn keep(id: i32, active: &mut Option<(u32, u32)>, wanted: Option<(u32, u32)>) -> bool {
     if wanted == *active {
         return true;

@@ -54,7 +54,6 @@ pub fn lines(id: &str, language: &str) -> Lines {
     }
 }
 
-/// The user's own lines; anything left empty falls back to `base`.
 pub fn custom(mut base: Lines, own: &Value) -> Lines {
     let text = |key: &str| own[key].as_str().map(str::trim).filter(|t| !t.is_empty()).map(String::from);
     for (key, line) in [

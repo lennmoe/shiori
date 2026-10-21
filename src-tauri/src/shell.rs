@@ -16,8 +16,6 @@ use windows::Win32::UI::Shell::{
     SHFILEOPSTRUCTW,
 };
 
-/// The app's own taskbar identity. Set explicitly so Windows never borrows the icon of a
-/// game shortcut that points at the app (those carry `SHORTCUT_APP_ID` instead).
 pub const APP_ID: &str = "moe.lenn.vnrpc-tauri";
 const SHORTCUT_APP_ID: &str = "moe.lenn.vnrpc-tauri.play";
 

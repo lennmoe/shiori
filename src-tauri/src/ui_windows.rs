@@ -11,8 +11,6 @@ use tauri::{
 use crate::capture::ScreenRect;
 use crate::winapi;
 
-/// Every webview must share these, or WebView2 refuses to create the next window.
-/// Same as `additionalBrowserArgs` in tauri.conf.json; autoplay lets mascots speak.
 pub const BROWSER_ARGS: &str =
     "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required";
 
