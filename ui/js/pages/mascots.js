@@ -360,7 +360,9 @@ async function editVoices(item) {
       el(
         "p",
         { class: "muted small-text" },
-        "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.",
+        "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go " +
+          "with the lines in order: the 1st sound (by file name) with the 1st line, and so on. " +
+          "Elsewhere, one is picked at random.",
       ),
       ...rows,
     );

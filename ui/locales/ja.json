@@ -572,7 +572,6 @@
     "Add a sound…": "音声を追加…",
     "Choose a sound": "音声を選択",
     "No sound: it only shows the text.": "音声なし：テキストだけ表示されます。",
-    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "マスコットのセリフと一緒に音声が流れます。ひとつの場面に複数入れると、ランダムに選ばれます。",
     "{name}'s voice": "{name}のボイス",
     "Couldn't watch the mascot key: another app already uses it": "マスコット用のキーを使えません：ほかのアプリが使用中です",
     "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "MP3・WAV・OGG・M4A・OPUS・FLAC ファイルを使ってください。",
@@ -581,6 +580,7 @@
     "Romanized": "ローマ字",
     "Original": "原題",
     "Same as the app": "アプリと同じ",
-    "Language on Discord": "Discordの言語"
+    "Language on Discord": "Discordの言語",
+    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "マスコットのセリフと一緒に音声が流れます。「クリックしたとき」と「ときどき」では、セリフの順番どおりに対応します（ファイル名順で1番目の音声が1番目のセリフ、以下同様）。それ以外はランダムに選ばれます。"
   }
 }

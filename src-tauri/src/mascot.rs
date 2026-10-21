@@ -594,7 +594,7 @@ fn say_as(
     app: &AppHandle,
     label: Option<&str>,
     event: &str,
-    line: impl Fn(&Lines) -> String,
+    line: impl Fn(&Lines) -> Said,
     seconds: u64,
 ) {
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
@@ -614,17 +614,34 @@ fn say_as(
             cfg.get("mascot_voice_volume").and_then(Value::as_u64).unwrap_or(80),
         )
     };
+    let said = line(&lines_for(&shared, id_of(&label), language));
     if volume > 0 {
-        if let Some(file) = random_voice(&shared, id_of(&label), event) {
+        if let Some(file) = voice_for(&shared, id_of(&label), event, said.index) {
             let _ = app.emit_to(label.as_str(), "voice", json!({ "file": file, "volume": volume }));
         }
     }
     if !talks {
         return;
     }
-    let text = line(&lines_for(&shared, id_of(&label), language));
     *SPEAKER.lock().unwrap() = Some(label);
-    ui_windows::show_balloon(app, &text, seconds as f64);
+    ui_windows::show_balloon(app, &said.text, seconds as f64);
+}
+
+struct Said {
+    text: String,
+    index: Option<usize>,
+}
+
+fn just(text: String) -> Said {
+    Said { text, index: None }
+}
+
+fn pick(lines: &[String]) -> Said {
+    let index = random(lines.len());
+    Said {
+        text: lines.get(index).cloned().unwrap_or_default(),
+        index: Some(index),
+    }
 }
 
 fn now() -> u64 {
@@ -651,7 +668,7 @@ pub fn start_chatter(app: &AppHandle) {
             &app,
             None,
             "chatter",
-            |lines| lines.chatter.get(random(lines.chatter.len())).cloned().unwrap_or_default(),
+            |lines| pick(&lines.chatter),
             6,
         );
     });
@@ -668,7 +685,6 @@ fn view_only_of(shared: &Shared, id: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Clicks go through view-only mascots, so they never take the focus from a game.
 pub fn set_view_only(shared: &Shared, ids: &[String], view_only: bool) {
     let mut all = shared
         .config
@@ -691,7 +707,6 @@ pub fn set_view_only(shared: &Shared, ids: &[String], view_only: bool) {
     });
 }
 
-/// The "make mascots clickable" key: switches every mascot on screen at once.
 pub fn toggle_view_only(app: &AppHandle, key: &str) {
     let shared = shared(app);
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
@@ -731,14 +746,35 @@ fn audio_files(dir: &Path) -> Vec<PathBuf> {
                 .is_some_and(|ext| AUDIO_EXTS.contains(&ext.as_str()))
         })
         .collect();
-    files.sort();
+    files.sort_by_key(|path| natural_key(&path.file_name().unwrap_or_default().to_string_lossy()));
     files
 }
 
-fn random_voice(shared: &Shared, id: &str, event: &str) -> Option<String> {
+/// Sorts "quote2" before "quote10": each run of digits is padded to the same width.
+fn natural_key(name: &str) -> String {
+    let mut key = String::new();
+    let mut digits = String::new();
+    for c in name.to_lowercase().chars().chain(std::iter::once('\0')) {
+        if c.is_ascii_digit() {
+            digits.push(c);
+            continue;
+        }
+        if !digits.is_empty() {
+            key.push_str(&format!("{digits:0>20}"));
+            digits.clear();
+        }
+        key.push(c);
+    }
+    key
+}
+
+fn voice_for(shared: &Shared, id: &str, event: &str, index: Option<usize>) -> Option<String> {
     let files = audio_files(&voices_dir(shared, id).join(event));
-    let file = files.get(random(files.len()))?;
-    Some(file.to_string_lossy().to_string())
+    if files.is_empty() {
+        return None;
+    }
+    let n = index.unwrap_or_else(|| random(files.len())) % files.len();
+    Some(files[n].to_string_lossy().to_string())
 }
 
 pub fn voices(shared: &Shared, id: &str) -> Map<String, Value> {
@@ -785,11 +821,14 @@ pub fn remove_voice(shared: &Shared, file: &Path) -> Result<(), String> {
 }
 
 fn random(len: usize) -> usize {
-    chrono::Utc::now().timestamp_subsec_nanos() as usize % len.max(1)
+    use std::hash::{BuildHasher, RandomState};
+    static DRAWS: AtomicU64 = AtomicU64::new(0);
+    let draw = DRAWS.fetch_add(1, Ordering::Relaxed);
+    (RandomState::new().hash_one(draw) % len.max(1) as u64) as usize
 }
 
 pub fn screenshot_saved(app: &AppHandle) {
-    say_as(app, None, "screenshot", |lines| lines.screenshot.clone(), 3);
+    say_as(app, None, "screenshot", |lines| just(lines.screenshot.clone()), 3);
 }
 
 pub fn poke(app: &AppHandle, label: &str) {
@@ -797,7 +836,7 @@ pub fn poke(app: &AppHandle, label: &str) {
         app,
         Some(label),
         "poke",
-        |lines| lines.pokes.get(random(lines.pokes.len())).cloned().unwrap_or_default(),
+        |lines| pick(&lines.pokes),
         6,
     );
 }
@@ -807,15 +846,15 @@ pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
     let section = new.section_label.clone();
 
     if new.detected && (!old.detected || old.key != new.key) {
-        say_as(app, None, "start", |lines| lines.start.replace("{name}", &name), 6);
+        say_as(app, None, "start", |lines| just(lines.start.replace("{name}", &name)), 6);
     } else if old.detected && !new.detected {
-        say_as(app, None, "stop", |lines| lines.stop.clone(), 6);
+        say_as(app, None, "stop", |lines| just(lines.stop.clone()), 6);
     } else if new.detected && new.idle && !old.idle {
-        say_as(app, None, "idle", |lines| lines.idle.clone(), 6);
+        say_as(app, None, "idle", |lines| just(lines.idle.clone()), 6);
     } else if new.detected && old.idle && !new.idle {
-        say_as(app, None, "back", |lines| lines.back.clone(), 3);
+        say_as(app, None, "back", |lines| just(lines.back.clone()), 3);
     } else if new.detected && !section.is_empty() && section != old.section_label {
-        say_as(app, None, "section", |lines| lines.section.replace("{section}", &section), 4);
+        say_as(app, None, "section", |lines| just(lines.section.replace("{section}", &section)), 4);
     }
 }
 
@@ -865,4 +904,26 @@ pub fn refresh(app: &AppHandle) {
 pub fn hide(app: &AppHandle, label: &str) {
     set_shown(&shared(app), id_of(label), false);
     refresh(app);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn voice_files_sort_like_people_count() {
+        let mut names = vec!["quote10.mp3", "quote2.mp3", "Quote1.mp3", "a.wav"];
+        names.sort_by_key(|name| natural_key(name));
+        assert_eq!(names, ["a.wav", "Quote1.mp3", "quote2.mp3", "quote10.mp3"]);
+    }
+
+    #[test]
+    fn random_reaches_every_choice() {
+        let mut seen = [false; 12];
+        for _ in 0..2000 {
+            seen[random(12)] = true;
+        }
+        assert!(seen.iter().all(|s| *s));
+        assert!((0..200).any(|_| random(2) == 1));
+    }
 }

@@ -571,7 +571,6 @@
     "Add a sound…": "Adicionar um som…",
     "Choose a sound": "Escolher um som",
     "No sound: it only shows the text.": "Sem som: só aparece o texto.",
-    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "Os sons tocam junto com o que o mascote diz. Coloque vários sons num momento e um é escolhido ao acaso.",
     "{name}'s voice": "Voz de {name}",
     "Couldn't watch the mascot key: another app already uses it": "Não deu para usar a tecla dos mascotes: outro app já usa ela",
     "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "Use um arquivo MP3, WAV, OGG, M4A, OPUS ou FLAC.",
@@ -580,6 +579,7 @@
     "Romanized": "Romanizado",
     "Original": "Original",
     "Same as the app": "Igual ao app",
-    "Language on Discord": "Idioma no Discord"
+    "Language on Discord": "Idioma no Discord",
+    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "Os sons tocam junto com o que o mascote diz. Em “Ao clicar nela” e “De vez em quando”, eles seguem a ordem das falas: o 1º som (pelo nome do arquivo) com a 1ª fala, e assim por diante. Nos outros, um é escolhido ao acaso."
   }
 }

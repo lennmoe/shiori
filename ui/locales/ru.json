@@ -571,7 +571,6 @@
     "Add a sound…": "Добавить звук…",
     "Choose a sound": "Выбери звук",
     "No sound: it only shows the text.": "Без звука: только текст.",
-    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "Звуки играют вместе с тем, что говорит маскот. Если у момента несколько звуков, выбирается случайный.",
     "{name}'s voice": "Голос: {name}",
     "Couldn't watch the mascot key: another app already uses it": "Не удалось следить за клавишей маскотов: её уже использует другое приложение",
     "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "Используй файл MP3, WAV, OGG, M4A, OPUS или FLAC.",
@@ -580,6 +579,7 @@
     "Romanized": "Латиницей",
     "Original": "Оригинал",
     "Same as the app": "Как в приложении",
-    "Language on Discord": "Язык в Discord"
+    "Language on Discord": "Язык в Discord",
+    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "Звуки играют вместе с тем, что говорит маскот. Для «Когда ты на неё нажимаешь» и «Время от времени» они идут по порядку реплик: 1-й звук (по имени файла) с 1-й репликой и так далее. В остальных случаях звук выбирается случайно."
   }
 }

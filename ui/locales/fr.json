@@ -571,7 +571,6 @@
     "Add a sound…": "Ajouter un son…",
     "Choose a sound": "Choisir un son",
     "No sound: it only shows the text.": "Pas de son : seul le texte s'affiche.",
-    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "Les sons sont joués avec ce que dit la mascotte. Mets plusieurs sons sur un moment et l'un d'eux est choisi au hasard.",
     "{name}'s voice": "Voix de {name}",
     "Couldn't watch the mascot key: another app already uses it": "Impossible de surveiller la touche des mascottes : une autre app l'utilise déjà",
     "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "Utilise un fichier MP3, WAV, OGG, M4A, OPUS ou FLAC.",
@@ -580,6 +579,7 @@
     "Romanized": "Romanisé",
     "Original": "Original",
     "Same as the app": "Comme l'app",
-    "Language on Discord": "Langue sur Discord"
+    "Language on Discord": "Langue sur Discord",
+    "Sounds play with what the mascot says. For “When you click it” and “Now and then”, sounds go with the lines in order: the 1st sound (by file name) with the 1st line, and so on. Elsewhere, one is picked at random.": "Les sons sont joués avec ce que dit la mascotte. Pour « Quand tu cliques dessus » et « De temps en temps », ils suivent l'ordre des répliques : le 1er son (par nom de fichier) va avec la 1re réplique, et ainsi de suite. Ailleurs, un son est choisi au hasard."
   }
 }
