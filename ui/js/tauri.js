@@ -3,6 +3,8 @@ const tauri = window.__TAURI__;
 export const invoke = tauri.core.invoke;
 export const listen = tauri.event.listen;
 export const currentWindow = () => tauri.window.getCurrentWindow();
+export const listenHere = (event, handler) =>
+  tauri.webviewWindow.getCurrentWebviewWindow().listen(event, handler);
 
 export function fileUrl(path) {
   return path ? tauri.core.convertFileSrc(path) : "";

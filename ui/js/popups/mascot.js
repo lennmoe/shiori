@@ -1,4 +1,4 @@
-import { invoke, fileUrl, currentWindow, listen } from "../tauri.js";
+import { invoke, fileUrl, currentWindow, listenHere } from "../tauri.js";
 
 const DRAG_SLOP = 4;
 const DOUBLE_CLICK_MS = 280;
@@ -62,12 +62,12 @@ character.addEventListener("contextmenu", (event) => {
 });
 
 let voice = null;
-listen("voice", (event) => {
+listenHere("voice", (event) => {
   voice?.pause();
   voice = new Audio(fileUrl(event.payload.file));
   voice.volume = Math.min(event.payload.volume, 100) / 100;
   voice.play().catch(() => {});
 });
 
-listen("mascot-refresh", start);
+listenHere("mascot-refresh", start);
 start();
