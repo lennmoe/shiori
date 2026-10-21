@@ -7,10 +7,25 @@ use windows::Win32::System::Com::{
     CoCreateInstance, CoInitializeEx, CoTaskMemFree, IPersistFile, CLSCTX_INPROC_SERVER,
     COINIT_APARTMENTTHREADED,
 };
+use windows::Win32::Storage::EnhancedStorage::PKEY_AppUserModel_ID;
+use windows::Win32::System::Com::StructuredStorage::PROPVARIANT;
+use windows::Win32::UI::Shell::PropertiesSystem::IPropertyStore;
 use windows::Win32::UI::Shell::{
     FOLDERID_Desktop, FOLDERID_Pictures, IShellLinkW, SHFileOperationW, SHGetKnownFolderPath,
-    ShellExecuteW, ShellLink, KNOWN_FOLDER_FLAG, SHFILEOPSTRUCTW,
+    SetCurrentProcessExplicitAppUserModelID, ShellExecuteW, ShellLink, KNOWN_FOLDER_FLAG,
+    SHFILEOPSTRUCTW,
 };
+
+/// The app's own taskbar identity. Set explicitly so Windows never borrows the icon of a
+/// game shortcut that points at the app (those carry `SHORTCUT_APP_ID` instead).
+pub const APP_ID: &str = "moe.lenn.vnrpc-tauri";
+const SHORTCUT_APP_ID: &str = "moe.lenn.vnrpc-tauri.play";
+
+pub fn set_app_id() {
+    unsafe {
+        let _ = SetCurrentProcessExplicitAppUserModelID(&HSTRING::from(APP_ID));
+    }
+}
 use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
 
 pub fn open(target: &str) -> Result<(), String> {
@@ -134,8 +149,35 @@ pub fn create_shortcut(dest: &Path, shortcut: &Shortcut) -> Result<(), String> {
             .and_then(|_| link.SetIconLocation(&HSTRING::from(shortcut.icon.as_os_str()), 0))
             .and_then(|_| link.SetDescription(&HSTRING::from(shortcut.description)))
             .map_err(|e| e.to_string())?;
+        let properties: IPropertyStore = link.cast().map_err(|e| e.to_string())?;
+        properties
+            .SetValue(&PKEY_AppUserModel_ID, &PROPVARIANT::from(SHORTCUT_APP_ID))
+            .and_then(|_| properties.Commit())
+            .map_err(|e| e.to_string())?;
         let file: IPersistFile = link.cast().map_err(|e| e.to_string())?;
         file.Save(&HSTRING::from(dest.as_os_str()), true)
             .map_err(|e| e.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shortcuts_get_their_own_app_id() {
+        let dest = std::env::temp_dir().join("vnrpc_shortcut_test.lnk");
+        let exe = std::env::current_exe().unwrap();
+        let shortcut = Shortcut {
+            target: &exe,
+            arguments: "--play \"test\"",
+            icon: &exe,
+            description: "test",
+        };
+        create_shortcut(&dest, &shortcut).unwrap();
+        let bytes = std::fs::read(&dest).unwrap();
+        let _ = std::fs::remove_file(&dest);
+        let wide: Vec<u8> = SHORTCUT_APP_ID.encode_utf16().flat_map(u16::to_le_bytes).collect();
+        assert!(bytes.windows(wide.len()).any(|w| w == wide.as_slice()));
     }
 }
