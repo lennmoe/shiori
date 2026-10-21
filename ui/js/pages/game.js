@@ -16,7 +16,7 @@ import { register, show } from "../router.js";
 import { store, subscribe } from "../store.js";
 import { ask, call, confirmButton, openDialog, segmented, setCover, toast } from "../ui.js";
 import { drawChart } from "../components/chart.js";
-import { LAUNCHERS, locateGame, locateTool, playGame } from "../components/play.js";
+import { LAUNCHERS, createShortcut, locateGame, locateTool, playGame } from "../components/play.js";
 import { t } from "../i18n.js";
 
 const TEMPLATE = `
@@ -151,10 +151,7 @@ function build(container) {
   part("change-cover").onclick = () => show("cover", { key, back: "game" });
   part("all-shots").onclick = () => show("screenshots", { key, back: "game" });
   part("play").onclick = () => playGame(key);
-  part("shortcut").onclick = async () => {
-    await call("create_shortcut", { key });
-    toast(t("Shortcut to {name} added to your desktop", { name: game.name }));
-  };
+  part("shortcut").onclick = () => createShortcut(key, game.name);
   part("locate").onclick = async () => (await locateGame(key)) && load();
   part("vote").onchange = saveVote;
 

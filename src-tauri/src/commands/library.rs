@@ -246,12 +246,14 @@ pub fn set_tool_path(shared: SharedState, launcher: String, path: String) -> Res
 }
 
 #[tauri::command(async)]
-pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, String> {
+pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, LaunchError> {
     let entry = shared.config.lock().unwrap().game(&key);
     let name = screenshots::display_name(&key, &entry);
-    let app_exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let app_exe = std::env::current_exe().map_err(|e| LaunchError::Failed(e.to_string()))?;
     let game_exe = PathBuf::from(text(&entry, "path"));
-    let icon = if game_exe.is_file() { game_exe.as_path() } else { app_exe.as_path() };
+    if !game_exe.is_file() {
+        return Err(LaunchError::GameMissing);
+    }
 
     let file_name: String = name
         .chars()
@@ -261,10 +263,10 @@ pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, Strin
     let shortcut = shell::Shortcut {
         target: &app_exe,
         arguments: &format!("--play \"{key}\""),
-        icon,
+        icon: &game_exe,
         description: &format!("Play {name} with Visual Novel RPC"),
     };
-    shell::create_shortcut(&dest, &shortcut)?;
+    shell::create_shortcut(&dest, &shortcut).map_err(LaunchError::Failed)?;
     Ok(dest.to_string_lossy().to_string())
 }
 

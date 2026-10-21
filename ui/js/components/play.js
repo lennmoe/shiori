@@ -42,6 +42,28 @@ export async function playGame(key) {
   }
 }
 
+export async function createShortcut(key, name) {
+  try {
+    await invoke("create_shortcut", { key });
+    toast(t("Shortcut to {name} added to your desktop", { name }));
+  } catch (error) {
+    if (error?.kind !== "GameMissing") {
+      toast(t("Couldn't create the shortcut: {error}", { error: error?.detail || error }), {
+        error: true,
+      });
+      return;
+    }
+    const locate = await ask(
+      "Desktop shortcut",
+      "This game's executable can't be found anymore (it may have moved or been uninstalled). Locate it?",
+      { yes: "Locate…" },
+    );
+    if (locate && (await locateGame(key))) {
+      await createShortcut(key, name);
+    }
+  }
+}
+
 async function launchFailed(key, error) {
   if (error?.kind === "GameMissing") {
     const locate = await ask(
