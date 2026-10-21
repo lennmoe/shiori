@@ -103,8 +103,5 @@ pub fn name_for_exe(exe_path: &str) -> Option<String> {
 }
 
 pub fn launch_id_for_exe(exe_path: &str) -> Option<String> {
-    let app = app_for_exe(exe_path)?;
-    let folder = Path::new(exe_path).parent()?.to_string_lossy().to_lowercase();
-    let root = app.install_dir.to_string_lossy().to_lowercase();
-    (folder.trim_end_matches('\\') == root.trim_end_matches('\\')).then(|| app.id.clone())
+    app_for_exe(exe_path).map(|app| app.id.clone())
 }
