@@ -70,8 +70,14 @@ pub async fn learn_cover_nsfw(
 }
 
 #[tauri::command]
-pub async fn image_data_url(path: String, width: u32, height: u32) -> Result<String, String> {
-    blocking(move || images::data_url(Path::new(&path), width, height)).await
+pub async fn image_data_url(
+    shared: SharedState<'_>,
+    path: String,
+    width: u32,
+    height: u32,
+) -> Result<String, String> {
+    let thumbs = shared.data_dir.join("cache").join("thumbs");
+    blocking(move || images::data_url(&thumbs, Path::new(&path), width, height)).await
 }
 
 fn decode_png(data_url: &str) -> Result<Vec<u8>, String> {

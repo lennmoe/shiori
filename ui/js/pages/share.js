@@ -30,6 +30,8 @@ const TEMPLATE = `
 let root;
 let periodKind = "this_week";
 let drawing = 0;
+const coverImages = new Map();
+let iconImage = null;
 
 const part = (id) => $(`[data-id="${id}"]`, root);
 
@@ -71,6 +73,23 @@ async function learnNsfw(vns) {
   } catch {}
 }
 
+// Each cover is resized once by the backend (and cached on disk), then kept here.
+function coverImage(path) {
+  if (!coverImages.has(path)) {
+    const loading = invoke("image_data_url", { path, width: 288, height: 408 })
+      .then((url) => loadImage(url))
+      .catch(() => null)
+      .then((image) => {
+        if (!image) {
+          coverImages.delete(path);
+        }
+        return image;
+      });
+    coverImages.set(path, loading);
+  }
+  return coverImages.get(path);
+}
+
 async function draw() {
   const job = ++drawing;
   for (const button of part("period").querySelectorAll("button")) {
@@ -83,28 +102,20 @@ async function draw() {
   const shown = data.vns.slice(0, MAX_COVERS);
   const allowNsfw = !!store.settings.allow_nsfw_covers;
 
-  if (!allowNsfw) {
-    await learnNsfw(shown);
-  }
-
   const covers = new Map();
-  await Promise.all(
-    shown
+  iconImage ??= loadImage("assets/app_icon.png");
+  const [icon] = await Promise.all([
+    iconImage,
+    allowNsfw ? null : learnNsfw(shown),
+    ...shown
       .filter((vn) => vn.cover)
       .map(async (vn) => {
-        const url = await invoke("image_data_url", {
-          path: vn.cover,
-          width: 288,
-          height: 408,
-        }).catch(() => null);
-        const image = url && (await loadImage(url));
+        const image = await coverImage(vn.cover);
         if (image) {
           covers.set(vn.key, image);
         }
       }),
-  );
-
-  const icon = await loadImage("assets/app_icon.png");
+  ]);
   if (job !== drawing) {
     return;
   }
