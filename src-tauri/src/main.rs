@@ -67,6 +67,21 @@ fn data_dir_override() -> Option<PathBuf> {
     std::env::var_os("VNRPC_DATA_DIR").map(PathBuf::from)
 }
 
+fn log_crashes(file: PathBuf, version: String) {
+    std::panic::set_hook(Box::new(move |info| {
+        use std::io::Write;
+        let thread = std::thread::current();
+        let line = format!(
+            "{} v{version} [{}] {info}\n",
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            thread.name().unwrap_or("?"),
+        );
+        if let Ok(mut log) = std::fs::OpenOptions::new().create(true).append(true).open(&file) {
+            let _ = log.write_all(line.as_bytes());
+        }
+    }));
+}
+
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let data_dir = match data_dir_override() {
         Some(dir) => dir,
@@ -78,6 +93,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     };
     app.asset_protocol_scope()
         .allow_directory(&data_dir, true)?;
+    log_crashes(data_dir.join("crash.log"), app.package_info().version.to_string());
 
     let cfg = Config::load(&data_dir);
     let client_id = cfg.str("discord_client_id");
@@ -253,4 +269,30 @@ fn main() {
                 api.prevent_exit();
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn crashes_are_written_to_the_log() {
+        let file = std::env::temp_dir().join("vnrpc_crash_test.log");
+        let _ = std::fs::remove_file(&file);
+        log_crashes(file.clone(), "9.9.9".into());
+
+        let crashed = std::thread::Builder::new()
+            .name("mascot-test".into())
+            .spawn(|| panic!("test crash"))
+            .unwrap()
+            .join();
+        let _ = std::panic::take_hook();
+
+        assert!(crashed.is_err());
+        let log = std::fs::read_to_string(&file).unwrap();
+        let _ = std::fs::remove_file(&file);
+        assert!(log.contains("v9.9.9 [mascot-test]"), "{log}");
+        assert!(log.contains("test crash"), "{log}");
+        assert!(log.contains("main.rs"), "{log}");
+    }
 }
