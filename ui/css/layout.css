@@ -115,7 +115,7 @@ main {
   display: none;
   flex-direction: column;
   gap: 14px;
-  max-width: 1180px;
+  max-width: 1720px;
   animation: rise 0.28s var(--ease);
 }
 
