@@ -83,6 +83,26 @@ pub fn set_mascot_custom_lines(shared: SharedState, id: String, lines: serde_jso
     mascot::set_custom_lines(&shared, &id, lines);
 }
 
+#[tauri::command(async)]
+pub fn set_mascot_view_only(shared: SharedState, id: String, view_only: bool) {
+    mascot::set_view_only(&shared, &[id], view_only);
+}
+
+#[tauri::command(async)]
+pub fn mascot_voices(shared: SharedState, id: String) -> serde_json::Map<String, serde_json::Value> {
+    mascot::voices(&shared, &id)
+}
+
+#[tauri::command(async)]
+pub fn add_mascot_voice(shared: SharedState, id: String, event: String, path: String) -> Result<(), String> {
+    mascot::add_voice(&shared, &id, &event, Path::new(&path))
+}
+
+#[tauri::command(async)]
+pub fn remove_mascot_voice(shared: SharedState, path: String) -> Result<(), String> {
+    mascot::remove_voice(&shared, Path::new(&path))
+}
+
 #[tauri::command]
 pub async fn set_mascot_size(app: AppHandle, id: String, height: u32) -> Result<(), String> {
     super::blocking(move || mascot::resize(&app, &id, height)).await

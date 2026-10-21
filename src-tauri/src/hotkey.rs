@@ -117,62 +117,89 @@ pub fn normalize(text: &str) -> String {
 }
 
 const HOTKEY_ID: i32 = 1;
+const MASCOT_HOTKEY_ID: i32 = 2;
 
 fn game_in_front(pid: u32) -> bool {
     pid != 0 && winapi::window_pid(winapi::foreground_window()) == pid
 }
 
-fn register((mods, vk): (u32, u32)) -> bool {
+fn register(id: i32, (mods, vk): (u32, u32)) -> bool {
     let flags = HOT_KEY_MODIFIERS(mods) | MOD_NOREPEAT;
-    unsafe { RegisterHotKey(None, HOTKEY_ID, flags, vk).is_ok() }
+    unsafe { RegisterHotKey(None, id, flags, vk).is_ok() }
 }
 
-fn unregister() {
+fn unregister(id: i32) {
     unsafe {
-        let _ = UnregisterHotKey(None, HOTKEY_ID);
+        let _ = UnregisterHotKey(None, id);
     }
+}
+
+/// Keeps one hotkey registered as `wanted`; returns false when another app owns the key.
+fn keep(id: i32, active: &mut Option<(u32, u32)>, wanted: Option<(u32, u32)>) -> bool {
+    if wanted == *active {
+        return true;
+    }
+    if active.is_some() {
+        unregister(id);
+    }
+    *active = wanted;
+    wanted.is_none_or(|combo| register(id, combo))
 }
 
 pub fn run(shared: Arc<Shared>) {
     let mut active: Option<(u32, u32)> = None;
+    let mut mascot_active: Option<(u32, u32)> = None;
     let mut reported = false;
+    let mut mascot_reported = false;
     let mut msg = MSG::default();
 
     loop {
         let pid = shared.snapshot().pid;
         unsafe {
             while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
-                if msg.message == WM_HOTKEY && game_in_front(pid) {
+                if msg.message != WM_HOTKEY {
+                    continue;
+                }
+                if msg.wParam.0 == MASCOT_HOTKEY_ID as usize {
+                    let key = shared.config.lock().unwrap().str("mascot_click_hotkey");
+                    crate::mascot::toggle_view_only(&shared.app, &key);
+                } else if game_in_front(pid) {
                     let shared = Arc::clone(&shared);
                     std::thread::spawn(move || crate::screenshots::take(&shared));
                 }
             }
         }
 
-        let hotkey = shared.config.lock().unwrap().str("screenshot_hotkey");
+        let (hotkey, mascot_hotkey) = {
+            let cfg = shared.config.lock().unwrap();
+            (cfg.str("screenshot_hotkey"), cfg.str("mascot_click_hotkey"))
+        };
         let wanted = if game_in_front(pid) {
             parse(&hotkey)
         } else {
             None
         };
+        let mascot_wanted = parse(&mascot_hotkey).filter(|combo| Some(*combo) != wanted);
 
-        if wanted != active {
-            if active.is_some() {
-                unregister();
-            }
-            if let Some(combo) = wanted {
-                if !register(combo) && !reported {
-                    reported = true;
-                    shared.emit(
-                        "toast",
-                        serde_json::json!({
-                            "title": "Couldn't watch the screenshot key: another app already uses it",
-                            "ok": false,
-                        }),
-                    );
-                }
-            }
-            active = wanted;
+        if !keep(HOTKEY_ID, &mut active, wanted) && !reported {
+            reported = true;
+            shared.emit(
+                "toast",
+                serde_json::json!({
+                    "title": "Couldn't watch the screenshot key: another app already uses it",
+                    "ok": false,
+                }),
+            );
+        }
+        if !keep(MASCOT_HOTKEY_ID, &mut mascot_active, mascot_wanted) && !mascot_reported {
+            mascot_reported = true;
+            shared.emit(
+                "toast",
+                serde_json::json!({
+                    "title": "Couldn't watch the mascot key: another app already uses it",
+                    "ok": false,
+                }),
+            );
         }
 
         unsafe {

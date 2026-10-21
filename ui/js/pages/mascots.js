@@ -4,6 +4,7 @@ import { register } from "../router.js";
 import { store, subscribe } from "../store.js";
 import { call, confirmButton, openDialog, toggle } from "../ui.js";
 import { t } from "../i18n.js";
+import { hotkeyInput } from "../components/hotkey-input.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -37,7 +38,23 @@ const LINE_FIELDS = [
   ["screenshot", "After a screenshot"],
 ];
 
+const LIST_FIELDS = [
+  ["pokes", "When you click it"],
+  ["chatter", "Now and then"],
+];
+
+const VOICE_MOMENTS = [
+  ...LINE_FIELDS.map(([key, label]) => [key, label]),
+  ["poke", "When you click it"],
+  ["chatter", "Now and then"],
+];
+
+const CHATTER_MINUTES = [0, 1, 3, 5, 10, 15, 30];
+
 const IMAGE_FILTERS = [{ name: "Images", extensions: ["png", "webp", "gif"] }];
+const AUDIO_FILTERS = [
+  { name: "Audio", extensions: ["mp3", "wav", "ogg", "m4a", "opus", "flac"] },
+];
 
 let root;
 
@@ -57,8 +74,55 @@ function options() {
   const backToCorner = el("button", { class: "btn secondary" }, "Put them back in the corner");
   backToCorner.onclick = () => save({ mascot_positions: {}, mascot_pos: null });
 
+  const chatter = el(
+    "select",
+    {},
+    ...CHATTER_MINUTES.map((minutes) =>
+      el(
+        "option",
+        { value: minutes, selected: minutes === (settings.mascot_chatter_minutes || 0) },
+        minutes ? t("Every {n} min", { n: minutes }) : t("Never"),
+      ),
+    ),
+  );
+  chatter.onchange = () => save({ mascot_chatter_minutes: Number(chatter.value) });
+
+  const volume = el("input", {
+    type: "range",
+    min: 0,
+    max: 100,
+    step: 5,
+    value: settings.mascot_voice_volume ?? 80,
+  });
+  const volumeLabel = el("span", { class: "muted", style: { width: "44px", textAlign: "right" } });
+  const showVolume = () =>
+    (volumeLabel.textContent = Number(volume.value) ? `${volume.value}%` : t("Off"));
+  volume.oninput = showVolume;
+  volume.onchange = () => save({ mascot_voice_volume: Number(volume.value) });
+  showVolume();
+
+  const clickKey = hotkeyInput(settings.mascot_click_hotkey, (value) =>
+    save({ mascot_click_hotkey: value }),
+  );
+
   return [
     toggle("Speech balloons", settings.mascot_talk, (on) => save({ mascot_talk: on })),
+    el("div", { class: "field" }, el("span", {}, "Talk on their own"), chatter),
+    el("div", { class: "hint-text" }, "After this long without saying anything."),
+    el(
+      "div",
+      { class: "field" },
+      el("span", {}, "Voice volume"),
+      el("div", { class: "row" }, volume, volumeLabel),
+    ),
+    el("div", { class: "hint-text" }, "For the sounds you give a mascot with “Voices…”."),
+    el("div", { class: "field" }, el("span", {}, "Key to switch clicks on or off"), clickKey),
+    el(
+      "div",
+      { class: "hint-text" },
+      "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable " +
+        "again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.",
+    ),
     toggle(
       "Keep them above other windows",
       settings.mascot_topmost,
@@ -132,6 +196,23 @@ function card(item, personalities) {
     }
   };
 
+  const viewOnly = toggle(
+    "View only",
+    item.view_only,
+    (on) => {
+      item.view_only = on;
+      call("set_mascot_view_only", { id: item.id, viewOnly: on });
+    },
+    "Clicks go through it.",
+  );
+  viewOnly.onclick = (event) => event.stopPropagation();
+
+  const voices = el("button", { class: "btn secondary small" }, "Voices…");
+  voices.onclick = (event) => {
+    event.stopPropagation();
+    editVoices(item);
+  };
+
   return el(
     "div",
     {
@@ -158,7 +239,9 @@ function card(item, personalities) {
         el("span", { class: "small-text" }, "Personality"),
         personality,
         editLines,
+        voices,
       ),
+      el("div", { class: "mascot-size" }, viewOnly),
       remove,
     ),
   );
@@ -179,14 +262,20 @@ async function writeLines(item) {
       hint && el("span", { class: "small-text muted" }, hint),
     );
   });
-  inputs.pokes = el("textarea", {
-    rows: 4,
-    placeholder: defaults.pokes.join("\n"),
+  const lists = LIST_FIELDS.map(([key, label]) => {
+    inputs[key] = el("textarea", { rows: 4, placeholder: (defaults[key] || []).join("\n") });
+    inputs[key].value = (saved[key] || []).join("\n");
+    return el(
+      "label",
+      { class: "line-field" },
+      el("span", {}, label),
+      inputs[key],
+      el("span", { class: "small-text muted" }, "One per line, picked at random."),
+    );
   });
-  inputs.pokes.value = (saved.pokes || []).join("\n");
 
   const answer = await openDialog({
-    title: t("{name}'s lines", { name: item.name }),
+    title: t("{name}'s lines", { name: t(item.name) }),
     wide: true,
     body: el(
       "div",
@@ -197,13 +286,7 @@ async function writeLines(item) {
         "Leave a line empty to keep the one shown in grey.",
       ),
       ...fields,
-      el(
-        "label",
-        { class: "line-field" },
-        el("span", {}, "When you click it"),
-        inputs.pokes,
-        el("span", { class: "small-text muted" }, "One per line, picked at random."),
-      ),
+      ...lists,
     ),
     actions: [
       { label: "Cancel", kind: "secondary", value: null },
@@ -218,12 +301,79 @@ async function writeLines(item) {
   for (const [key] of LINE_FIELDS) {
     lines[key] = inputs[key].value.trim();
   }
-  lines.pokes = inputs.pokes.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  for (const [key] of LIST_FIELDS) {
+    lines[key] = inputs[key].value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
   await call("set_mascot_custom_lines", { id: item.id, lines });
   item.custom = lines;
+}
+
+const fileName = (path) => path.split(/[\\/]/).pop();
+
+let preview = null;
+function playPreview(path) {
+  preview?.pause();
+  preview = new Audio(fileUrl(path));
+  preview.volume = (store.settings.mascot_voice_volume ?? 80) / 100;
+  preview.play().catch(() => {});
+}
+
+async function editVoices(item) {
+  const body = el("div", { class: "line-fields" });
+
+  const render = async () => {
+    const voices = await call("mascot_voices", { id: item.id });
+    const rows = VOICE_MOMENTS.map(([moment, label]) => {
+      const files = (voices[moment] || []).map((path) => {
+        const play = el("button", { class: "btn secondary small", title: "Play" }, "▶");
+        play.onclick = () => playPreview(path);
+        const remove = el("button", { class: "btn danger small", title: "Remove" }, "✕");
+        remove.onclick = async () => {
+          await call("remove_mascot_voice", { path });
+          render();
+        };
+        return el("div", { class: "voice-file" }, play, el("span", {}, fileName(path)), remove);
+      });
+
+      const add = el("button", { class: "btn secondary small" }, "Add a sound…");
+      add.onclick = async () => {
+        const path = await pickFile({ title: "Choose a sound", filters: AUDIO_FILTERS });
+        if (path) {
+          await call("add_mascot_voice", { id: item.id, event: moment, path });
+          render();
+        }
+      };
+
+      return el(
+        "div",
+        { class: "voice-moment" },
+        el("div", { class: "row" }, el("b", {}, label), add),
+        files.length
+          ? el("div", { class: "voice-files" }, ...files)
+          : el("span", { class: "small-text muted" }, "No sound: it only shows the text."),
+      );
+    });
+    body.replaceChildren(
+      el(
+        "p",
+        { class: "muted small-text" },
+        "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.",
+      ),
+      ...rows,
+    );
+  };
+
+  await render();
+  await openDialog({
+    title: t("{name}'s voice", { name: t(item.name) }),
+    wide: true,
+    body,
+    actions: [{ label: "Done", value: true }],
+  });
+  preview?.pause();
 }
 
 async function addMascot() {

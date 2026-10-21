@@ -121,6 +121,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     }
     tray::build(app.handle())?;
     mascot::apply_settings(app.handle());
+    mascot::start_chatter(app.handle());
 
     if !start_minimized {
         ui_windows::show_main(app.handle());
@@ -142,6 +143,7 @@ fn import_python_data(data_dir: &std::path::Path) {
 }
 
 fn main() {
+    shell::set_app_id();
     let mut builder = tauri::Builder::default();
 
     if data_dir_override().is_none() {
@@ -232,6 +234,10 @@ fn main() {
             commands::popups::set_mascot_personality,
             commands::popups::personality_lines,
             commands::popups::set_mascot_custom_lines,
+            commands::popups::set_mascot_view_only,
+            commands::popups::mascot_voices,
+            commands::popups::add_mascot_voice,
+            commands::popups::remove_mascot_voice,
             commands::popups::balloon_text,
             commands::popups::place_balloon,
             commands::popups::hide_balloon,

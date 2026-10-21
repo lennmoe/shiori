@@ -11,7 +11,10 @@
     "Hide this mascot": "Ẩn linh vật này",
     "Reading": "Đang đọc",
     "Total read: {}": "Tổng thời gian đọc: {}",
-    "View on VNDB": "Xem trên VNDB"
+    "View on VNDB": "Xem trên VNDB",
+    "Mascots: you can click them": "Linh vật: có thể nhấp",
+    "Mascots: clicks go through": "Linh vật: nhấp xuyên qua",
+    "Press {} again to switch back.": "Nhấn {} lần nữa để quay lại."
   },
   "personalities": {
     "cheerful": {
@@ -26,6 +29,11 @@
         "Cần gì để đọc không? Nhấp chuột phải vào mình để chọn ngẫu nhiên một VN từ wishlist nhé!",
         "Mình đang theo dõi thời gian đọc của bạn đó~",
         "Hehe, nhột quá!"
+      ],
+      "chatter": [
+        "Vẫn đang đọc à? Giỏi lắm~",
+        "Đừng quên uống nước nhé!",
+        "Không biết chuyện gì sẽ xảy ra… đọc tiếp đi!"
       ]
     },
     "tsundere": {
@@ -40,6 +48,11 @@
         "M-muốn gì hả?!",
         "Đừng chọc mình nữa! ...Muốn một VN ngẫu nhiên từ wishlist à? Nhấp chuột phải đi, baka.",
         "Không phải mình đếm thời gian đọc giùm bạn đâu nhé!"
+      ],
+      "chatter": [
+        "N-này, cậu đọc lâu rồi đấy. Không phải tớ lo đâu nhé!",
+        "Đừng thức khuya quá, đồ ngốc.",
+        "…Thôi được, đoạn này cũng hay."
       ]
     },
     "shy": {
@@ -54,6 +67,11 @@
         "Á! ...X-xin lỗi, bạn làm mình giật mình.",
         "Bạn... có muốn một VN từ wishlist không? Nhấp chuột phải vào mình nhé...",
         "Mình đang đếm thời gian đọc của bạn... thật khẽ."
+      ],
+      "chatter": [
+        "Ư-ừm… tớ vẫn ở đây, đọc cùng cậu…",
+        "D-duỗi người một chút nhé? …Nếu cậu muốn…",
+        "Thật dễ chịu… khi đọc cùng nhau…"
       ]
     },
     "big_sister": {
@@ -68,6 +86,11 @@
         "Ara~ Muốn được chú ý hả?",
         "Không biết đọc gì à? Nhấp chuột phải vào chị, chị chọn từ wishlist cho~",
         "Đừng đọc khuya quá nhé?"
+      ],
+      "chatter": [
+        "Em đọc lâu rồi đó, cưng. Chị tự hào về em~",
+        "Nhớ cho mắt nghỉ ngơi nhé?",
+        "Ara~ Tập trung ghê. Dễ thương quá."
       ]
     },
     "chuuni": {
@@ -82,6 +105,11 @@
         "Đừng chạm vào ta! Cánh tay phải của ta... nó đang mất kiểm soát!",
         "Nhấp chuột phải để triệu hồi một câu chuyện ngẫu nhiên từ wishlist!",
         "Ta là người canh giữ giờ đọc của ngươi. Hãy run sợ đi!"
+      ],
+      "chatter": [
+        "Câu chuyện ngày càng sâu… ta cảm nhận được định mệnh vĩ đại!",
+        "Phàm nhân, sức bền của ngươi khiến ta kinh ngạc!",
+        "Con mắt bóng tối của ta dõi theo từng dòng cùng ngươi…"
       ]
     }
   },
@@ -525,6 +553,33 @@
     "{section} becomes its name.": "{section} sẽ thành tên của nó.",
     "After a screenshot": "Sau khi chụp màn hình",
     "When you click it": "Khi bạn nhấp vào",
-    "One per line, picked at random.": "Mỗi dòng một câu, chọn ngẫu nhiên."
+    "One per line, picked at random.": "Mỗi dòng một câu, chọn ngẫu nhiên.",
+    "Couldn't create the shortcut: {error}": "Không thể tạo lối tắt: {error}",
+    "Now and then": "Thỉnh thoảng",
+    "Every {n} min": "Mỗi {n} phút",
+    "Never": "Không bao giờ",
+    "Done": "Xong",
+    "Talk on their own": "Tự nói chuyện",
+    "After this long without saying anything.": "Sau khoảng thời gian này không nói gì.",
+    "Voice volume": "Âm lượng giọng nói",
+    "For the sounds you give a mascot with “Voices…”.": "Cho các âm thanh bạn gán cho linh vật qua “Giọng nói…”.",
+    "Key to switch clicks on or off": "Phím bật/tắt nhấp chuột",
+    "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.": "Dùng được ở mọi nơi, kể cả trong game: mọi linh vật cho nhấp xuyên qua, hoặc nhấp được trở lại. Tiện nếu bạn chơi game khi linh vật đang hiện. Mỗi linh vật cũng có “Chỉ xem” riêng.",
+    "View only": "Chỉ xem",
+    "Clicks go through it.": "Nhấp chuột xuyên qua.",
+    "Voices…": "Giọng nói…",
+    "Add a sound…": "Thêm âm thanh…",
+    "Choose a sound": "Chọn âm thanh",
+    "No sound: it only shows the text.": "Không có âm thanh: chỉ hiện chữ.",
+    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "Âm thanh phát cùng lời linh vật nói. Gán nhiều âm thanh cho một lúc thì sẽ chọn ngẫu nhiên một cái.",
+    "{name}'s voice": "Giọng của {name}",
+    "Couldn't watch the mascot key: another app already uses it": "Không thể dùng phím linh vật: ứng dụng khác đang dùng",
+    "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "Hãy dùng tệp MP3, WAV, OGG, M4A, OPUS hoặc FLAC.",
+    "Title on Discord": "Tên trên Discord",
+    "The original title comes from VNDB. VNs without one keep the romanized title.": "Tên gốc lấy từ VNDB. VN không có tên gốc sẽ giữ tên Latinh hóa.",
+    "Romanized": "Latinh hóa",
+    "Original": "Nguyên bản",
+    "Same as the app": "Giống ứng dụng",
+    "Language on Discord": "Ngôn ngữ trên Discord"
   }
 }

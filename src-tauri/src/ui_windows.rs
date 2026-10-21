@@ -11,6 +11,11 @@ use tauri::{
 use crate::capture::ScreenRect;
 use crate::winapi;
 
+/// Every webview must share these, or WebView2 refuses to create the next window.
+/// Same as `additionalBrowserArgs` in tauri.conf.json; autoplay lets mascots speak.
+pub const BROWSER_ARGS: &str =
+    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required";
+
 pub fn show_main(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
@@ -68,6 +73,7 @@ fn popup(
     }
 
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(page.into()))
+        .additional_browser_args(BROWSER_ARGS)
         .title("Visual Novel RPC")
         .inner_size(width, height)
         .decorations(false)

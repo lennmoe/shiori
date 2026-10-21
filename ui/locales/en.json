@@ -15,6 +15,11 @@
         "Need something to read? Right-click me for a random pick from your wishlist!",
         "I'm keeping an eye on your reading time~",
         "Hehe, that tickles!"
+      ],
+      "chatter": [
+        "Still reading? You're doing great~",
+        "Don't forget to drink some water!",
+        "I wonder what happens next... keep going!"
       ]
     },
     "tsundere": {
@@ -29,6 +34,11 @@
         "W-what do you want?!",
         "Stop poking me! ...Want a random VN from your wishlist? Right-click, baka.",
         "It's not like I'm counting your reading time for you or anything!"
+      ],
+      "chatter": [
+        "H-hey, you've been reading for a while. Not that I'm worried!",
+        "Don't stay up too late, idiot.",
+        "...Fine, this part is kind of good."
       ]
     },
     "shy": {
@@ -43,6 +53,11 @@
         "Eep! ...S-sorry, you surprised me.",
         "Do you... want a VN from your wishlist? Right-click me...",
         "I'm keeping track of your reading time... quietly."
+      ],
+      "chatter": [
+        "U-um... I'm still here, reading with you...",
+        "M-maybe a little stretch? ...Only if you want...",
+        "This is nice... reading together..."
       ]
     },
     "big_sister": {
@@ -57,6 +72,11 @@
         "Ara~ Need some attention?",
         "Can't decide what to read? Right-click me, I'll pick from your wishlist~",
         "Don't stay up too late reading, okay?"
+      ],
+      "chatter": [
+        "You've been at it for a while, sweetie. Proud of you~",
+        "Remember to rest your eyes, okay?",
+        "Ara~ So focused. Cute."
       ]
     },
     "chuuni": {
@@ -71,6 +91,11 @@
         "Do not touch me! My right arm... it's acting up!",
         "Right-click to summon a random tale from your wishlist!",
         "I am the keeper of your reading hours. Fear me!"
+      ],
+      "chatter": [
+        "The tale deepens... I sense a great fate ahead!",
+        "Mortal, your stamina impresses even me!",
+        "My dark eye watches every line with you..."
       ]
     }
   },

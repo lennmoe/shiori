@@ -17,12 +17,15 @@ use crate::config::safe_filename;
 use crate::lang;
 use crate::personalities::{self, Lines};
 use crate::state::{Shared, Snapshot};
-use crate::ui_windows;
+use crate::ui_windows::{self, Toast};
 use crate::winapi;
 
 const BUILT_IN: &[u8] = include_bytes!("../assets/mascot.png");
 const BUILT_IN_ID: &str = "default";
 const IMAGE_EXTS: [&str; 3] = ["png", "webp", "gif"];
+const AUDIO_EXTS: [&str; 6] = ["mp3", "wav", "ogg", "m4a", "opus", "flac"];
+pub const VOICE_EVENTS: [&str; 8] =
+    ["start", "stop", "idle", "back", "section", "screenshot", "poke", "chatter"];
 
 pub const WINDOW_PREFIX: &str = "mascot-";
 pub const HIDE_MENU_PREFIX: &str = "mascot-hide:";
@@ -30,6 +33,7 @@ pub const HIDE_MENU_PREFIX: &str = "mascot-hide:";
 struct Character {
     file: PathBuf,
     alpha: RgbaImage,
+    view_only: bool,
 }
 
 static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
@@ -39,6 +43,7 @@ static GENERATION: AtomicU64 = AtomicU64::new(0);
 static REQUESTS: AtomicU64 = AtomicU64::new(0);
 static RESIZES: AtomicU64 = AtomicU64::new(0);
 static APPLYING: Mutex<()> = Mutex::new(());
+static LAST_SAID: AtomicU64 = AtomicU64::new(0);
 
 const MIN_HEIGHT: u32 = 80;
 const MAX_HEIGHT: u32 = 1500;
@@ -155,6 +160,7 @@ pub struct GalleryItem {
     height: u32,
     personality: String,
     custom: Value,
+    view_only: bool,
 }
 
 pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
@@ -171,6 +177,7 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
         height: height_for(shared, BUILT_IN_ID),
         personality: personality_of(shared, BUILT_IN_ID),
         custom: custom_lines_of(shared, BUILT_IN_ID),
+        view_only: view_only_of(shared, BUILT_IN_ID),
     }];
     for path in gallery_files(shared) {
         let id = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
@@ -182,6 +189,7 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
             height: height_for(shared, &id),
             personality: personality_of(shared, &id),
             custom: custom_lines_of(shared, &id),
+            view_only: view_only_of(shared, &id),
             id,
         });
     }
@@ -218,6 +226,7 @@ pub fn remove_from_gallery(shared: &Shared, id: &str) -> Result<(), String> {
     if let Some(file) = file_for(shared, id) {
         std::fs::remove_file(file).map_err(|e| e.to_string())?;
     }
+    let _ = std::fs::remove_dir_all(voices_dir(shared, id));
     Ok(())
 }
 
@@ -356,8 +365,9 @@ fn apply_now(app: &AppHandle) {
         let (x, y) = saved_position(positions.get(&id), width, height)
             .unwrap_or_else(|| default_position(width, height, &mut offset));
         let label = format!("{WINDOW_PREFIX}{id}");
+        let view_only = view_only_of(&shared, &id);
         with_characters(|characters| {
-            characters.insert(label.clone(), Character { file, alpha: character })
+            characters.insert(label.clone(), Character { file, alpha: character, view_only })
         });
         placements.push((label, x, y, width, height));
     }
@@ -393,8 +403,9 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
     let n = RESIZES.fetch_add(1, Ordering::SeqCst);
     let file = shared.data_dir.join("cache").join(format!("mascot_r{n}_{id}.png"));
     character.save(&file).map_err(|e| e.to_string())?;
+    let view_only = view_only_of(&shared, id);
     with_characters(|characters| {
-        characters.insert(label.clone(), Character { file, alpha: character })
+        characters.insert(label.clone(), Character { file, alpha: character, view_only })
     });
 
     if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
@@ -417,6 +428,7 @@ fn remove_old_pictures(cache: &Path) {
 
 fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height: u32, topmost: bool) {
     let built = WebviewWindowBuilder::new(app, label, WebviewUrl::App("mascot.html".into()))
+        .additional_browser_args(ui_windows::BROWSER_ARGS)
         .title("Visual Novel RPC mascot")
         .decorations(false)
         .transparent(true)
@@ -464,7 +476,8 @@ fn click_through_loop(app: &AppHandle, label: &str, generation: u64) {
                 && y >= 0
                 && (x as u32) < character.alpha.width()
                 && (y as u32) < character.alpha.height();
-            Some(inside && character.alpha.get_pixel(x as u32, y as u32).0[3] > 10)
+            let opaque = inside && character.alpha.get_pixel(x as u32, y as u32).0[3] > 10;
+            Some(opaque && !character.view_only)
         });
         let Some(over_character) = over_character else {
             return;
@@ -577,7 +590,13 @@ fn lines_for(shared: &Shared, id: &str, language: &str) -> Lines {
     }
 }
 
-fn say_as(app: &AppHandle, label: Option<&str>, line: impl Fn(&Lines) -> String, seconds: u64) {
+fn say_as(
+    app: &AppHandle,
+    label: Option<&str>,
+    event: &str,
+    line: impl Fn(&Lines) -> String,
+    seconds: u64,
+) {
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
@@ -585,14 +604,21 @@ fn say_as(app: &AppHandle, label: Option<&str>, line: impl Fn(&Lines) -> String,
         _ => labels[random(labels.len())].clone(),
     };
 
+    LAST_SAID.store(now(), Ordering::SeqCst);
     let shared = shared(app);
-    let (talks, language) = {
+    let (talks, language, volume) = {
         let cfg = shared.config.lock().unwrap();
         (
             cfg.get("mascot_talk").and_then(Value::as_bool).unwrap_or(true),
             lang::resolve(&cfg.str("language")),
+            cfg.get("mascot_voice_volume").and_then(Value::as_u64).unwrap_or(80),
         )
     };
+    if volume > 0 {
+        if let Some(file) = random_voice(&shared, id_of(&label), event) {
+            let _ = app.emit_to(label.as_str(), "voice", json!({ "file": file, "volume": volume }));
+        }
+    }
     if !talks {
         return;
     }
@@ -601,18 +627,176 @@ fn say_as(app: &AppHandle, label: Option<&str>, line: impl Fn(&Lines) -> String,
     ui_windows::show_balloon(app, &text, seconds as f64);
 }
 
+fn now() -> u64 {
+    chrono::Utc::now().timestamp().max(0) as u64
+}
+
+/// Says a "now and then" line every `mascot_chatter_minutes` of silence (0 = never).
+pub fn start_chatter(app: &AppHandle) {
+    LAST_SAID.store(now(), Ordering::SeqCst);
+    let app = app.clone();
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_secs(10));
+        let minutes = shared(&app)
+            .config
+            .lock()
+            .unwrap()
+            .get("mascot_chatter_minutes")
+            .and_then(Value::as_u64)
+            .unwrap_or(0);
+        if minutes == 0 || now().saturating_sub(LAST_SAID.load(Ordering::SeqCst)) < minutes * 60 {
+            continue;
+        }
+        say_as(
+            &app,
+            None,
+            "chatter",
+            |lines| lines.chatter.get(random(lines.chatter.len())).cloned().unwrap_or_default(),
+            6,
+        );
+    });
+}
+
+fn view_only_of(shared: &Shared, id: &str) -> bool {
+    shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_view_only")
+        .and_then(|all| all.get(id))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+/// Clicks go through view-only mascots, so they never take the focus from a game.
+pub fn set_view_only(shared: &Shared, ids: &[String], view_only: bool) {
+    let mut all = shared
+        .config
+        .lock()
+        .unwrap()
+        .get("mascot_view_only")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    for id in ids {
+        all.insert(id.clone(), json!(view_only));
+    }
+    save_settings(shared, Map::from_iter([("mascot_view_only".into(), Value::Object(all))]));
+    with_characters(|characters| {
+        for (label, character) in characters.iter_mut() {
+            if ids.iter().any(|id| id == id_of(label)) {
+                character.view_only = view_only;
+            }
+        }
+    });
+}
+
+/// The "make mascots clickable" key: switches every mascot on screen at once.
+pub fn toggle_view_only(app: &AppHandle, key: &str) {
+    let shared = shared(app);
+    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+    if labels.is_empty() {
+        return;
+    }
+    let ids: Vec<String> = labels.iter().map(|l| id_of(l).to_string()).collect();
+    let view_only = !with_characters(|characters| characters.values().all(|c| c.view_only));
+    set_view_only(&shared, &ids, view_only);
+
+    let language = lang::resolve(&shared.config.lock().unwrap().str("language"));
+    let title = if view_only { "Mascots: clicks go through" } else { "Mascots: you can click them" };
+    let toast = Toast {
+        title: lang::tr(title, language).to_string(),
+        detail: lang::tr("Press {} again to switch back.", language).replace("{}", key),
+        image: None,
+        ok: true,
+    };
+    ui_windows::show_toast(app, toast, None);
+    let settings = shared.config.lock().unwrap().data().clone();
+    let _ = app.emit("settings-changed", settings);
+}
+
+fn voices_dir(shared: &Shared, id: &str) -> PathBuf {
+    gallery_dir(shared).join("voices").join(id)
+}
+
+fn audio_files(dir: &Path) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                .is_some_and(|ext| AUDIO_EXTS.contains(&ext.as_str()))
+        })
+        .collect();
+    files.sort();
+    files
+}
+
+fn random_voice(shared: &Shared, id: &str, event: &str) -> Option<String> {
+    let files = audio_files(&voices_dir(shared, id).join(event));
+    let file = files.get(random(files.len()))?;
+    Some(file.to_string_lossy().to_string())
+}
+
+pub fn voices(shared: &Shared, id: &str) -> Map<String, Value> {
+    VOICE_EVENTS
+        .iter()
+        .map(|event| {
+            let files: Vec<String> = audio_files(&voices_dir(shared, id).join(event))
+                .iter()
+                .map(|f| f.to_string_lossy().to_string())
+                .collect();
+            (event.to_string(), json!(files))
+        })
+        .collect()
+}
+
+pub fn add_voice(shared: &Shared, id: &str, event: &str, source: &Path) -> Result<(), String> {
+    if !VOICE_EVENTS.contains(&event) {
+        return Err("Unknown moment.".into());
+    }
+    let ext = source
+        .extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .filter(|ext| AUDIO_EXTS.contains(&ext.as_str()))
+        .ok_or("Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.")?;
+    let dir = voices_dir(shared, id).join(event);
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+
+    let stem = safe_filename(&source.file_stem().unwrap_or_default().to_string_lossy());
+    let (mut target, mut n) = (dir.join(format!("{stem}.{ext}")), 2);
+    while target.exists() {
+        target = dir.join(format!("{stem}_{n}.{ext}"));
+        n += 1;
+    }
+    std::fs::copy(source, target).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+pub fn remove_voice(shared: &Shared, file: &Path) -> Result<(), String> {
+    let root = gallery_dir(shared).join("voices");
+    if !file.starts_with(&root) {
+        return Err("That file isn't a mascot voice.".into());
+    }
+    std::fs::remove_file(file).map_err(|e| e.to_string())
+}
+
 fn random(len: usize) -> usize {
     chrono::Utc::now().timestamp_subsec_nanos() as usize % len.max(1)
 }
 
 pub fn screenshot_saved(app: &AppHandle) {
-    say_as(app, None, |lines| lines.screenshot.clone(), 3);
+    say_as(app, None, "screenshot", |lines| lines.screenshot.clone(), 3);
 }
 
 pub fn poke(app: &AppHandle, label: &str) {
     say_as(
         app,
         Some(label),
+        "poke",
         |lines| lines.pokes.get(random(lines.pokes.len())).cloned().unwrap_or_default(),
         6,
     );
@@ -623,15 +807,15 @@ pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
     let section = new.section_label.clone();
 
     if new.detected && (!old.detected || old.key != new.key) {
-        say_as(app, None, |lines| lines.start.replace("{name}", &name), 6);
+        say_as(app, None, "start", |lines| lines.start.replace("{name}", &name), 6);
     } else if old.detected && !new.detected {
-        say_as(app, None, |lines| lines.stop.clone(), 6);
+        say_as(app, None, "stop", |lines| lines.stop.clone(), 6);
     } else if new.detected && new.idle && !old.idle {
-        say_as(app, None, |lines| lines.idle.clone(), 6);
+        say_as(app, None, "idle", |lines| lines.idle.clone(), 6);
     } else if new.detected && old.idle && !new.idle {
-        say_as(app, None, |lines| lines.back.clone(), 3);
+        say_as(app, None, "back", |lines| lines.back.clone(), 3);
     } else if new.detected && !section.is_empty() && section != old.section_label {
-        say_as(app, None, |lines| lines.section.replace("{section}", &section), 4);
+        say_as(app, None, "section", |lines| lines.section.replace("{section}", &section), 4);
     }
 }
 

@@ -61,5 +61,13 @@ character.addEventListener("contextmenu", (event) => {
   invoke("mascot_menu");
 });
 
+let voice = null;
+listen("voice", (event) => {
+  voice?.pause();
+  voice = new Audio(fileUrl(event.payload.file));
+  voice.volume = Math.min(event.payload.volume, 100) / 100;
+  voice.play().catch(() => {});
+});
+
 listen("mascot-refresh", start);
 start();

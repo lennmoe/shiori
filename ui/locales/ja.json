@@ -11,7 +11,10 @@
     "Hide this mascot": "このマスコットを隠す",
     "Reading": "読書中",
     "Total read: {}": "合計読書時間：{}",
-    "View on VNDB": "VNDBで見る"
+    "View on VNDB": "VNDBで見る",
+    "Mascots: you can click them": "マスコット：クリックできます",
+    "Mascots: clicks go through": "マスコット：クリックが通り抜けます",
+    "Press {} again to switch back.": "もう一度 {} を押すと元に戻ります。"
   },
   "personalities": {
     "cheerful": {
@@ -26,6 +29,11 @@
         "読むもの探してる？右クリックでウィッシュリストからランダムに選ぶよ！",
         "読書時間はちゃんと見てるからね～",
         "えへへ、くすぐったいよ！"
+      ],
+      "chatter": [
+        "まだ読んでるの？えらいえらい～",
+        "お水飲むの忘れないでね！",
+        "この先どうなるのかな…続けて続けて！"
       ]
     },
     "tsundere": {
@@ -40,6 +48,11 @@
         "な、何よ！？",
         "つつかないでよ！…ウィッシュリストからランダムに選びたいの？右クリックしなさいよ、バカ。",
         "べ、別にあんたのために読書時間を数えてるわけじゃないんだからね！"
+      ],
+      "chatter": [
+        "ちょ、ちょっと、もうずいぶん読んでるじゃない。別に心配してるわけじゃないけど！",
+        "夜更かししすぎないでよね、バカ。",
+        "…まあ、このシーンは悪くないわね。"
       ]
     },
     "shy": {
@@ -54,6 +67,11 @@
         "ひゃっ！…ご、ごめんなさい、びっくりしました。",
         "ウィッシュリストから…選びますか？右クリックしてください…",
         "読書時間…こっそり数えてます。"
+      ],
+      "chatter": [
+        "あ、あの…まだここで、一緒に読んでます…",
+        "す、少しストレッチとか…？よ、よければ…",
+        "なんだか落ち着きます…一緒に読むの…"
       ]
     },
     "big_sister": {
@@ -68,6 +86,11 @@
         "あら～ かまってほしいの？",
         "何を読むか迷ってる？右クリックしてくれたら、ウィッシュリストから選んであげる～",
         "夜更かしして読みすぎちゃダメよ？"
+      ],
+      "chatter": [
+        "ずいぶん頑張ってるわね。えらいわ～",
+        "目を休めるのも忘れないでね？",
+        "あらあら～、集中しちゃって。かわいい。"
       ]
     },
     "chuuni": {
@@ -82,6 +105,11 @@
         "我に触れるな！右腕が…疼く…！",
         "右クリックでウィッシュリストから物語を召喚せよ！",
         "我こそは汝の読書時間の守護者。恐れるがいい！"
+      ],
+      "chatter": [
+        "物語は深淵へ…大いなる運命を感じるぞ！",
+        "人の子よ、その持久力…我すら感服するわ！",
+        "我が魔眼は汝と共に一行一行を見届けている…"
       ]
     }
   },
@@ -526,6 +554,33 @@
     "{section} becomes its name.": "{section} はその名前になります。",
     "After a screenshot": "スクリーンショットの後",
     "When you click it": "クリックしたとき",
-    "One per line, picked at random.": "1行に1つ。ランダムに選ばれます。"
+    "One per line, picked at random.": "1行に1つ。ランダムに選ばれます。",
+    "Couldn't create the shortcut: {error}": "ショートカットを作成できませんでした：{error}",
+    "Now and then": "ときどき",
+    "Every {n} min": "{n}分ごと",
+    "Never": "しない",
+    "Done": "完了",
+    "Talk on their own": "自分から話す",
+    "After this long without saying anything.": "この時間なにも話さなかったとき。",
+    "Voice volume": "ボイスの音量",
+    "For the sounds you give a mascot with “Voices…”.": "「ボイス…」でマスコットに設定した音声の音量です。",
+    "Key to switch clicks on or off": "クリックの切り替えキー",
+    "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.": "ゲーム中でもどこでも使えます。すべてのマスコットをクリックが通り抜ける状態にするか、またクリックできる状態に戻します。マスコットを表示したままゲームをするときに便利です。マスコットごとの「表示のみ」もあります。",
+    "View only": "表示のみ",
+    "Clicks go through it.": "クリックが通り抜けます。",
+    "Voices…": "ボイス…",
+    "Add a sound…": "音声を追加…",
+    "Choose a sound": "音声を選択",
+    "No sound: it only shows the text.": "音声なし：テキストだけ表示されます。",
+    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "マスコットのセリフと一緒に音声が流れます。ひとつの場面に複数入れると、ランダムに選ばれます。",
+    "{name}'s voice": "{name}のボイス",
+    "Couldn't watch the mascot key: another app already uses it": "マスコット用のキーを使えません：ほかのアプリが使用中です",
+    "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "MP3・WAV・OGG・M4A・OPUS・FLAC ファイルを使ってください。",
+    "Title on Discord": "Discordに表示するタイトル",
+    "The original title comes from VNDB. VNs without one keep the romanized title.": "原題はVNDBから取得します。原題がないVNはローマ字のままです。",
+    "Romanized": "ローマ字",
+    "Original": "原題",
+    "Same as the app": "アプリと同じ",
+    "Language on Discord": "Discordの言語"
   }
 }

@@ -44,7 +44,11 @@ pub fn update_settings(
         let normalized = hotkey::normalize(key);
         changes.insert("screenshot_hotkey".into(), json!(normalized));
     }
-    let mascot_changed = changes.keys().any(|k| k.starts_with("mascot_"));
+    const NOT_ON_SCREEN: [&str; 3] =
+        ["mascot_chatter_minutes", "mascot_voice_volume", "mascot_click_hotkey"];
+    let mascot_changed = changes
+        .keys()
+        .any(|k| k.starts_with("mascot_") && !NOT_ON_SCREEN.contains(&k.as_str()));
     let language_changed = changes.contains_key("language");
 
     shared

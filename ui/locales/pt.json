@@ -11,7 +11,10 @@
     "Hide this mascot": "Esconder este mascote",
     "Reading": "Lendo",
     "Total read: {}": "Tempo lido: {}",
-    "View on VNDB": "Ver no VNDB"
+    "View on VNDB": "Ver no VNDB",
+    "Mascots: you can click them": "Mascotes: dá para clicar",
+    "Mascots: clicks go through": "Mascotes: os cliques passam por elas",
+    "Press {} again to switch back.": "Aperte {} de novo para voltar."
   },
   "personalities": {
     "cheerful": {
@@ -26,6 +29,11 @@
         "Precisa de algo pra ler? Clique com o botão direito em mim para uma VN aleatória da sua wishlist!",
         "Estou de olho no seu tempo de leitura~",
         "Hehe, isso faz cócegas!"
+      ],
+      "chatter": [
+        "Ainda lendo? Você está indo muito bem~",
+        "Não esquece de beber água!",
+        "O que será que vem agora... continua!"
       ]
     },
     "tsundere": {
@@ -40,6 +48,11 @@
         "O-o que você quer?!",
         "Para de me cutucar! ...Quer uma VN aleatória da sua wishlist? Botão direito, baka.",
         "Não é como se eu estivesse contando seu tempo de leitura pra você nem nada!"
+      ],
+      "chatter": [
+        "E-ei, você já está lendo faz tempo. Não que eu esteja preocupada!",
+        "Não vai dormir tarde, bobo.",
+        "...Tá, essa parte é até boa."
       ]
     },
     "shy": {
@@ -54,6 +67,11 @@
         "Ai! ...D-desculpa, você me assustou.",
         "Você... quer uma VN da sua wishlist? Clique com o botão direito em mim...",
         "Estou contando seu tempo de leitura... quietinha."
+      ],
+      "chatter": [
+        "É-é... eu ainda estou aqui, lendo com você...",
+        "T-talvez se alongar um pouco? ...Só se você quiser...",
+        "Que bom... ler juntos..."
       ]
     },
     "big_sister": {
@@ -68,6 +86,11 @@
         "Ara~ Precisando de um pouco de atenção?",
         "Não sabe o que ler? Botão direito em mim, eu escolho da sua wishlist~",
         "Não fique lendo até muito tarde, tá?"
+      ],
+      "chatter": [
+        "Você já está nessa faz tempo, querido. Tenho orgulho de você~",
+        "Lembra de descansar os olhos, tá?",
+        "Ara~ Tão concentrado. Que fofo."
       ]
     },
     "chuuni": {
@@ -82,6 +105,11 @@
         "Não me toque! Meu braço direito... está descontrolado!",
         "Botão direito para invocar uma história aleatória da sua wishlist!",
         "Eu sou a guardiã das suas horas de leitura. Tema-me!"
+      ],
+      "chatter": [
+        "A história se aprofunda... sinto um grande destino à frente!",
+        "Mortal, sua resistência me impressiona!",
+        "Meu olho sombrio acompanha cada linha com você..."
       ]
     }
   },
@@ -525,6 +553,33 @@
     "{section} becomes its name.": "{section} vira o nome dele.",
     "After a screenshot": "Depois de uma captura",
     "When you click it": "Ao clicar nela",
-    "One per line, picked at random.": "Uma por linha, escolhida ao acaso."
+    "One per line, picked at random.": "Uma por linha, escolhida ao acaso.",
+    "Couldn't create the shortcut: {error}": "Não foi possível criar o atalho: {error}",
+    "Now and then": "De vez em quando",
+    "Every {n} min": "A cada {n} min",
+    "Never": "Nunca",
+    "Done": "Pronto",
+    "Talk on their own": "Falar sozinhos",
+    "After this long without saying anything.": "Depois desse tempo sem dizer nada.",
+    "Voice volume": "Volume das vozes",
+    "For the sounds you give a mascot with “Voices…”.": "Para os sons que você dá a um mascote em “Vozes…”.",
+    "Key to switch clicks on or off": "Tecla para ligar ou desligar os cliques",
+    "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.": "Funciona em qualquer lugar, até num jogo: os cliques passam por todos os mascotes, ou eles voltam a ser clicáveis. Útil se você joga com os mascotes na tela. Cada mascote também tem o seu “Só visual”.",
+    "View only": "Só visual",
+    "Clicks go through it.": "Os cliques passam por ele.",
+    "Voices…": "Vozes…",
+    "Add a sound…": "Adicionar um som…",
+    "Choose a sound": "Escolher um som",
+    "No sound: it only shows the text.": "Sem som: só aparece o texto.",
+    "Sounds play with what the mascot says. Give a moment several sounds and one is picked at random.": "Os sons tocam junto com o que o mascote diz. Coloque vários sons num momento e um é escolhido ao acaso.",
+    "{name}'s voice": "Voz de {name}",
+    "Couldn't watch the mascot key: another app already uses it": "Não deu para usar a tecla dos mascotes: outro app já usa ela",
+    "Use an MP3, WAV, OGG, M4A, OPUS or FLAC file.": "Use um arquivo MP3, WAV, OGG, M4A, OPUS ou FLAC.",
+    "Title on Discord": "Título no Discord",
+    "The original title comes from VNDB. VNs without one keep the romanized title.": "O título original vem do VNDB. VNs sem ele mantêm o título romanizado.",
+    "Romanized": "Romanizado",
+    "Original": "Original",
+    "Same as the app": "Igual ao app",
+    "Language on Discord": "Idioma no Discord"
   }
 }
