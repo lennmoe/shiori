@@ -166,3 +166,37 @@ pub fn quit_app(app: &AppHandle, shared: &Shared) {
     std::thread::sleep(std::time::Duration::from_millis(400));
     app.exit(0);
 }
+
+#[tauri::command(async)]
+pub fn set_background(shared: SharedState, path: Option<String>) -> Result<(), String> {
+    let dir = shared.data_dir.join("backgrounds");
+    let stored = match path {
+        Some(path) => {
+            let source = std::path::Path::new(&path);
+            let ext = source
+                .extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                .filter(|ext| ["png", "jpg", "jpeg", "webp", "gif", "bmp"].contains(&ext.as_str()))
+                .ok_or("Use a PNG, JPG, WebP, GIF or BMP image.")?;
+            let _ = std::fs::remove_dir_all(&dir);
+            std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let stamp = chrono::Utc::now().timestamp_millis();
+            let target = dir.join(format!("background_{stamp}.{ext}"));
+            std::fs::copy(source, &target).map_err(|e| e.to_string())?;
+            target.to_string_lossy().to_string()
+        }
+        None => {
+            let _ = std::fs::remove_dir_all(&dir);
+            String::new()
+        }
+    };
+
+    let settings = {
+        let mut cfg = shared.config.lock().unwrap();
+        cfg.update(Map::from_iter([("background_image".into(), json!(stored))]))
+            .map_err(|e| e.to_string())?;
+        cfg.data().clone()
+    };
+    shared.emit("settings-changed", settings);
+    Ok(())
+}

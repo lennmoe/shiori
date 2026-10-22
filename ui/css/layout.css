@@ -77,14 +77,40 @@ nav button.active {
 }
 
 .pill {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  border-radius: 99px;
-  border: 1px solid var(--border);
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-alt);
+  color: var(--subtle);
   font-weight: 600;
   font-size: 13px;
+  transition:
+    color 0.3s,
+    background 0.3s;
+}
+
+.pill span {
+  flex: 1;
+  color: var(--muted);
+}
+
+.pill-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.pill-icon.line,
+#pause-btn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .pill i {
@@ -95,13 +121,54 @@ nav button.active {
   transition: background 0.3s;
 }
 
+.pill.ok {
+  color: var(--green);
+}
+
 .pill.ok i {
   background: var(--green);
   box-shadow: 0 0 8px var(--green);
 }
 
+.pill.bad {
+  color: var(--red);
+}
+
 .pill.bad i {
   background: var(--red);
+}
+
+#pill-discord .pill-icon {
+  color: #5865f2;
+}
+
+#pause-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#pause-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+#pause-btn .play-icon,
+#pause-btn.paused .pause-icon {
+  display: none;
+}
+
+#pause-btn.paused .play-icon {
+  display: block;
+  fill: currentColor;
+}
+
+#pause-btn .pause-icon {
+  fill: currentColor;
+  stroke: none;
+  width: 14px;
+  height: 14px;
 }
 
 main {
@@ -140,4 +207,34 @@ main {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+#app-bg {
+  display: none;
+}
+
+html.has-bg #app-bg {
+  display: block;
+  position: fixed;
+  inset: calc(var(--app-bg-blur, 0px) * -2);
+  z-index: -1;
+  background: var(--app-bg-image) center / cover no-repeat;
+  filter: blur(var(--app-bg-blur, 0px));
+}
+
+html.has-bg #app-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: var(--app-bg-dim, 0.55);
+}
+
+html.has-bg body {
+  background: transparent;
+}
+
+html.has-bg .sidebar,
+html.has-bg .card {
+  background: color-mix(in srgb, var(--surface) var(--app-panels, 80%), transparent);
 }

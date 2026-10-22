@@ -1,7 +1,10 @@
 import { el } from "../dom.js";
 import { THEMES, buildCustomPalette, resolveTheme, normalizeHex } from "../themes.js";
 import { store } from "../store.js";
-import { segmented } from "../ui.js";
+import { call, segmented } from "../ui.js";
+import { fileUrl, pickFile } from "../tauri.js";
+import { previewBackground } from "../background.js";
+import { t } from "../i18n.js";
 
 const CUSTOM_KEYS = { BG: "Background", SURFACE: "Cards", ACCENT: "Accent", TEXT: "Text" };
 
@@ -107,6 +110,58 @@ export function renderThemeTab(container, save) {
       { class: "custom-editor" },
       el("div", { style: { width: "170px" } }, customTile),
       customEditor(custom, save),
+    ),
+    el("div", { class: "section-title" }, "Background image"),
+    backgroundEditor(save),
+  );
+}
+
+const IMAGE_FILTERS = [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "gif", "bmp"] }];
+
+function backgroundEditor(save) {
+  const settings = store.settings;
+  const image = settings.background_image || "";
+
+  const preview = el("div", { class: "bg-preview" });
+  if (image) {
+    preview.style.backgroundImage = `url("${fileUrl(image)}")`;
+  }
+
+  const choose = el("button", { class: "btn" }, image ? "Change image…" : "Choose an image…");
+  choose.onclick = async () => {
+    const path = await pickFile({ title: t("Choose a background image"), filters: IMAGE_FILTERS });
+    if (path) {
+      await call("set_background", { path });
+    }
+  };
+  const remove = el("button", { class: "btn secondary" }, "Remove");
+  remove.hidden = !image;
+  remove.onclick = () => call("set_background", { path: null });
+
+  const slider = (key, label, { min, max, unit, fallback }) => {
+    const value = settings[key] ?? fallback;
+    const input = el("input", { type: "range", min, max, step: 1, value });
+    const shown = el("span", { class: "muted bg-value" }, `${value}${unit}`);
+    input.oninput = () => {
+      shown.textContent = `${input.value}${unit}`;
+      previewBackground({ ...store.settings, [key]: Number(input.value) });
+    };
+    input.onchange = () => save({ [key]: Number(input.value) });
+    return el("div", { class: "field" }, el("span", {}, label), el("div", { class: "row" }, input, shown));
+  };
+
+  return el(
+    "div",
+    { class: "bg-editor" },
+    preview,
+    el(
+      "div",
+      { class: "bg-controls" },
+      el("div", { class: "muted small-text" }, "A picture behind the whole app. Works with any theme."),
+      el("div", { class: "row" }, choose, remove),
+      image && slider("background_blur", "Blur", { min: 0, max: 30, unit: "px", fallback: 8 }),
+      image && slider("background_dim", "Darkness", { min: 0, max: 90, unit: "%", fallback: 55 }),
+      image && slider("background_panels", "Panel opacity", { min: 30, max: 100, unit: "%", fallback: 80 }),
     ),
   );
 }
