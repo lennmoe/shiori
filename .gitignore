@@ -6,3 +6,5 @@ build/
 dist/
 dist-nuitka/
 ideas/
+tools/symbolize/target/
+symbols/
