@@ -32,11 +32,14 @@ features = [
   "Win32_Globalization",
   "Win32_Graphics_Gdi",
   "Win32_Storage_EnhancedStorage",
+  "Win32_Storage_FileSystem",
   "Win32_Media_Multimedia",
   "Win32_Storage_Xps",
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
   "Win32_System_DataExchange",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_Kernel",
   "Win32_System_LibraryLoader",
   "Win32_System_Memory",
   "Win32_System_Threading",
@@ -48,6 +51,7 @@ features = [
 ]
 
 [profile.release]
+debug = "line-tables-only"
 codegen-units = 1
 lto = true
 opt-level = "s"
