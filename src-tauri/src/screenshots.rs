@@ -155,6 +155,7 @@ pub struct GameShots {
     pub key: String,
     pub name: String,
     pub shots: Vec<String>,
+    pub times: Vec<u64>,
 }
 
 pub fn games_with_shots(cfg: &mut Config) -> Vec<GameShots> {
@@ -169,11 +170,19 @@ pub fn games_with_shots(cfg: &mut Config) -> Vec<GameShots> {
         let folder = folder_for(cfg, &key, false);
         let shots = list_shots(folder.as_deref());
         if !shots.is_empty() {
+            let times = shots
+                .iter()
+                .map(|p| {
+                    modified(p)
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map_or(0, |d| d.as_secs())
+                })
+                .collect();
             let shots = shots
                 .iter()
                 .map(|p| p.to_string_lossy().to_string())
                 .collect();
-            out.push(GameShots { key, name, shots });
+            out.push(GameShots { key, name, shots, times });
         }
     }
 

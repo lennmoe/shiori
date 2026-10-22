@@ -2,12 +2,13 @@ import { $, el, html } from "../dom.js";
 import { dayMonth, plural } from "../format.js";
 import { fileUrl, invoke } from "../tauri.js";
 import { register, show } from "../router.js";
-import { subscribe } from "../store.js";
+import { store, subscribe } from "../store.js";
 import { call, flashLabel } from "../ui.js";
 import { t } from "../i18n.js";
 
 const BATCH = 60;
 const ALL = "";
+const VIEWS = ["right", "folder"];
 
 const TEMPLATE = `
   <button class="back" data-id="back" hidden>← Back</button>
@@ -18,12 +19,24 @@ const TEMPLATE = `
       <span class="muted" data-id="count"></span>
     </div>
     <div class="row">
+      <div class="view-menu" data-id="view-menu">
+        <button class="btn secondary" data-id="view-button" aria-haspopup="menu">
+          <span data-id="view-label"></span> ▾
+        </button>
+        <div class="menu" data-id="view-list" role="menu" hidden>
+          <button data-order="game" role="menuitemradio">By game</button>
+          <button data-order="date" role="menuitemradio">By date</button>
+          <hr />
+          <button data-v="right" role="menuitemradio">Thumbnails</button>
+          <button data-v="folder" role="menuitemradio">Folder</button>
+        </div>
+      </div>
       <select data-id="game"></select>
       <button class="btn secondary" data-id="folder">Open folder</button>
     </div>
   </div>
 
-  <div class="gallery">
+  <div class="gallery" data-id="gallery">
     <div class="card viewer">
       <div class="viewer-image" data-id="image"></div>
       <div class="viewer-info">
@@ -49,6 +62,7 @@ let games = [];
 let names = new Map();
 let filterKey = ALL;
 let shots = [];
+let sections = [];
 let index = -1;
 let shownCount = 0;
 let backTo = null;
@@ -75,7 +89,76 @@ function build(container) {
   part("delete").onclick = remove;
   part("image").ondblclick = openCurrent;
 
+  part("view-button").onclick = () => (part("view-list").hidden = !part("view-list").hidden);
+  for (const item of part("view-list").querySelectorAll("[data-v]")) {
+    item.onclick = () => {
+      part("view-list").hidden = true;
+      store.settings.screenshots_view = item.dataset.v;
+      applyView();
+      call("update_settings", { changes: { screenshots_view: item.dataset.v } });
+    };
+  }
+  for (const item of part("view-list").querySelectorAll("[data-order]")) {
+    item.onclick = () => {
+      part("view-list").hidden = true;
+      store.settings.screenshots_order = item.dataset.order;
+      applyView();
+      reload();
+      call("update_settings", { changes: { screenshots_order: item.dataset.order } });
+    };
+  }
+  document.addEventListener("click", (event) => {
+    if (!part("view-menu").contains(event.target)) {
+      part("view-list").hidden = true;
+    }
+  });
+
   subscribe("screenshots", () => root.classList.contains("active") && reload());
+}
+
+function applyView() {
+  const view = VIEWS.includes(store.settings.screenshots_view) ? store.settings.screenshots_view : "right";
+  part("gallery").dataset.view = view;
+  for (const item of part("view-list").querySelectorAll("[data-v]")) {
+    item.classList.toggle("on", item.dataset.v === view);
+    if (item.dataset.v === view) {
+      part("view-label").textContent = item.textContent;
+    }
+  }
+  for (const item of part("view-list").querySelectorAll("[data-order]")) {
+    item.classList.toggle("on", item.dataset.order === order());
+  }
+  highlight();
+}
+
+const order = () => (store.settings.screenshots_order === "date" ? "date" : "game");
+
+function dayTitle(seconds) {
+  const date = new Date(seconds * 1000);
+  return `${dayMonth(date)} ${date.getFullYear()}`;
+}
+
+function buildSections(visible) {
+  if (order() === "game") {
+    return visible.map((game) => ({
+      title: visible.length > 1 ? game.name : "",
+      items: game.shots.map((path) => ({ key: game.key, path })),
+    }));
+  }
+
+  const all = visible.flatMap((game) =>
+    game.shots.map((path, i) => ({ key: game.key, path, time: game.times?.[i] || 0 })),
+  );
+  all.sort((a, b) => b.time - a.time);
+  const byDay = [];
+  for (const shot of all) {
+    const title = dayTitle(shot.time);
+    if (byDay.at(-1)?.title !== title) {
+      byDay.push({ title, items: [] });
+    }
+    byDay.at(-1).items.push(shot);
+  }
+  return byDay;
 }
 
 function goBack() {
@@ -90,6 +173,7 @@ async function showPage({ key = ALL, select = null, back = null } = {}) {
   part("back").hidden = !back;
   filterKey = key || ALL;
   index = -1;
+  applyView();
   await reload(select);
 }
 
@@ -111,11 +195,12 @@ async function reload(select = null) {
   renderMenu(data.extra);
 
   const visible = games.filter((g) => filterKey === ALL || g.key === filterKey);
-  shots = visible.flatMap((g) => g.shots.map((path) => ({ key: g.key, path })));
+  sections = buildSections(visible);
+  shots = sections.flatMap((section) => section.items);
   part("count").textContent = shots.length ? plural(shots.length, "screenshot") : "";
 
   const wanted = shots.findIndex((s) => s.path === keep);
-  fillStrip(visible, Math.max(BATCH, wanted + 1));
+  fillStrip(Math.max(BATCH, wanted + 1));
   selectShot(wanted >= 0 ? wanted : shots.length ? 0 : -1);
 }
 
@@ -131,22 +216,20 @@ function renderMenu(extra) {
   part("game").value = filterKey;
 }
 
-function fillStrip(visible, upto) {
+function fillStrip(upto) {
   const strip = part("strip");
   strip.replaceChildren();
   shownCount = 0;
-
-  const grouped = filterKey === ALL && visible.length > 1;
   let n = 0;
 
-  for (const game of visible) {
+  for (const section of sections) {
     if (n >= upto) {
       break;
     }
-    if (grouped) {
-      strip.append(el("div", { class: "group" }, game.name));
+    if (section.title) {
+      strip.append(el("div", { class: "group" }, section.title));
     }
-    for (const path of game.shots) {
+    for (const { path } of section.items) {
       if (n >= upto) {
         break;
       }
@@ -160,7 +243,7 @@ function fillStrip(visible, upto) {
     const rest = Math.min(shots.length - n, BATCH);
     const more = el("button", { class: "btn secondary small" }, t("Show {count} more", { count: rest }));
     more.onclick = () => {
-      fillStrip(visible, shownCount + BATCH);
+      fillStrip(shownCount + BATCH);
       highlight();
     };
     strip.append(more);
@@ -169,7 +252,13 @@ function fillStrip(visible, upto) {
 
 function tile(path, i) {
   const img = el("img", { alt: "" });
-  const button = el("button", { class: "tile", "data-index": i }, img);
+  const name = path.split(/[\\/]/).pop().replace(/\.[^.]+$/, "");
+  const button = el(
+    "button",
+    { class: "tile", "data-index": i, title: name },
+    img,
+    el("span", { class: "tile-name" }, name),
+  );
   button.onclick = () => selectShot(i);
   button.ondblclick = () => {
     selectShot(i);
@@ -231,10 +320,7 @@ async function selectShot(i) {
   }
 
   if (i >= shownCount) {
-    fillStrip(
-      games.filter((g) => filterKey === ALL || g.key === filterKey),
-      i + 1,
-    );
+    fillStrip(i + 1);
   }
   highlight();
 

@@ -565,6 +565,9 @@
 
 .heatmap {
   position: relative;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .heatmap svg {
@@ -1119,4 +1122,107 @@
 
 .stat:has(.stat-edit) > span {
   padding-right: 22px;
+}
+
+.view-menu .menu button {
+  white-space: nowrap;
+}
+
+.side-strip .tile-name {
+  display: none;
+}
+
+.gallery[data-view="folder"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.gallery[data-view="folder"] .viewer {
+  order: 1;
+  padding: 12px 16px;
+}
+
+.gallery[data-view="folder"] .viewer-info {
+  padding: 0;
+}
+
+.gallery[data-view="folder"] .viewer-image {
+  display: none;
+}
+
+.gallery[data-view="folder"] .side-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 14px 10px;
+  padding: 4px;
+}
+
+.gallery[data-view="folder"] .side-strip .group,
+.gallery[data-view="folder"] .side-strip > .btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.gallery[data-view="folder"] .side-strip .tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: auto;
+  padding: 6px;
+  border-radius: 8px;
+  background: none;
+}
+
+.gallery[data-view="folder"] .side-strip .tile:hover {
+  background: var(--surface-hover);
+}
+
+.gallery[data-view="folder"] .side-strip .tile.on {
+  border-color: transparent;
+  background: var(--accent-soft, var(--surface-hover));
+}
+
+.gallery[data-view="folder"] .side-strip .tile img {
+  flex: none;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.gallery[data-view="folder"] .side-strip .tile-name {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  word-break: break-word;
+}
+
+.bg-editor {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.bg-preview {
+  flex: none;
+  width: 170px;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt) center / cover no-repeat;
+}
+
+.bg-controls {
+  flex: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.bg-value {
+  width: 44px;
+  text-align: right;
 }
