@@ -285,7 +285,10 @@ function drawCover(ctx, vn, image, x, y, p, allowNsfw) {
     if (vn.nsfw && !allowNsfw) {
       ctx.filter = "blur(18px)";
     }
-    ctx.drawImage(image, x, y, COVER_W, COVER_H);
+    const scale = Math.max(COVER_W / image.width, COVER_H / image.height);
+    const sw = COVER_W / scale;
+    const sh = COVER_H / scale;
+    ctx.drawImage(image, (image.width - sw) / 2, (image.height - sh) / 2, sw, sh, x, y, COVER_W, COVER_H);
   } else {
     ctx.fillStyle = p.SURFACE_ALT;
     ctx.fillRect(x, y, COVER_W, COVER_H);
