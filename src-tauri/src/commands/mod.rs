@@ -1,6 +1,7 @@
 pub mod app;
 pub mod covers;
 pub mod data;
+pub mod labs;
 pub mod library;
 pub mod popups;
 pub mod screenshots;

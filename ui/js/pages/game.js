@@ -199,6 +199,7 @@ async function load() {
   renderProgress(entry);
   renderChart();
   renderShots();
+  document.dispatchEvent(new CustomEvent("game-loaded", { detail: game }));
 
   part("play").hidden = !exe;
   part("shortcut").hidden = !exe;

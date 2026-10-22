@@ -176,7 +176,6 @@ function languageSection() {
 function generalTab() {
   return [
     ...languageSection(),
-    ...discordSection(),
     ...presenceSection(),
     ...coversSection(),
     ...vndbSection(),
@@ -185,6 +184,19 @@ function generalTab() {
     ...appSection(),
     ...dataSection(),
     ...advancedSection(),
+    ...labsSection(),
+  ];
+}
+
+function labsSection() {
+  return [
+    section("Labs (test)"),
+    hint("Features being tried out. They may change or go away."),
+    setting("labs_vn_description", "Description and characters on a VN's page", "From VNDB."),
+    setting("labs_search", "Search with Ctrl+K", "Find a VN or a page from anywhere."),
+    setting("labs_hover", "Covers lift when hovered"),
+    setting("labs_compact_sidebar", "Compact sidebar", "Icons only. The « button at the bottom of the sidebar switches it too."),
+    setting("labs_shortcuts", "Keyboard shortcuts", "1 to 6 switch pages, Alt+← goes back."),
   ];
 }
 
@@ -196,8 +208,7 @@ function discordSection() {
   };
 
   return [
-    section("Discord"),
-    el("div", { class: "field-label" }, "Application ID"),
+    el("div", { class: "field-label" }, "Discord Application ID"),
     ...testedField(clientId, test),
     hint(
       "Create one at discord.com/developers → New Application, then paste its Application ID. " +
@@ -454,6 +465,7 @@ async function importData() {
 function advancedSection() {
   return [
     section("Advanced"),
+    ...discordSection(),
     numberField("update_min_interval", "Min. seconds between presence updates", {
       min: 1,
       max: 300,

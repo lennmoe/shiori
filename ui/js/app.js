@@ -3,6 +3,7 @@ import { invoke, listen, currentWindow } from "./tauri.js";
 import { store, update, subscribe } from "./store.js";
 import { show } from "./router.js";
 import { resolveTheme, applyPalette } from "./themes.js";
+import { applyBackground } from "./background.js";
 import { call, toast } from "./ui.js";
 import { offerUpdate } from "./components/update.js";
 import { loadLanguage, t, translateTree } from "./i18n.js";
@@ -17,6 +18,7 @@ import "./pages/share.js";
 import "./pages/mascots.js";
 import "./pages/settings.js";
 import "./pages/whatsnew.js";
+import "./labs/index.js";
 
 // F11: full screen, like a browser.
 document.addEventListener("keydown", async (event) => {
@@ -31,6 +33,7 @@ document.addEventListener("keydown", async (event) => {
 function applyTheme() {
   const palette = resolveTheme(store.settings.theme || "system", store.settings.custom_theme);
   applyPalette(palette);
+  applyBackground(store.settings);
   currentWindow()
     .setTheme(palette.mode)
     .catch(() => {});
@@ -52,7 +55,9 @@ $("#pause-btn").onclick = () => call("set_paused", { paused: !store.snapshot.pau
 
 function renderSidebar() {
   const snap = store.snapshot;
-  $("#pause-btn").textContent = snap.paused ? t("Resume") : t("Pause");
+  $("#pause-label").textContent = snap.paused ? t("Resume") : t("Pause");
+  $("#pause-btn").classList.toggle("paused", !!snap.paused);
+  $("#pause-btn").title = snap.paused ? t("Resume") : t("Pause");
   $("#pill-game").className = "pill" + (snap.detected ? " ok" : "");
 }
 

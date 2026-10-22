@@ -260,6 +260,43 @@ impl Vndb {
         Ok(Some(VnResult::from_api(&first)))
     }
 
+    pub fn description(&self, id: &str) -> Result<String, String> {
+        let id = vn_id(id);
+        let cache = self.cache_dir.join(format!("desc_{id}.json"));
+        if let Some(raw) = read_cached(&cache, 30) {
+            return Ok(text(&raw["description"]));
+        }
+
+        let body = json!({"filters": ["id", "=", id], "fields": "description", "results": 1});
+        let data = self.post("/vn", &body)?;
+        let first = data["results"].get(0).cloned().unwrap_or_else(|| json!({}));
+
+        let _ = fs::create_dir_all(&self.cache_dir);
+        let _ = fs::write(&cache, first.to_string());
+        Ok(text(&first["description"]))
+    }
+
+    pub fn characters(&self, id: &str) -> Result<Value, String> {
+        let id = vn_id(id);
+        let cache = self.cache_dir.join(format!("chars_{id}.json"));
+        if let Some(raw) = read_cached(&cache, 30) {
+            return Ok(raw);
+        }
+
+        let body = json!({
+            "filters": ["vn", "=", ["id", "=", id]],
+            "fields": "id,name,original,description,image.url,image.sexual,blood_type,height,weight,bust,waist,hips,age,birthday,sex,vns.id,vns.role,vns.spoiler",
+            "results": 100,
+            "sort": "name",
+        });
+        let data = self.post("/character", &body)?;
+        let results = data["results"].clone();
+
+        let _ = fs::create_dir_all(&self.cache_dir);
+        let _ = fs::write(&cache, results.to_string());
+        Ok(results)
+    }
+
     pub fn release_covers(&self, id: &str) -> Result<Vec<ReleaseCover>, String> {
         let id = vn_id(id);
         let cache = self.cache_dir.join(format!("releases_{id}.json"));
