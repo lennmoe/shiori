@@ -1,6 +1,6 @@
 [package]
 name = "vnrpc"
-version = "2.1.6"
+version = "2.1.7"
 description = "Visual Novel RPC (Tauri prototype)"
 edition = "2021"
 
