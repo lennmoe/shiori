@@ -161,6 +161,7 @@ pub fn install(new_exe: &Path) -> Result<(), String> {
         "ping -n 2 127.0.0.1 >nul".to_string(),
         "goto wait".to_string(),
         ":run".to_string(),
+        "ping -n 4 127.0.0.1 >nul".to_string(),
         format!("start \"\" \"{}\"", target.display()),
         ":end".to_string(),
         "del \"%~f0\"".to_string(),
