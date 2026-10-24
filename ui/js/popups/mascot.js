@@ -70,4 +70,5 @@ listenHere("voice", (event) => {
 });
 
 listenHere("mascot-refresh", start);
+setInterval(() => invoke("mascot_alive"), 10000);
 start();

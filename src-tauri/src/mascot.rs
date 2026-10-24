@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use image::imageops::FilterType;
 use image::{DynamicImage, RgbaImage};
@@ -44,6 +44,8 @@ static REQUESTS: AtomicU64 = AtomicU64::new(0);
 static RESIZES: AtomicU64 = AtomicU64::new(0);
 static APPLYING: Mutex<()> = Mutex::new(());
 static LAST_SAID: AtomicU64 = AtomicU64::new(0);
+static LAST_SEEN: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
+const SILENT_LIMIT: Duration = Duration::from_secs(90);
 
 const MIN_HEIGHT: u32 = 80;
 const MAX_HEIGHT: u32 = 1500;
@@ -337,6 +339,7 @@ fn apply_now(app: &AppHandle) {
     ui_windows::hide_balloon(app);
     for (label, window) in app.webview_windows() {
         if label.starts_with(WINDOW_PREFIX) {
+            crate::crash::note(format!("destroy {label}"));
             let _ = window.destroy();
         }
     }
@@ -378,6 +381,7 @@ fn apply_now(app: &AppHandle) {
 }
 
 pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
+    crate::crash::note(format!("resize {id} to {height}"));
     let shared = shared(app);
     let height = height.clamp(MIN_HEIGHT, MAX_HEIGHT);
     let mut sizes = shared
@@ -427,6 +431,8 @@ fn remove_old_pictures(cache: &Path) {
 }
 
 fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height: u32, topmost: bool) {
+    crate::crash::note(format!("create {label}"));
+    alive(label);
     let built = WebviewWindowBuilder::new(app, label, WebviewUrl::App("mascot.html".into()))
         .additional_browser_args(ui_windows::BROWSER_ARGS)
         .title("Visual Novel RPC mascot")
@@ -439,8 +445,13 @@ fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height
         .focused(false)
         .visible(false)
         .build();
-    let Ok(window) = built else {
-        return;
+    let window = match built {
+        Ok(window) => window,
+        Err(error) => {
+            crate::crash::note(format!("couldn't create {label}: {error}"));
+            eprintln!("couldn't create {label}: {error}");
+            return;
+        }
     };
 
     let _ = window.set_size(PhysicalSize::new(width, height));
@@ -605,6 +616,7 @@ fn say_as(
     };
 
     LAST_SAID.store(now(), Ordering::SeqCst);
+    crate::crash::note(format!("{label} says {event}"));
     let shared = shared(app);
     let (talks, language, volume) = {
         let cfg = shared.config.lock().unwrap();
@@ -646,6 +658,53 @@ fn pick(lines: &[String]) -> Said {
 
 fn now() -> u64 {
     chrono::Utc::now().timestamp().max(0) as u64
+}
+
+pub fn alive(label: &str) {
+    LAST_SEEN
+        .lock()
+        .unwrap()
+        .get_or_insert_with(HashMap::new)
+        .insert(label.to_string(), Instant::now());
+}
+
+fn needs_rebuild(app: &AppHandle) -> Option<String> {
+    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+    let seen = LAST_SEEN.lock().unwrap().clone().unwrap_or_default();
+    for label in labels {
+        let Some(window) = app.get_webview_window(&label) else {
+            return Some(format!("{label} window is gone"));
+        };
+        if window.is_minimized().unwrap_or(false) {
+            let _ = window.unminimize();
+        }
+        if !window.is_visible().unwrap_or(true) {
+            let _ = window.show();
+        }
+        let silent = seen.get(&label).map_or(SILENT_LIMIT, Instant::elapsed);
+        if silent >= SILENT_LIMIT {
+            return Some(format!("{label} stopped answering"));
+        }
+    }
+    None
+}
+
+pub fn start_watchdog(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_secs(15));
+        if !shared(&app).config.lock().unwrap().bool("mascot_enabled") {
+            continue;
+        }
+        let reason = match APPLYING.try_lock() {
+            Ok(_guard) => needs_rebuild(&app),
+            Err(_) => None,
+        };
+        if let Some(reason) = reason {
+            crate::crash::note(format!("rebuild mascots: {reason}"));
+            apply_settings(&app);
+        }
+    });
 }
 
 pub fn start_chatter(app: &AppHandle) {
@@ -707,6 +766,7 @@ pub fn set_view_only(shared: &Shared, ids: &[String], view_only: bool) {
 }
 
 pub fn toggle_view_only(app: &AppHandle, key: &str) {
+    crate::crash::note("view-only key");
     let shared = shared(app);
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
     if labels.is_empty() {
@@ -857,6 +917,7 @@ pub fn react(app: &AppHandle, old: &Snapshot, new: &Snapshot) {
 }
 
 pub fn show_menu(app: &AppHandle, label: &str) {
+    crate::crash::note(format!("menu on {label}"));
     let Some(window) = app.get_webview_window(label) else {
         return;
     };
