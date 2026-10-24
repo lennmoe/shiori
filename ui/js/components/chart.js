@@ -101,7 +101,9 @@ function render(container, points) {
     hit.addEventListener("mouseenter", () => {
       const read = point.seconds ? exactDuration(point.seconds) : t("nothing read");
       tip.textContent = `${point.tip}  ·  ${read}`;
-      tip.style.left = `${(center / WIDTH) * 100}%`;
+      const left = (center / WIDTH) * 100;
+      tip.style.left = `${left}%`;
+      tip.style.transform = `translateX(${left < 20 ? "0%" : left > 80 ? "-100%" : "-50%"})`;
       tip.hidden = false;
     });
     hit.addEventListener("mouseleave", () => (tip.hidden = true));
