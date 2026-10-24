@@ -10,8 +10,23 @@ function say(text) {
   void balloon.offsetWidth;
   balloon.style.animation = "";
 
+  retries = 0;
   requestAnimationFrame(place);
 }
+
+let retries = 0;
+
+function overflowing() {
+  const box = balloon.getBoundingClientRect();
+  return box.right + 2 > window.innerWidth || box.bottom + 2 > window.innerHeight;
+}
+
+window.addEventListener("resize", () => {
+  if (overflowing() && retries < 3) {
+    retries += 1;
+    place();
+  }
+});
 
 async function place() {
   await document.fonts.ready;
@@ -20,8 +35,9 @@ async function place() {
   const marginX = parseFloat(style.marginLeft) + parseFloat(style.marginRight);
   const marginY = parseFloat(style.marginTop) + parseFloat(style.marginBottom);
 
-  const width = Math.ceil(balloon.offsetWidth + marginX) + 4;
-  const height = Math.ceil(balloon.offsetHeight + marginY) + 4;
+  const scale = window.devicePixelRatio || 1;
+  const width = Math.ceil((balloon.offsetWidth + marginX + 4) * scale);
+  const height = Math.ceil((balloon.offsetHeight + marginY + 4) * scale);
   invoke("place_balloon", { width, height });
 }
 
