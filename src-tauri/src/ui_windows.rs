@@ -12,7 +12,7 @@ use crate::capture::ScreenRect;
 use crate::winapi;
 
 pub const BROWSER_ARGS: &str =
-    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required";
+    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows";
 
 pub fn show_main(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -69,6 +69,7 @@ fn popup(
     if let Some(existing) = app.get_webview_window(label) {
         return Some(existing);
     }
+    crate::crash::note(format!("create {label}"));
 
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(page.into()))
         .additional_browser_args(BROWSER_ARGS)
@@ -81,6 +82,7 @@ fn popup(
         .skip_taskbar(true)
         .always_on_top(true)
         .focused(false)
+        .focusable(false)
         .visible(false)
         .build()
         .ok()?;
@@ -98,7 +100,8 @@ fn close_later(app: &AppHandle, label: &'static str, generation: &'static Atomic
         std::thread::sleep(Duration::from_secs_f64(seconds));
         if generation.load(Ordering::SeqCst) == mine {
             if let Some(window) = app.get_webview_window(label) {
-                let _ = window.destroy();
+                crate::crash::note(format!("hide {label}"));
+                let _ = window.hide();
             }
         }
     });
@@ -180,11 +183,7 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
         return;
     };
 
-    let scale = balloon.scale_factor().unwrap_or(1.0);
-    let (bw, bh) = (
-        (width as f64 * scale) as i32,
-        (height as f64 * scale) as i32,
-    );
+    let (bw, bh) = (width as i32, height as i32);
     let (cw, ch) = (size.width as i32, size.height as i32);
     let (left, top, right, _) = winapi::work_area();
 
@@ -195,6 +194,7 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
     let x = x.clamp(left, (right - bw).max(left));
     let y = top.max(pos.y + ch / 10);
 
+    let _ = balloon.set_position(PhysicalPosition::new(x, y));
     let _ = balloon.set_size(PhysicalSize::new(bw as u32, bh as u32));
     let _ = balloon.set_position(PhysicalPosition::new(x, y));
     let _ = balloon.show();
@@ -203,6 +203,7 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
 pub fn hide_balloon(app: &AppHandle) {
     BALLOON_GENERATION.fetch_add(1, Ordering::SeqCst);
     if let Some(window) = app.get_webview_window("balloon") {
-        let _ = window.destroy();
+        crate::crash::note("hide balloon");
+        let _ = window.hide();
     }
 }
