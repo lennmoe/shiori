@@ -124,6 +124,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     tray::build(app.handle())?;
     mascot::apply_settings(app.handle());
     mascot::start_chatter(app.handle());
+    mascot::start_watchdog(app.handle());
 
     if !start_minimized {
         ui_windows::show_main(app.handle());
@@ -240,6 +241,7 @@ fn main() {
             commands::popups::personality_lines,
             commands::popups::set_mascot_custom_lines,
             commands::popups::set_mascot_view_only,
+            commands::popups::mascot_alive,
             commands::popups::mascot_voices,
             commands::popups::add_mascot_voice,
             commands::popups::remove_mascot_voice,
@@ -251,6 +253,14 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while building the app")
         .run(|_app, event| {
+            if let RunEvent::WindowEvent {
+                label,
+                event: tauri::WindowEvent::Destroyed,
+                ..
+            } = &event
+            {
+                crash::note(format!("destroyed {label}"));
+            }
             if let RunEvent::ExitRequested {
                 api, code: None, ..
             } = event

@@ -295,6 +295,7 @@ pub fn info(path: &Path) -> ShotInfo {
 }
 
 pub fn take(shared: &Arc<Shared>) {
+    crate::crash::note("screenshot");
     match capture_and_save(shared) {
         Ok((path, key, area)) => {
             shared.emit("screenshots-changed", json!({ "key": key }));

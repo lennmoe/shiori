@@ -46,6 +46,10 @@ pub fn update_settings(
     }
     const NOT_ON_SCREEN: [&str; 3] =
         ["mascot_chatter_minutes", "mascot_voice_volume", "mascot_click_hotkey"];
+    crate::crash::note(format!(
+        "settings: {}",
+        changes.keys().cloned().collect::<Vec<_>>().join(", ")
+    ));
     let mascot_changed = changes
         .keys()
         .any(|k| k.starts_with("mascot_") && !NOT_ON_SCREEN.contains(&k.as_str()));

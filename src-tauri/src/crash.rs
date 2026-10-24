@@ -2,12 +2,14 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::os::windows::io::AsRawHandle;
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::collections::VecDeque;
+use std::sync::{Mutex, OnceLock};
 
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HANDLE, HMODULE};
 use windows::Win32::System::Diagnostics::Debug::{
-    MiniDumpWithThreadInfo, MiniDumpWriteDump, RtlCaptureStackBackTrace,
+    MiniDumpWithIndirectlyReferencedMemory, MiniDumpWithProcessThreadData, MiniDumpWithThreadInfo,
+    MiniDumpWithUnloadedModules, MiniDumpWriteDump, RtlCaptureStackBackTrace,
     SetUnhandledExceptionFilter, EXCEPTION_POINTERS, MINIDUMP_EXCEPTION_INFORMATION,
 };
 use windows::Win32::System::LibraryLoader::{
@@ -22,6 +24,34 @@ struct Target {
 }
 
 static TARGET: OnceLock<Target> = OnceLock::new();
+static TRAIL: Mutex<VecDeque<String>> = Mutex::new(VecDeque::new());
+const TRAIL_LEN: usize = 60;
+
+pub fn note(text: impl AsRef<str>) {
+    let thread = std::thread::current();
+    let line = format!(
+        "{} [{}] {}",
+        chrono::Local::now().format("%H:%M:%S%.3f"),
+        thread.name().unwrap_or("?"),
+        text.as_ref(),
+    );
+    if let Ok(mut trail) = TRAIL.lock() {
+        if trail.len() == TRAIL_LEN {
+            trail.pop_front();
+        }
+        trail.push_back(line);
+    }
+}
+
+fn trail_text() -> String {
+    match TRAIL.try_lock() {
+        Ok(trail) if !trail.is_empty() => {
+            let lines: Vec<String> = trail.iter().map(|line| format!("    {line}")).collect();
+            format!("\n  last actions:\n{}", lines.join("\n"))
+        }
+        _ => String::new(),
+    }
+}
 
 pub fn install(dir: PathBuf, version: String) {
     if TARGET.set(Target { dir, version }).is_err() {
@@ -29,7 +59,7 @@ pub fn install(dir: PathBuf, version: String) {
     }
     std::panic::set_hook(Box::new(|info| {
         let thread = std::thread::current();
-        write_line(&format!("[{}] {info}", thread.name().unwrap_or("?")));
+        write_line(&format!("[{}] {info}{}", thread.name().unwrap_or("?"), trail_text()));
     }));
     unsafe {
         SetUnhandledExceptionFilter(Some(on_exception));
@@ -89,10 +119,11 @@ unsafe extern "system" fn on_exception(info: *const EXCEPTION_POINTERS) -> i32 {
         .collect();
 
     write_line(&format!(
-        "[{}] native crash 0x{code:08X} at {}\n{}",
+        "[{}] native crash 0x{code:08X} at {}\n{}{}",
         thread.name().unwrap_or("?"),
         module_of(record.ExceptionAddress as usize),
         stack.join("\n"),
+        trail_text(),
     ));
 
     if let Ok(file) = File::create(target.dir.join("crash.dmp")) {
@@ -106,7 +137,10 @@ unsafe extern "system" fn on_exception(info: *const EXCEPTION_POINTERS) -> i32 {
                 GetCurrentProcess(),
                 GetCurrentProcessId(),
                 HANDLE(file.as_raw_handle()),
-                MiniDumpWithThreadInfo,
+                MiniDumpWithThreadInfo
+                    | MiniDumpWithIndirectlyReferencedMemory
+                    | MiniDumpWithUnloadedModules
+                    | MiniDumpWithProcessThreadData,
                 Some(&exception),
                 None,
                 None,
@@ -126,6 +160,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         install(dir.clone(), "9.9.9".into());
+        note("opened the mascot menu");
 
         let crashed = std::thread::Builder::new()
             .name("mascot-test".into())
@@ -138,6 +173,7 @@ mod tests {
         let log = std::fs::read_to_string(dir.join("crash.log")).unwrap();
         assert!(log.contains("v9.9.9 [mascot-test]"), "{log}");
         assert!(log.contains("test crash"), "{log}");
+        assert!(log.contains("last actions:") && log.contains("opened the mascot menu"), "{log}");
 
         let here = module_of(panics_and_modules_are_logged as *const () as usize);
         assert!(here.contains(".exe+0x"), "{here}");
