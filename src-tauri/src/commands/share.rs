@@ -1,12 +1,17 @@
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
 
 use base64::Engine as _;
+use chrono::{Datelike, NaiveDate};
 use serde_json::{json, Map, Value};
 
 use super::library::visible_games;
 use super::{blocking, SharedState};
+use crate::config::Entry;
 use crate::{clipboard, images, screenshots};
+
+const WRAPPED_SITE: &str = "https://wrapped.maia.moe/";
 
 #[tauri::command(async)]
 pub fn share_games(shared: SharedState) -> Vec<Value> {
@@ -98,4 +103,192 @@ pub async fn copy_png(data_url: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn save_png(path: String, data_url: String) -> Result<(), String> {
     blocking(move || std::fs::write(&path, decode_png(&data_url)?).map_err(|e| e.to_string())).await
+}
+
+fn in_year(stamp: i64, year: i32) -> bool {
+    chrono::DateTime::from_timestamp(stamp, 0)
+        .is_some_and(|t| t.with_timezone(&chrono::Local).year() == year)
+}
+
+fn counter(entry: &Entry, name: &str) -> Vec<(String, i64)> {
+    entry
+        .get(name)
+        .and_then(Value::as_object)
+        .map(|map| {
+            map.iter()
+                .filter_map(|(k, v)| v.as_i64().filter(|s| *s > 0).map(|s| (k.clone(), s)))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn longest_streak(days: &BTreeMap<NaiveDate, i64>) -> i64 {
+    let mut best = 0;
+    let mut run = 0;
+    let mut previous: Option<NaiveDate> = None;
+    for day in days.keys() {
+        run = if previous.and_then(|p| p.succ_opt()) == Some(*day) { run + 1 } else { 1 };
+        best = best.max(run);
+        previous = Some(*day);
+    }
+    best
+}
+
+fn finished_in(entry: &Entry, year: i32) -> bool {
+    entry.get("status").and_then(Value::as_str) == Some("finished")
+        && ["finished_at", "last_played"]
+            .iter()
+            .find_map(|f| entry.get(*f).and_then(Value::as_i64).filter(|t| *t > 0))
+            .is_some_and(|t| in_year(t, year))
+}
+
+pub fn build_recap(
+    year: i32,
+    games: &[(String, Entry)],
+    shot_times: &[u64],
+    lang: &str,
+    nsfw: bool,
+) -> Value {
+    let prefix = format!("{year}-");
+    let mut months = [0i64; 12];
+    let mut hours = [0i64; 24];
+    let mut days: BTreeMap<NaiveDate, i64> = BTreeMap::new();
+    let mut read: Vec<(i64, Value)> = Vec::new();
+    let mut finished = 0;
+
+    for (key, entry) in games {
+        let mut seconds = 0;
+        for (day, s) in counter(entry, "daily") {
+            let Ok(date) = NaiveDate::parse_from_str(&day, "%Y-%m-%d") else {
+                continue;
+            };
+            if date.year() == year {
+                seconds += s;
+                months[date.month0() as usize] += s;
+                *days.entry(date).or_default() += s;
+            }
+        }
+        for (slot, s) in counter(entry, "hourly") {
+            if let Some(hour) = slot
+                .strip_prefix(&prefix)
+                .and_then(|h| h.parse::<usize>().ok())
+                .filter(|h| *h < 24)
+            {
+                hours[hour] += s;
+            }
+        }
+
+        let done = finished_in(entry, year);
+        if done {
+            finished += 1;
+        }
+        if seconds < 60 {
+            continue;
+        }
+        let title: String = screenshots::display_name(key, entry).chars().take(60).collect();
+        let mut vn = json!({ "t": title, "s": seconds });
+        if let Some(id) = ["vndb_id", "matched_vndb_id"]
+            .iter()
+            .filter_map(|f| entry.get(*f).and_then(Value::as_str))
+            .find(|id| !id.is_empty())
+        {
+            vn["id"] = json!(id);
+        }
+        if done {
+            vn["f"] = json!(1);
+        }
+        read.push((seconds, vn));
+    }
+
+    read.sort_by_key(|(seconds, _)| std::cmp::Reverse(*seconds));
+    let mut recap = json!({
+        "v": 1,
+        "y": year,
+        "lang": lang,
+        "t": days.values().sum::<i64>(),
+        "n": read.len(),
+        "f": finished,
+        "dr": days.len(),
+        "st": longest_streak(&days),
+        "m": months,
+        "top": read.into_iter().take(5).map(|(_, vn)| vn).collect::<Vec<_>>(),
+    });
+    if hours.iter().any(|h| *h > 0) {
+        recap["hr"] = json!(hours);
+    }
+    let shots = shot_times.iter().filter(|t| in_year(**t as i64, year)).count();
+    if shots > 0 {
+        recap["sh"] = json!(shots);
+    }
+    if nsfw {
+        recap["x"] = json!(1);
+    }
+    recap
+}
+
+#[tauri::command(async)]
+pub fn year_recap(shared: SharedState, year: i32) -> Value {
+    let mut cfg = shared.config.lock().unwrap();
+    let games = visible_games(&cfg);
+    let shots: Vec<u64> = screenshots::games_with_shots(&mut cfg)
+        .into_iter()
+        .flat_map(|game| game.times)
+        .collect();
+    let lang = crate::lang::resolve(&cfg.str("language"));
+    let recap = build_recap(year, &games, &shots, lang, cfg.bool("allow_nsfw_covers"));
+    drop(cfg);
+
+    let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(recap.to_string());
+    json!({ "url": format!("{WRAPPED_SITE}?d={encoded}"), "seconds": recap["t"] })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    fn game(fields: Value) -> Entry {
+        fields.as_object().unwrap().clone()
+    }
+
+    #[test]
+    fn recap_counts_only_the_asked_year() {
+        let finished_2026 = chrono::Local
+            .with_ymd_and_hms(2026, 6, 1, 12, 0, 0)
+            .unwrap()
+            .timestamp();
+        let games = vec![
+            (
+                "a.exe".to_string(),
+                game(json!({
+                    "title": "Senren * Banka",
+                    "vndb_id": "v19073",
+                    "status": "finished",
+                    "finished_at": finished_2026,
+                    "daily": { "2025-12-31": 999, "2026-03-01": 3600, "2026-03-02": 1800, "2026-03-04": 600 },
+                    "hourly": { "2025-23": 999, "2026-22": 6000 },
+                })),
+            ),
+            (
+                "b.exe".to_string(),
+                game(json!({ "name": "Other", "daily": { "2026-03-02": 7200 } })),
+            ),
+            ("c.exe".to_string(), game(json!({ "name": "Old", "daily": { "2025-01-01": 9000 } }))),
+        ];
+
+        let recap = build_recap(2026, &games, &[], "fr", false);
+
+        assert_eq!(recap["t"], 13200);
+        assert_eq!(recap["n"], 2);
+        assert_eq!(recap["f"], 1);
+        assert_eq!(recap["dr"], 3);
+        assert_eq!(recap["st"], 2);
+        assert_eq!(recap["m"][2], 13200);
+        assert_eq!(recap["hr"][22], 6000);
+        assert_eq!(recap["top"][0]["t"], "Other");
+        assert_eq!(recap["top"][1]["id"], "v19073");
+        assert_eq!(recap["top"][1]["f"], 1);
+        assert!(recap.get("sh").is_none());
+        assert!(recap.get("x").is_none());
+    }
 }

@@ -625,6 +625,10 @@
     "Birthday: {date}": "誕生日：{date}",
     "Discord Application ID": "DiscordのApplication ID",
     "Remove this VN from your library? Its screenshots are kept.": "このVNをライブラリから削除しますか？スクリーンショットは残ります。",
-    "More": "その他"
+    "More": "その他",
+    "Your {year} in visual novels": "{year}年のビジュアルノベル",
+    "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours}時間の読書、トップVNなど。ブラウザで開きます。データはリンクの中だけに入っています。",
+    "Open my recap": "まとめを見る",
+    "My {year} recap": "{year}年のまとめ"
   }
 }

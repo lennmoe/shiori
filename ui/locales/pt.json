@@ -624,6 +624,10 @@
     "Birthday: {date}": "Aniversário: {date}",
     "Discord Application ID": "Application ID do Discord",
     "Remove this VN from your library? Its screenshots are kept.": "Remover esta VN da biblioteca? As capturas são mantidas.",
-    "More": "Mais"
+    "More": "Mais",
+    "Your {year} in visual novels": "Seu {year} em visual novels",
+    "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours} h de leitura, suas VNs favoritas e mais. Abre no seu navegador, e seus dados ficam no link.",
+    "Open my recap": "Ver minha retrospectiva",
+    "My {year} recap": "Minha retrospectiva {year}"
   }
 }

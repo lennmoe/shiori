@@ -1,4 +1,4 @@
-import { $, html } from "../dom.js";
+import { $, html, svg } from "../dom.js";
 import { isoDay } from "../format.js";
 import { invoke, pickSaveFile } from "../tauri.js";
 import { register } from "../router.js";
@@ -6,6 +6,8 @@ import { store } from "../store.js";
 import { resolveTheme } from "../themes.js";
 import { call, flashLabel } from "../ui.js";
 import { collect, render, MAX_COVERS, PERIODS } from "../components/share-card.js";
+import { openRecap, recapYear } from "../components/recap.js";
+import { t } from "../i18n.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -24,6 +26,10 @@ const TEMPLATE = `
     <button class="btn" data-id="copy">Copy image</button>
     <button class="btn secondary" data-id="save">Save…</button>
     <span class="muted">Then paste it in a Discord message with Ctrl+V.</span>
+  </div>
+
+  <div class="row">
+    <button class="btn secondary btn-ext" data-id="recap"></button>
   </div>
 `;
 
@@ -47,6 +53,10 @@ function build(container) {
   }
   part("copy").onclick = copy;
   part("save").onclick = save;
+  const icon = svg("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" });
+  icon.append(svg("path", { d: "M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" }));
+  part("recap").replaceChildren(t("My {year} recap", { year: recapYear() }), icon);
+  part("recap").onclick = () => openRecap();
 }
 
 function loadImage(src) {

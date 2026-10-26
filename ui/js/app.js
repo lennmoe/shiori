@@ -6,6 +6,7 @@ import { resolveTheme, applyPalette } from "./themes.js";
 import { applyBackground } from "./background.js";
 import { call, toast } from "./ui.js";
 import { offerUpdate } from "./components/update.js";
+import { offerRecap } from "./components/recap.js";
 import { loadLanguage, t, translateTree } from "./i18n.js";
 
 import "./pages/home.js";
@@ -115,8 +116,9 @@ async function start() {
   }
 
   if (store.settings.check_updates) {
-    offerUpdate();
+    await offerUpdate();
   }
+  offerRecap();
 }
 
 start();

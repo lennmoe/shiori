@@ -218,6 +218,7 @@ fn main() {
             commands::share::image_data_url,
             commands::share::copy_png,
             commands::share::save_png,
+            commands::share::year_recap,
             commands::data::backup_default_name,
             commands::data::export_data,
             commands::data::import_data,

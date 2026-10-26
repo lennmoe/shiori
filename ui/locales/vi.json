@@ -624,6 +624,10 @@
     "Birthday: {date}": "Sinh nhật: {date}",
     "Discord Application ID": "Application ID của Discord",
     "Remove this VN from your library? Its screenshots are kept.": "Xóa VN này khỏi thư viện? Ảnh chụp vẫn được giữ.",
-    "More": "Thêm"
+    "More": "Thêm",
+    "Your {year} in visual novels": "Năm {year} của bạn với visual novel",
+    "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours} giờ đọc, các VN hàng đầu và hơn thế nữa. Mở trong trình duyệt, dữ liệu của bạn chỉ nằm trong liên kết.",
+    "Open my recap": "Xem tổng kết",
+    "My {year} recap": "Tổng kết {year} của tôi"
   }
 }
