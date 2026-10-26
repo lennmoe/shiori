@@ -213,7 +213,7 @@ pub fn parse(title: &str, game_name: &str, other_names: &[String], user: &[Rule]
     let remainder = squash(&remainder)
         .trim_matches(|c| STRIP_CHARS.contains(c))
         .to_string();
-    if remainder.is_empty() {
+    if loose(&remainder).is_empty() {
         return TitleInfo::default();
     }
     for rule in user.iter().chain(DEFAULT_RULES.iter()) {
@@ -383,6 +383,15 @@ mod tests {
         let title = "HimaNatsu: Of Churches, Sunflowers, and Long Summers - Our Secret Base";
         let info = parse(title, "Himawari no Kyoukai to Nagai Natsuyasumi", &other, &[]);
         assert_eq!(info.section_label, "Our Secret Base");
+    }
+
+    #[test]
+    fn leftover_punctuation_is_not_a_section() {
+        let other = vec!["Re:LieF ～親愛なるあなたへ～".to_string()];
+        for title in ["Re:LieF ～親愛なるあなたへ～", "Re: LieF ~Shin'ainaru Anata e~", "Re:LieF ～"] {
+            let info = parse(title, "Re: LieF ~Shin'ainaru Anata e~", &other, &[]);
+            assert_eq!(info.section_label, "", "{title}");
+        }
     }
 
     #[test]
