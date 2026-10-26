@@ -13,12 +13,24 @@ body.mascot-window img {
 }
 
 body.balloon-window {
-  width: 280px;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+body.balloon-window.right {
+  justify-content: flex-end;
 }
 
 .balloon {
   display: inline-block;
   max-width: 260px;
+  max-height: calc(100vh - 8px);
+  overflow: hidden;
   margin: 2px;
   padding: 12px 16px;
   border-radius: 16px;
@@ -28,14 +40,22 @@ body.balloon-window {
   font-size: 13px;
   line-height: 1.4;
   cursor: pointer;
-  animation: balloon-in 0.2s var(--ease);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px) scale(0.97);
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.2s var(--ease),
+    visibility 0s linear 0.2s;
 }
 
-@keyframes balloon-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.97);
-  }
+.balloon.shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.2s var(--ease);
 }
 
 .shot-toast {

@@ -125,8 +125,8 @@ pub fn balloon_text() -> String {
 }
 
 #[tauri::command(async)]
-pub fn place_balloon(app: AppHandle, width: u32, height: u32) {
-    ui_windows::place_balloon(&app, width, height);
+pub fn place_balloon(app: AppHandle, width: u32, height: u32) -> &'static str {
+    ui_windows::place_balloon(&app, width, height)
 }
 
 #[tauri::command(async)]

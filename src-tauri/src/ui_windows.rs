@@ -1,10 +1,10 @@
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{
-    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
+    AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWindow,
     WebviewWindowBuilder,
 };
 
@@ -149,6 +149,8 @@ pub fn current_toast() -> Option<Toast> {
 
 static BALLOON_TEXT: Mutex<String> = Mutex::new(String::new());
 static BALLOON_GENERATION: AtomicU64 = AtomicU64::new(0);
+static BUBBLE: Mutex<Option<(i32, i32, i32, i32)>> = Mutex::new(None);
+static BUBBLE_WATCH: AtomicBool = AtomicBool::new(false);
 
 pub fn show_balloon(app: &AppHandle, text: &str, seconds: f64) {
     *BALLOON_TEXT.lock().unwrap() = text.to_string();
@@ -157,11 +159,16 @@ pub fn show_balloon(app: &AppHandle, text: &str, seconds: f64) {
     let text = text.to_string();
     std::thread::spawn(move || {
         let app = &app;
-        let Some(window) = popup(app, "balloon", "balloon.html", 280.0, 80.0) else {
+        let Some(window) = popup(app, "balloon", "balloon.html", 300.0, 220.0) else {
             return;
         };
         let _ = window.emit("say", &text);
-        close_later(app, "balloon", &BALLOON_GENERATION, seconds);
+
+        let mine = BALLOON_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+        std::thread::sleep(Duration::from_secs_f64(seconds));
+        if BALLOON_GENERATION.load(Ordering::SeqCst) == mine {
+            hide_balloon(app);
+        }
     });
 }
 
@@ -169,18 +176,22 @@ pub fn balloon_text() -> String {
     BALLOON_TEXT.lock().unwrap().clone()
 }
 
-pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
+pub fn place_balloon(app: &AppHandle, width: u32, height: u32) -> &'static str {
     let Some(speaker) = crate::mascot::speaker() else {
-        return;
+        return "left";
     };
     let (Some(balloon), Some(mascot)) = (
         app.get_webview_window("balloon"),
         app.get_webview_window(&speaker),
     ) else {
-        return;
+        return "left";
     };
-    let (Ok(pos), Ok(size)) = (mascot.outer_position(), mascot.outer_size()) else {
-        return;
+    let (Ok(pos), Ok(size), Ok(frame)) = (
+        mascot.outer_position(),
+        mascot.outer_size(),
+        balloon.outer_size(),
+    ) else {
+        return "left";
     };
 
     let (bw, bh) = (width as i32, height as i32);
@@ -188,22 +199,61 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32) {
     let (left, top, right, _) = winapi::work_area();
 
     let mut x = pos.x - bw + cw / 6;
-    if x < left {
+    let before = x >= left;
+    if !before {
         x = pos.x + cw - cw / 6;
     }
     let x = x.clamp(left, (right - bw).max(left));
     let y = top.max(pos.y + ch / 10);
 
-    let _ = balloon.set_position(PhysicalPosition::new(x, y));
-    let _ = balloon.set_size(PhysicalSize::new(bw as u32, bh as u32));
-    let _ = balloon.set_position(PhysicalPosition::new(x, y));
-    let _ = balloon.show();
+    let target = if before {
+        PhysicalPosition::new(x + bw - frame.width as i32, y)
+    } else {
+        PhysicalPosition::new(x, y)
+    };
+    if balloon.outer_position().ok() != Some(target) {
+        let _ = balloon.set_position(target);
+    }
+    if !balloon.is_visible().unwrap_or(false) {
+        let _ = balloon.set_ignore_cursor_events(true);
+        let _ = balloon.show();
+    }
+    *BUBBLE.lock().unwrap() = Some((x, y, bw, bh));
+    watch_bubble(app);
+    if before {
+        "right"
+    } else {
+        "left"
+    }
+}
+
+fn watch_bubble(app: &AppHandle) {
+    if BUBBLE_WATCH.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let mut ignoring = true;
+        while let Some(window) = app.get_webview_window("balloon") {
+            std::thread::sleep(Duration::from_millis(60));
+            let over = match (*BUBBLE.lock().unwrap(), winapi::cursor_pos()) {
+                (Some((x, y, w, h)), Some((cx, cy))) => cx >= x && cx < x + w && cy >= y && cy < y + h,
+                _ => false,
+            };
+            if ignoring == over {
+                ignoring = !over;
+                let _ = window.set_ignore_cursor_events(ignoring);
+            }
+        }
+        BUBBLE_WATCH.store(false, Ordering::SeqCst);
+    });
 }
 
 pub fn hide_balloon(app: &AppHandle) {
     BALLOON_GENERATION.fetch_add(1, Ordering::SeqCst);
-    if let Some(window) = app.get_webview_window("balloon") {
+    *BUBBLE.lock().unwrap() = None;
+    if app.get_webview_window("balloon").is_some() {
         crate::crash::note("hide balloon");
-        let _ = window.hide();
+        let _ = app.emit_to("balloon", "hush", ());
     }
 }
