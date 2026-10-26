@@ -34,6 +34,7 @@ struct Character {
     file: PathBuf,
     alpha: RgbaImage,
     view_only: bool,
+    token: u64,
 }
 
 static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
@@ -45,6 +46,12 @@ static RESIZES: AtomicU64 = AtomicU64::new(0);
 static APPLYING: Mutex<()> = Mutex::new(());
 static LAST_SAID: AtomicU64 = AtomicU64::new(0);
 static LAST_SEEN: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
+static FORCE: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static EXITING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn exiting() {
+    EXITING.store(true, Ordering::SeqCst);
+}
 const SILENT_LIMIT: Duration = Duration::from_secs(90);
 
 const MIN_HEIGHT: u32 = 80;
@@ -322,6 +329,15 @@ pub fn apply_settings(app: &AppHandle) {
     });
 }
 
+fn token_of(label: &str) -> Option<u64> {
+    with_characters(|characters| characters.get(label).map(|c| c.token))
+}
+
+pub fn force_rebuild(app: &AppHandle, label: &str) {
+    FORCE.lock().unwrap().push(label.to_string());
+    apply_settings(app);
+}
+
 fn apply_now(app: &AppHandle) {
     let shared = shared(app);
     migrate_custom_image(&shared);
@@ -334,50 +350,69 @@ fn apply_now(app: &AppHandle) {
             cfg.get("mascot_positions").cloned().unwrap_or(json!({})),
         )
     };
+    let wanted: Vec<String> = if enabled { shown_ids(&shared) } else { vec![] };
+    let wanted_labels: Vec<String> = wanted.iter().map(|id| format!("{WINDOW_PREFIX}{id}")).collect();
+    let forced: Vec<String> = std::mem::take(&mut *FORCE.lock().unwrap());
 
-    GENERATION.fetch_add(1, Ordering::SeqCst);
-    ui_windows::hide_balloon(app);
-    for (label, window) in app.webview_windows() {
-        if label.starts_with(WINDOW_PREFIX) {
+    let leaving: Vec<(String, tauri::WebviewWindow)> = app
+        .webview_windows()
+        .into_iter()
+        .filter(|(label, _)| label.starts_with(WINDOW_PREFIX))
+        .filter(|(label, _)| !wanted_labels.contains(label) || forced.contains(label))
+        .collect();
+    if !leaving.is_empty() {
+        ui_windows::hide_balloon(app);
+        with_characters(|characters| {
+            for (label, _) in &leaving {
+                characters.remove(label);
+            }
+        });
+        for (label, window) in &leaving {
+            crate::crash::note(format!("hide {label} before destroying it"));
+            let _ = window.hide();
+        }
+        std::thread::sleep(Duration::from_millis(600));
+        for (label, window) in &leaving {
             crate::crash::note(format!("destroy {label}"));
             let _ = window.destroy();
         }
-    }
-    with_characters(HashMap::clear);
-    if !enabled {
-        return;
+        std::thread::sleep(Duration::from_millis(300));
     }
 
     let cache = shared.data_dir.join("cache");
-    remove_old_pictures(&cache);
-    let generation = GENERATION.load(Ordering::SeqCst);
     let mut offset = 0;
-    let mut placements = Vec::new();
-
-    for id in shown_ids(&shared) {
-        let Some(img) = image_for(&shared, &id) else {
-            continue;
-        };
-        let character = fit(img, height_for(&shared, &id));
-        let (width, height) = (character.width(), character.height());
-        let file = cache.join(format!("mascot_{generation}_{id}.png"));
-        if character.save(&file).is_err() {
+    for (id, label) in wanted.iter().zip(&wanted_labels) {
+        if let Some(window) = app.get_webview_window(label) {
+            let _ = window.set_always_on_top(topmost);
+            let _ = window.set_always_on_bottom(!topmost);
+            if positions.get(id).is_none() {
+                if let Ok(size) = window.outer_size() {
+                    let (x, y) = default_position(size.width, size.height, &mut offset);
+                    let _ = window.set_position(PhysicalPosition::new(x, y));
+                }
+            }
             continue;
         }
 
-        let (x, y) = saved_position(positions.get(&id), width, height)
+        let Some(img) = image_for(&shared, id) else {
+            continue;
+        };
+        let character = fit(img, height_for(&shared, id));
+        let (width, height) = (character.width(), character.height());
+        let token = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+        let file = cache.join(format!("mascot_{token}_{id}.png"));
+        if character.save(&file).is_err() {
+            continue;
+        }
+        let (x, y) = saved_position(positions.get(id), width, height)
             .unwrap_or_else(|| default_position(width, height, &mut offset));
-        let label = format!("{WINDOW_PREFIX}{id}");
-        let view_only = view_only_of(&shared, &id);
+        let view_only = view_only_of(&shared, id);
         with_characters(|characters| {
-            characters.insert(label.clone(), Character { file, alpha: character, view_only })
+            characters.insert(label.clone(), Character { file, alpha: character, view_only, token })
         });
-        placements.push((label, x, y, width, height));
+        build_window(app, label, x, y, width, height, topmost, token);
     }
-
-    for (label, x, y, width, height) in placements {
-        build_window(app, &label, x, y, width, height, topmost);
-    }
+    remove_old_pictures(&cache);
 }
 
 pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
@@ -408,8 +443,9 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
     let file = shared.data_dir.join("cache").join(format!("mascot_r{n}_{id}.png"));
     character.save(&file).map_err(|e| e.to_string())?;
     let view_only = view_only_of(&shared, id);
+    let token = token_of(&label).unwrap_or_else(|| GENERATION.fetch_add(1, Ordering::SeqCst) + 1);
     with_characters(|characters| {
-        characters.insert(label.clone(), Character { file, alpha: character, view_only })
+        characters.insert(label.clone(), Character { file, alpha: character, view_only, token })
     });
 
     if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
@@ -422,16 +458,27 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
 }
 
 fn remove_old_pictures(cache: &Path) {
+    let in_use: Vec<PathBuf> = with_characters(|characters| characters.values().map(|c| c.file.clone()).collect());
     for entry in std::fs::read_dir(cache).into_iter().flatten().flatten() {
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with("mascot_") && name.ends_with(".png") {
+        if name.starts_with("mascot_") && name.ends_with(".png") && !in_use.contains(&entry.path()) {
             let _ = std::fs::remove_file(entry.path());
         }
     }
 }
 
-fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height: u32, topmost: bool) {
-    crate::crash::note(format!("create {label}"));
+#[allow(clippy::too_many_arguments)]
+fn build_window(
+    app: &AppHandle,
+    label: &str,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    topmost: bool,
+    token: u64,
+) {
+    crate::crash::event(format!("create {label}"));
     alive(label);
     let built = WebviewWindowBuilder::new(app, label, WebviewUrl::App("mascot.html".into()))
         .additional_browser_args(ui_windows::BROWSER_ARGS)
@@ -448,12 +495,13 @@ fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height
     let window = match built {
         Ok(window) => window,
         Err(error) => {
-            crate::crash::note(format!("couldn't create {label}: {error}"));
+            crate::crash::event(format!("couldn't create {label}: {error}"));
             eprintln!("couldn't create {label}: {error}");
             return;
         }
     };
 
+    watch_webview(app, &window, label);
     let _ = window.set_size(PhysicalSize::new(width, height));
     let _ = window.set_position(PhysicalPosition::new(x, y));
     if !topmost {
@@ -463,14 +511,43 @@ fn build_window(app: &AppHandle, label: &str, x: i32, y: i32, width: u32, height
 
     let app = app.clone();
     let label = label.to_string();
-    let generation = GENERATION.load(Ordering::SeqCst);
-    std::thread::spawn(move || click_through_loop(&app, &label, generation));
+    std::thread::spawn(move || click_through_loop(&app, &label, token));
 }
 
-fn click_through_loop(app: &AppHandle, label: &str, generation: u64) {
+fn watch_webview(app: &AppHandle, window: &tauri::WebviewWindow, label: &str) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_PROCESS_FAILED_KIND;
+    use webview2_com::ProcessFailedEventHandler;
+
+    let app = app.clone();
+    let label = label.to_string();
+    let _ = window.with_webview(move |webview| unsafe {
+        let Ok(core) = webview.controller().CoreWebView2() else {
+            return;
+        };
+        let handler = ProcessFailedEventHandler::create(Box::new(move |_, args| {
+            let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
+            if let Some(args) = args {
+                let _ = args.ProcessFailedKind(&mut kind);
+            }
+            if EXITING.load(Ordering::SeqCst) {
+                return Ok(());
+            }
+            let fatal = matches!(kind.0, 0 | 1 | 2 | 6);
+            crate::crash::event(format!("{label}: WebView2 process failed (kind {})", kind.0));
+            if fatal {
+                force_rebuild(&app, &label);
+            }
+            Ok(())
+        }));
+        let mut token = 0i64;
+        let _ = core.add_ProcessFailed(&handler, &mut token);
+    });
+}
+
+fn click_through_loop(app: &AppHandle, label: &str, token: u64) {
     let mut ignoring: Option<bool> = None;
 
-    while GENERATION.load(Ordering::SeqCst) == generation {
+    while token_of(label) == Some(token) {
         std::thread::sleep(Duration::from_millis(40));
 
         let Some(window) = app.get_webview_window(label) else {
@@ -668,12 +745,12 @@ pub fn alive(label: &str) {
         .insert(label.to_string(), Instant::now());
 }
 
-fn needs_rebuild(app: &AppHandle) -> Option<String> {
+fn needs_rebuild(app: &AppHandle) -> Option<(String, String)> {
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
     let seen = LAST_SEEN.lock().unwrap().clone().unwrap_or_default();
     for label in labels {
         let Some(window) = app.get_webview_window(&label) else {
-            return Some(format!("{label} window is gone"));
+            return Some((label.clone(), format!("{label} window is gone")));
         };
         if window.is_minimized().unwrap_or(false) {
             let _ = window.unminimize();
@@ -683,7 +760,7 @@ fn needs_rebuild(app: &AppHandle) -> Option<String> {
         }
         let silent = seen.get(&label).map_or(SILENT_LIMIT, Instant::elapsed);
         if silent >= SILENT_LIMIT {
-            return Some(format!("{label} stopped answering"));
+            return Some((label.clone(), format!("{label} stopped answering")));
         }
     }
     None
@@ -700,9 +777,9 @@ pub fn start_watchdog(app: &AppHandle) {
             Ok(_guard) => needs_rebuild(&app),
             Err(_) => None,
         };
-        if let Some(reason) = reason {
-            crate::crash::note(format!("rebuild mascots: {reason}"));
-            apply_settings(&app);
+        if let Some((label, reason)) = reason {
+            crate::crash::event(format!("rebuild mascot: {reason}"));
+            force_rebuild(&app, &label);
         }
     });
 }

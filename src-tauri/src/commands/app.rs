@@ -166,6 +166,7 @@ pub fn quit(shared: SharedState, app: AppHandle) {
 }
 
 pub fn quit_app(app: &AppHandle, shared: &Shared) {
+    crate::mascot::exiting();
     shared.send(Cmd::Quit);
     std::thread::sleep(std::time::Duration::from_millis(400));
     app.exit(0);

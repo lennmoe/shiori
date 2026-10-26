@@ -262,6 +262,13 @@ fn main() {
             {
                 crash::note(format!("destroyed {label}"));
             }
+            if let RunEvent::ExitRequested { code: Some(_), .. } = &event {
+                mascot::exiting();
+            }
+            if let RunEvent::Exit = event {
+                mascot::exiting();
+                crash::event("exit");
+            }
             if let RunEvent::ExitRequested {
                 api, code: None, ..
             } = event
