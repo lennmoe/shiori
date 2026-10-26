@@ -80,6 +80,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     app.asset_protocol_scope()
         .allow_directory(&data_dir, true)?;
     crash::install(data_dir.clone(), app.package_info().version.to_string());
+    crash::started();
 
     let cfg = Config::load(&data_dir);
     let client_id = cfg.str("discord_client_id");

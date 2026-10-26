@@ -43,6 +43,42 @@ pub fn note(text: impl AsRef<str>) {
     }
 }
 
+pub fn event(text: impl AsRef<str>) {
+    note(text.as_ref());
+    append_event(text.as_ref());
+}
+
+fn append_event(text: &str) {
+    let Some(target) = TARGET.get() else {
+        return;
+    };
+    let file = target.dir.join("events.log");
+    if std::fs::metadata(&file).is_ok_and(|meta| meta.len() > 256 * 1024) {
+        let _ = std::fs::rename(&file, target.dir.join("events.old.log"));
+    }
+    let line = format!(
+        "{} v{} {text}\n",
+        chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+        target.version,
+    );
+    if let Ok(mut log) = OpenOptions::new().create(true).append(true).open(file) {
+        let _ = log.write_all(line.as_bytes());
+    }
+}
+
+pub fn started() {
+    let Some(target) = TARGET.get() else {
+        return;
+    };
+    let previous = std::fs::read_to_string(target.dir.join("events.log")).unwrap_or_default();
+    if let Some(last) = previous.lines().last() {
+        if !last.ends_with(" exit") && !last.contains("(see crash.log)") {
+            event("the previous run ended without closing normally");
+        }
+    }
+    event("start");
+}
+
 fn trail_text() -> String {
     match TRAIL.try_lock() {
         Ok(trail) if !trail.is_empty() => {
@@ -60,6 +96,7 @@ pub fn install(dir: PathBuf, version: String) {
     std::panic::set_hook(Box::new(|info| {
         let thread = std::thread::current();
         write_line(&format!("[{}] {info}{}", thread.name().unwrap_or("?"), trail_text()));
+        append_event("panic (see crash.log)");
     }));
     unsafe {
         SetUnhandledExceptionFilter(Some(on_exception));
@@ -118,6 +155,7 @@ unsafe extern "system" fn on_exception(info: *const EXCEPTION_POINTERS) -> i32 {
         .map(|frame| format!("    {}", module_of(*frame as usize)))
         .collect();
 
+    append_event(&format!("native crash 0x{code:08X} (see crash.log)"));
     write_line(&format!(
         "[{}] native crash 0x{code:08X} at {}\n{}{}",
         thread.name().unwrap_or("?"),
