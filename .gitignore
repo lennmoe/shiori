@@ -10,3 +10,4 @@ tools/symbolize/target/
 symbols/
 crash/
 tools/symbolize/Cargo.lock
+wrapped/
