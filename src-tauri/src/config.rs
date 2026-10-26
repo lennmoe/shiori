@@ -145,6 +145,23 @@ pub fn today() -> String {
     chrono::Local::now().format("%Y-%m-%d").to_string()
 }
 
+pub fn this_hour() -> String {
+    chrono::Local::now().format("%Y-%H").to_string()
+}
+
+fn add_to_counter(entry: &mut Map<String, Value>, counter: &str, slot: String, seconds: i64) {
+    if seconds <= 0 {
+        return;
+    }
+    if let Value::Object(map) = entry
+        .entry(counter)
+        .or_insert_with(|| Value::Object(Map::new()))
+    {
+        let before = map.get(&slot).and_then(Value::as_i64).unwrap_or(0);
+        map.insert(slot, json!(before + seconds));
+    }
+}
+
 pub fn now() -> i64 {
     chrono::Utc::now().timestamp()
 }
@@ -517,7 +534,7 @@ impl Config {
         };
 
         for (field, value) in &source {
-            if blank(target.get(field)) {
+            if blank(target.get(field)) && field != "daily" && field != "hourly" {
                 target.insert(field.clone(), value.clone());
             }
         }
@@ -534,16 +551,11 @@ impl Config {
             json!(num(&target, "last_played").max(num(&source, "last_played"))),
         );
 
-        let mut daily = target
-            .get("daily")
-            .and_then(Value::as_object)
-            .cloned()
-            .unwrap_or_default();
-        for (day, seconds) in source.get("daily").and_then(Value::as_object).into_iter().flatten() {
-            let before = daily.get(day).and_then(Value::as_i64).unwrap_or(0);
-            daily.insert(day.clone(), json!(before + seconds.as_i64().unwrap_or(0)));
+        for counter in ["daily", "hourly"] {
+            for (slot, seconds) in source.get(counter).and_then(Value::as_object).into_iter().flatten() {
+                add_to_counter(&mut target, counter, slot.clone(), seconds.as_i64().unwrap_or(0));
+            }
         }
-        target.insert("daily".into(), Value::Object(daily));
 
         let frac = self.frac.get(from).copied().unwrap_or(0.0);
         *self.frac.entry(into.to_string()).or_insert(0.0) += frac;
@@ -575,14 +587,8 @@ impl Config {
             .unwrap_or(0);
         entry.insert("playtime_seconds".into(), json!(current + whole));
         if whole > 0 {
-            let daily = entry
-                .entry("daily")
-                .or_insert_with(|| Value::Object(Map::new()));
-            if let Value::Object(daily) = daily {
-                let day = today();
-                let before = daily.get(&day).and_then(Value::as_i64).unwrap_or(0);
-                daily.insert(day, json!(before + whole));
-            }
+            add_to_counter(entry, "daily", today(), whole);
+            add_to_counter(entry, "hourly", this_hour(), whole);
         }
         entry.insert("last_played".into(), json!(now()));
         self.save_game(key);
@@ -703,6 +709,7 @@ mod tests {
         add(&mut cfg, "drop", json!({
             "playtime_seconds": 50, "sessions": 1, "last_played": 20, "status": "playing",
             "daily": { "2026-10-01": 20, "2026-10-02": 30 }, "path": "new.exe",
+            "hourly": { "2026-23": 50 },
         }));
 
         cfg.merge_games("drop", "keep");
@@ -712,8 +719,20 @@ mod tests {
         assert_eq!(merged["sessions"], 3);
         assert_eq!(merged["last_played"], 20);
         assert_eq!(merged["daily"], json!({ "2026-10-01": 120, "2026-10-02": 30 }));
+        assert_eq!(merged["hourly"], json!({ "2026-23": 50 }));
         assert_eq!(merged["title"], "Aiyoku no Eustia");
         assert_eq!(merged["status"], "playing");
         assert_eq!(merged["path"], "new.exe");
+    }
+
+    #[test]
+    fn reading_time_is_counted_per_hour() {
+        let mut cfg = library("hourly");
+        add(&mut cfg, "vn", json!({ "title": "Amatsutsumi" }));
+        cfg.add_playtime("vn", 90.0);
+        cfg.add_playtime("vn", 30.0);
+        let entry = cfg.game("vn");
+        assert_eq!(entry["hourly"][this_hour()], 120);
+        assert_eq!(entry["daily"][today()], 120);
     }
 }
