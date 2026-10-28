@@ -11,6 +11,12 @@ Show the visual novel you're reading on your **Discord profile**: the game, your
   <a href="https://discord.gg/cDTUQFq4Hn">Discord</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/lennmoe/vnrpc/releases">
+    <img src="https://img.shields.io/github/downloads/lennmoe/vnrpc/total" alt="Release downloads">
+  </a>
+</p>
+
 <p align="center"><img src="image/now-reading.png" width="100%" alt="Now reading: Sanoba Witch, Nene Route, 22% read, with the Discord preview, over a custom background"></p>
 
 A small Windows tray app, written in Rust with [Tauri](https://tauri.app). It reads the title of the VN's window, so most engines work without any setup. One light `.exe` (about 10 MB), nothing else to install. Available in 7 languages.
