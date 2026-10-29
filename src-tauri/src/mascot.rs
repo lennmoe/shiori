@@ -860,6 +860,7 @@ pub fn toggle_view_only(app: &AppHandle, key: &str) {
         detail: lang::tr("Press {} again to switch back.", language).replace("{}", key),
         image: None,
         ok: true,
+        ..Default::default()
     };
     ui_windows::show_toast(app, toast, None);
     let settings = shared.config.lock().unwrap().data().clone();

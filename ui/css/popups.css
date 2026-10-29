@@ -113,3 +113,14 @@ body.balloon-window.right {
     opacity: 0;
   }
 }
+
+.shot-toast.clickable {
+  cursor: pointer;
+  animation:
+    toast-in 0.2s var(--ease),
+    toast-out 0.4s ease-in 6.5s forwards;
+}
+
+.shot-toast.clickable:hover {
+  border-color: var(--accent);
+}

@@ -14,7 +14,9 @@
     "View on VNDB": "Voir sur VNDB",
     "Mascots: you can click them": "Mascottes : cliquables",
     "Mascots: clicks go through": "Mascottes : les clics passent à travers",
-    "Press {} again to switch back.": "Appuie de nouveau sur {} pour revenir."
+    "Press {} again to switch back.": "Appuie de nouveau sur {} pour revenir.",
+    "New VN detected": "Nouveau VN détecté",
+    "{} · click to check it's the right one": "{} · clique pour vérifier que c'est le bon"
   },
   "personalities": {
     "cheerful": {
@@ -628,6 +630,19 @@
     "Your {year} in visual novels": "Ton année {year} en visual novels",
     "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours} h de lecture, tes VN préférés et plus encore. Ça s'ouvre dans ton navigateur, et tes données restent dans le lien.",
     "Open my recap": "Voir mon récap",
-    "My {year} recap": "Mon récap {year}"
+    "My {year} recap": "Mon récap {year}",
+    "New VN detected": "Nouveau VN détecté",
+    "Check that it's the right game: this name and cover are what your friends see on Discord. Your answer is remembered for this game.": "Vérifie que c'est le bon jeu : ce nom et cette cover sont ce que tes amis voient sur Discord. Ta réponse est retenue pour ce jeu.",
+    "What was detected": "Ce qui a été détecté",
+    "Program": "Programme",
+    "Window": "Fenêtre",
+    "Matched on VNDB": "Trouvé sur VNDB",
+    "See it on VNDB": "Voir sur VNDB",
+    "Not found on VNDB.": "Introuvable sur VNDB.",
+    "Pick it yourself to get its name, cover and length.": "Choisis-le toi-même pour avoir son nom, sa cover et sa durée.",
+    "Pick another VN…": "Choisir un autre VN…",
+    "Pick it on VNDB…": "Le choisir sur VNDB…",
+    "Yes, that's it": "Oui, c'est ça",
+    "Saved: {name}": "Enregistré : {name}"
   }
 }

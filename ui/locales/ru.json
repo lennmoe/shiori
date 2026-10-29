@@ -14,7 +14,9 @@
     "View on VNDB": "Открыть на VNDB",
     "Mascots: you can click them": "Маскоты: можно нажимать",
     "Mascots: clicks go through": "Маскоты: клики проходят насквозь",
-    "Press {} again to switch back.": "Нажми {} ещё раз, чтобы вернуть."
+    "Press {} again to switch back.": "Нажми {} ещё раз, чтобы вернуть.",
+    "New VN detected": "Обнаружена новая новелла",
+    "{} · click to check it's the right one": "{} · нажми, чтобы проверить"
   },
   "personalities": {
     "cheerful": {
@@ -628,6 +630,19 @@
     "Your {year} in visual novels": "Ваш {year} год в визуальных новеллах",
     "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours} ч чтения, ваши любимые VN и многое другое. Откроется в браузере, данные хранятся только в ссылке.",
     "Open my recap": "Открыть итоги",
-    "My {year} recap": "Мои итоги {year}"
+    "My {year} recap": "Мои итоги {year}",
+    "New VN detected": "Обнаружена новая новелла",
+    "Check that it's the right game: this name and cover are what your friends see on Discord. Your answer is remembered for this game.": "Проверь, что это нужная игра: это название и обложку видят друзья в Discord. Ответ запомнится для этой игры.",
+    "What was detected": "Что обнаружено",
+    "Program": "Программа",
+    "Window": "Окно",
+    "Matched on VNDB": "Найдено на VNDB",
+    "See it on VNDB": "Открыть на VNDB",
+    "Not found on VNDB.": "Не найдено на VNDB.",
+    "Pick it yourself to get its name, cover and length.": "Выбери её сам, чтобы получить название, обложку и длину.",
+    "Pick another VN…": "Выбрать другую…",
+    "Pick it on VNDB…": "Выбрать на VNDB…",
+    "Yes, that's it": "Да, это она",
+    "Saved: {name}": "Сохранено: {name}"
   }
 }

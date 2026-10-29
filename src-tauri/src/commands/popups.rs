@@ -120,6 +120,14 @@ pub fn show_mascot(app: AppHandle, shared: SharedState, id: String, shown: bool)
 }
 
 #[tauri::command(async)]
+pub fn toast_action(app: AppHandle, action: String) {
+    match action.as_str() {
+        "check" => ui_windows::open_page(&app, "home"),
+        _ => {}
+    }
+}
+
+#[tauri::command(async)]
 pub fn balloon_text() -> String {
     ui_windows::balloon_text()
 }

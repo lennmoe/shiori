@@ -37,6 +37,7 @@ pub struct Snapshot {
     pub idle: bool,
     pub paused: bool,
     pub activity: Option<Activity>,
+    pub needs_check: bool,
 
     #[serde(skip)]
     pub hwnd: isize,

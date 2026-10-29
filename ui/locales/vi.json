@@ -14,7 +14,9 @@
     "View on VNDB": "Xem trên VNDB",
     "Mascots: you can click them": "Linh vật: có thể nhấp",
     "Mascots: clicks go through": "Linh vật: nhấp xuyên qua",
-    "Press {} again to switch back.": "Nhấn {} lần nữa để quay lại."
+    "Press {} again to switch back.": "Nhấn {} lần nữa để quay lại.",
+    "New VN detected": "Phát hiện VN mới",
+    "{} · click to check it's the right one": "{} · bấm để kiểm tra đúng chưa"
   },
   "personalities": {
     "cheerful": {
@@ -628,6 +630,19 @@
     "Your {year} in visual novels": "Năm {year} của bạn với visual novel",
     "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours} giờ đọc, các VN hàng đầu và hơn thế nữa. Mở trong trình duyệt, dữ liệu của bạn chỉ nằm trong liên kết.",
     "Open my recap": "Xem tổng kết",
-    "My {year} recap": "Tổng kết {year} của tôi"
+    "My {year} recap": "Tổng kết {year} của tôi",
+    "New VN detected": "Phát hiện VN mới",
+    "Check that it's the right game: this name and cover are what your friends see on Discord. Your answer is remembered for this game.": "Kiểm tra đúng game chưa: tên và ảnh bìa này là thứ bạn bè thấy trên Discord. Câu trả lời sẽ được nhớ cho game này.",
+    "What was detected": "Đã phát hiện",
+    "Program": "Chương trình",
+    "Window": "Cửa sổ",
+    "Matched on VNDB": "Tìm thấy trên VNDB",
+    "See it on VNDB": "Xem trên VNDB",
+    "Not found on VNDB.": "Không tìm thấy trên VNDB.",
+    "Pick it yourself to get its name, cover and length.": "Tự chọn để có tên, ảnh bìa và độ dài.",
+    "Pick another VN…": "Chọn VN khác…",
+    "Pick it on VNDB…": "Chọn trên VNDB…",
+    "Yes, that's it": "Đúng rồi",
+    "Saved: {name}": "Đã lưu: {name}"
   }
 }

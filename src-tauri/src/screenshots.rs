@@ -309,6 +309,7 @@ pub fn take(shared: &Arc<Shared>) {
                         .unwrap_or_default(),
                     image: Some(path.to_string_lossy().to_string()),
                     ok: true,
+                    ..Default::default()
                 },
                 Some(area),
             );
@@ -320,6 +321,7 @@ pub fn take(shared: &Arc<Shared>) {
                 detail: message,
                 image: None,
                 ok: false,
+                ..Default::default()
             };
             ui_windows::show_toast(&shared.app, toast, None);
         }

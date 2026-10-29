@@ -107,12 +107,13 @@ fn close_later(app: &AppHandle, label: &'static str, generation: &'static Atomic
     });
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct Toast {
     pub title: String,
     pub detail: String,
     pub image: Option<String>,
     pub ok: bool,
+    pub action: String,
 }
 
 static TOAST: Mutex<Option<Toast>> = Mutex::new(None);
@@ -139,7 +140,8 @@ pub fn show_toast(app: &AppHandle, toast: Toast, area: Option<ScreenRect>) {
         let _ = window.emit("toast", &toast);
         let _ = window.show();
 
-        close_later(app, "toast", &TOAST_GENERATION, 2.8);
+        let seconds = if toast.action.is_empty() { 2.8 } else { 7.0 };
+        close_later(app, "toast", &TOAST_GENERATION, seconds);
     });
 }
 

@@ -14,7 +14,9 @@
     "View on VNDB": "VNDBで見る",
     "Mascots: you can click them": "マスコット：クリックできます",
     "Mascots: clicks go through": "マスコット：クリックが通り抜けます",
-    "Press {} again to switch back.": "もう一度 {} を押すと元に戻ります。"
+    "Press {} again to switch back.": "もう一度 {} を押すと元に戻ります。",
+    "New VN detected": "新しいVNを検出",
+    "{} · click to check it's the right one": "{} · クリックして正しいか確認"
   },
   "personalities": {
     "cheerful": {
@@ -629,6 +631,19 @@
     "Your {year} in visual novels": "{year}年のビジュアルノベル",
     "{hours} h of reading, your top VNs and more. It opens in your browser, and your data stays in the link.": "{hours}時間の読書、トップVNなど。ブラウザで開きます。データはリンクの中だけに入っています。",
     "Open my recap": "まとめを見る",
-    "My {year} recap": "{year}年のまとめ"
+    "My {year} recap": "{year}年のまとめ",
+    "New VN detected": "新しいVNを検出",
+    "Check that it's the right game: this name and cover are what your friends see on Discord. Your answer is remembered for this game.": "正しいゲームか確認してください。この名前とカバーがDiscordで友達に表示されます。回答はこのゲームに記憶されます。",
+    "What was detected": "検出された内容",
+    "Program": "プログラム",
+    "Window": "ウィンドウ",
+    "Matched on VNDB": "VNDBで一致",
+    "See it on VNDB": "VNDBで見る",
+    "Not found on VNDB.": "VNDBで見つかりません。",
+    "Pick it yourself to get its name, cover and length.": "自分で選ぶと、名前・カバー・長さが入ります。",
+    "Pick another VN…": "別のVNを選ぶ…",
+    "Pick it on VNDB…": "VNDBで選ぶ…",
+    "Yes, that's it": "はい、これです",
+    "Saved: {name}": "保存しました: {name}"
   }
 }

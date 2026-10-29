@@ -18,7 +18,10 @@ function render(toast) {
     toast.detail && el("div", { class: "detail" }, toast.detail),
   );
 
-  const card = el("div", { class: "shot-toast" }, picture, text);
+  const card = el("div", { class: `shot-toast${toast.action ? " clickable" : ""}` }, picture, text);
+  if (toast.action) {
+    card.onclick = () => invoke("toast_action", { action: toast.action });
+  }
   box.replaceChildren(card);
 }
 

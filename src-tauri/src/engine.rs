@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use fancy_regex::Regex;
 use serde_json::{json, Map, Value};
+use tauri::Manager;
 
 use crate::config::{game_key, url_cache_key, Config};
 use crate::discord::{self, Activity};
@@ -297,6 +298,7 @@ pub struct Engine {
     unfocused_since: f64,
     idle_since: f64,
     idle: bool,
+    announced: HashSet<String>,
 }
 
 impl Engine {
@@ -315,6 +317,7 @@ impl Engine {
             unfocused_since: 0.0,
             idle_since: 0.0,
             idle: false,
+            announced: HashSet::new(),
         }
     }
 
@@ -514,6 +517,12 @@ impl Engine {
         let privacy = Some(text(&entry, "privacy").to_lowercase())
             .filter(|p| !p.is_empty())
             .unwrap_or("full".into());
+        let needs_check = vn_id.is_empty()
+            && !entry.get("match_checked").and_then(Value::as_bool).unwrap_or(false)
+            && playtime < 600;
+        if needs_check && self.announced.insert(key.clone()) {
+            self.announce_new_vn(&game_name, cover.local_path.clone());
+        }
 
         self.store(Snapshot {
             detected: true,
@@ -535,9 +544,29 @@ impl Engine {
             idle: self.idle,
             paused: false,
             activity: None,
+            needs_check,
             hwnd: target.hwnd,
             pid: target.pid,
         });
+    }
+
+    fn announce_new_vn(&self, name: &str, image: Option<String>) {
+        let app = &self.shared.app;
+        let in_front = app
+            .get_webview_window("main")
+            .is_some_and(|w| w.is_visible().unwrap_or(false) && !w.is_minimized().unwrap_or(true));
+        if in_front {
+            return;
+        }
+        let language = lang::resolve(&self.shared.config.lock().unwrap().str("language"));
+        let toast = crate::ui_windows::Toast {
+            title: lang::tr("New VN detected", language).to_string(),
+            detail: lang::tr("{} · click to check it's the right one", language).replace("{}", name),
+            image,
+            ok: true,
+            action: "check".into(),
+        };
+        crate::ui_windows::show_toast(app, toast, None);
     }
 
     fn start_session(&mut self, key: &str) {

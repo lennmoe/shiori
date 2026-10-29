@@ -209,13 +209,26 @@ pub fn confirm_match(shared: SharedState, key: String) {
         if vn_id.is_empty() {
             return;
         }
-        let mut fields = Map::from_iter([("vndb_id".into(), json!(vn_id))]);
+        let mut fields = Map::from_iter([
+            ("vndb_id".into(), json!(vn_id)),
+            ("match_checked".into(), json!(true)),
+        ]);
         let name = text(&entry, "name");
         if !name.is_empty() {
             fields.insert("title".into(), json!(name));
         }
         cfg.set_game(&key, fields);
     }
+    changed(&shared, &key);
+}
+
+#[tauri::command(async)]
+pub fn match_checked(shared: SharedState, key: String) {
+    shared
+        .config
+        .lock()
+        .unwrap()
+        .set_game(&key, Map::from_iter([("match_checked".into(), json!(true))]));
     changed(&shared, &key);
 }
 
