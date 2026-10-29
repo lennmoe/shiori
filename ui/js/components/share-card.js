@@ -88,6 +88,10 @@ export function collect(games, kind, today = midnight(new Date())) {
       vns.push({ ...game, seconds, finished });
     }
   }
+  const long = vns.filter((vn) => vn.seconds >= 15 * 60 || vn.finished);
+  if (long.length) {
+    vns.splice(0, vns.length, ...long);
+  }
   vns.sort((a, b) => b.seconds - a.seconds || Number(b.finished) - Number(a.finished));
 
   return {
