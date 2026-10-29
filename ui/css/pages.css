@@ -1226,3 +1226,49 @@
   width: 44px;
   text-align: right;
 }
+
+.now-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--green);
+  white-space: nowrap;
+}
+
+.tile-cover .now-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.lib-tile.now-playing .cover,
+.lib-tile.now-playing:hover .cover,
+.lib-tile.now-playing:focus-visible .cover {
+  box-shadow:
+    0 0 0 3px var(--green),
+    0 0 22px color-mix(in srgb, var(--green) 45%, transparent);
+}
+
+.lib-row.now-playing {
+  box-shadow:
+    inset 0 0 0 2px var(--green),
+    0 0 18px color-mix(in srgb, var(--green) 25%, transparent);
+}
+
+.lib-line.now-playing .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lib-line.now-playing .cover {
+  box-shadow: 0 0 0 2px var(--green);
+}
+
+.lib-tile.now-playing .tile-cover .status {
+  display: none;
+}

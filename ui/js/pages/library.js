@@ -115,6 +115,16 @@ function build(container) {
 
   subscribe("library", () => root.classList.contains("active") && load());
   subscribe("settings", () => root.classList.contains("active") && load());
+
+  let shownKey = playingKey();
+  subscribe("snapshot", () => {
+    if (playingKey() !== shownKey) {
+      shownKey = playingKey();
+      if (root.classList.contains("active") && games.length) {
+        render();
+      }
+    }
+  });
 }
 
 async function load() {
@@ -246,6 +256,13 @@ function coverOf(game, size = "") {
   return cover;
 }
 
+const playingKey = () => (store.snapshot?.detected ? store.snapshot.key : "");
+const isPlaying = (game) => !!game.key && game.key === playingKey();
+
+function nowBadge(game) {
+  return isPlaying(game) && el("span", { class: "now-badge" }, t("Now reading"));
+}
+
 function statusChip(game) {
   return game.status && el("span", { class: `status ${game.status}` }, capitalize(game.status));
 }
@@ -264,6 +281,7 @@ function row(game, most) {
   const meta = el(
     "div",
     { class: "meta" },
+    nowBadge(game),
     statusChip(game),
     el("span", {}, t("{time} read", { time: formatPlaytime(game.playtime) })),
     game.last_played > 0 && el("span", {}, `·  ${lastPlayed(game.last_played)}`),
@@ -284,7 +302,7 @@ function row(game, most) {
 
   return el(
     "div",
-    { class: "card lib-row", ...opener(game) },
+    { class: `card lib-row${isPlaying(game) ? " now-playing" : ""}`, ...opener(game) },
     coverOf(game, "small"),
     el("div", { class: "info" }, el("div", { class: "name" }, game.name), meta, bar),
     el("div", { class: "actions" }, playButton(game), remove),
@@ -294,8 +312,8 @@ function row(game, most) {
 function tile(game) {
   return el(
     "div",
-    { class: "lib-tile", ...opener(game) },
-    el("div", { class: "tile-cover" }, coverOf(game), statusChip(game), playButton(game, "▶")),
+    { class: `lib-tile${isPlaying(game) ? " now-playing" : ""}`, ...opener(game) },
+    el("div", { class: "tile-cover" }, coverOf(game), statusChip(game), nowBadge(game), playButton(game, "▶")),
     el("div", { class: "name" }, game.name),
     el("div", { class: "muted small-text" }, t("{time} read", { time: formatPlaytime(game.playtime) })),
   );
@@ -317,9 +335,9 @@ function compactHead() {
 function line(game) {
   return el(
     "div",
-    { class: "lib-line", ...opener(game) },
+    { class: `lib-line${isPlaying(game) ? " now-playing" : ""}`, ...opener(game) },
     coverOf(game),
-    el("div", { class: "name" }, game.name),
+    el("div", { class: "name" }, game.name, nowBadge(game)),
     el("span", {}, statusChip(game) || ""),
     el("span", { class: "muted" }, formatPlaytime(game.playtime)),
     el("span", { class: "muted" }, game.last_played > 0 ? lastPlayed(game.last_played) : "—"),
