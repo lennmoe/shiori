@@ -11,3 +11,5 @@ symbols/
 crash/
 tools/symbolize/Cargo.lock
 wrapped/
+RENAME.txt
+
