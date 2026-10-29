@@ -16,7 +16,9 @@
     "Mascots: clicks go through": "Маскоты: клики проходят насквозь",
     "Press {} again to switch back.": "Нажми {} ещё раз, чтобы вернуть.",
     "New VN detected": "Обнаружена новая новелла",
-    "{} · click to check it's the right one": "{} · нажми, чтобы проверить"
+    "{} · click to check it's the right one": "{} · нажми, чтобы проверить",
+    "Still running in the tray": "Продолжает работать в трее",
+    "Right-click its icon to quit": "Чтобы выйти, нажми правой кнопкой на значок"
   },
   "personalities": {
     "cheerful": {
@@ -686,10 +688,26 @@
     "Yes, that's it": "Да, это она",
     "Saved: {name}": "Сохранено: {name}",
     "Discord": "Discord",
+    "Reading": "Читаю",
     "Your own Discord layout is in the Presence tab.": "Свой вид статуса Discord — во вкладке «Статус».",
     "Only needed if something doesn't work as expected.": "Нужно, только если что-то работает не так.",
     "Set by your own layout": "Задаётся твоим видом статуса",
     "Only when the VN has no status on your list yet.": "Только если у новеллы ещё нет статуса в списке.",
+    "Discord isn't found. Open the Discord app (not the website): it connects by itself.": "Discord не найден. Открой приложение Discord (не сайт): подключение произойдёт само.",
+    "Sync with your VNDB list?": "Синхронизировать со списком VNDB?",
+    "With a VNDB token, the statuses and ratings you set here go to your VNDB list, and a VN you start leaves your wishlist.": "С токеном VNDB статусы и оценки отсюда попадают в твой список VNDB, а начатая новелла уходит из списка желаемого.",
+    "No thanks": "Нет, спасибо",
+    "Set it up": "Настроить",
+    "Connected to Discord ✓": "Подключено к Discord ✓",
+    "Open the Discord app (not the website). It connects by itself.": "Открой приложение Discord (не сайт). Подключение произойдёт само.",
+    "Welcome to Visual Novel RPC": "Добро пожаловать в Visual Novel RPC",
+    "It shows the visual novel you're reading on your Discord profile and keeps track of your time read.": "Показывает новеллу, которую ты читаешь, в профиле Discord и считает время чтения.",
+    "Start a VN": "Запусти новеллу",
+    "Most games are found by themselves. The first time, you're asked to check it's the right VN.": "Большинство игр находятся сами. В первый раз тебя попросят проверить, та ли это новелла.",
+    "Let's go": "Поехали",
+    "Discord privacy": "Приватность в Discord",
+    "VN & cover — {name}": "Новелла и обложка — {name}",
+    "Not matched on VNDB — pick it with “Change VN / cover…”.": "Нет совпадения на VNDB — выбери через «Сменить новеллу / обложку…».",
     "beta": "бета",
     "Beta": "Бета"
   }

@@ -81,6 +81,7 @@ async function ask(snap) {
   if (answer === "yes") {
     await call("confirm_match", { key: snap.key });
     toast(t("Saved: {name}", { name: snap.vn.title }));
+    await offerVndbList();
   } else if (answer === "pick") {
     await call("match_checked", { key: snap.key });
     show("cover", { key: snap.key });
@@ -88,6 +89,28 @@ async function ask(snap) {
     await call("match_checked", { key: snap.key });
     await call("not_a_vn", { exe: snap.exe });
     toast(t("{exe} won't be detected again", { exe: snap.exe }));
+  }
+}
+
+async function offerVndbList() {
+  if (store.settings.vndb_token || store.settings.vndb_offer_shown) {
+    return;
+  }
+  await call("update_settings", { changes: { vndb_offer_shown: true } });
+  const answer = await openDialog({
+    title: "Sync with your VNDB list?",
+    body: el(
+      "p",
+      { class: "muted" },
+      "With a VNDB token, the statuses and ratings you set here go to your VNDB list, and a VN you start leaves your wishlist.",
+    ),
+    actions: [
+      { label: "No thanks", kind: "secondary", value: null },
+      { label: "Set it up", value: "setup" },
+    ],
+  });
+  if (answer) {
+    show("settings", { tab: "general", focus: "vndb" });
   }
 }
 

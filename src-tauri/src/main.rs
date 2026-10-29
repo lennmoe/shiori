@@ -168,6 +168,9 @@ fn main() {
             if window.label().starts_with(mascot::WINDOW_PREFIX) && matches!(event, WindowEvent::Moved(_)) {
                 mascot::moved(window.app_handle());
             }
+            if window.label() == "main" && matches!(event, WindowEvent::CloseRequested { .. }) {
+                tray::closed_once(window.app_handle());
+            }
         })
         .invoke_handler(tauri::generate_handler![
             commands::app::get_state,

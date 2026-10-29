@@ -1,15 +1,8 @@
 import { $, el, html } from "../dom.js";
 import { register, show } from "../router.js";
 import { store } from "../store.js";
-import { ask, call, openDialog, segmented, setCover, toast } from "../ui.js";
+import { ask, call, openDialog, setCover, toast } from "../ui.js";
 import { plural, t } from "../i18n.js";
-
-const PRIVACY_HELP = {
-  full: "Discord shows the name, the current section and the cover.",
-  partial: "Discord shows the name and cover, but not where you are in the story.",
-  private: "Discord only shows a generic “Visual Novel” — no name, no cover.",
-  off: "Nothing is shared on Discord while this game is open.",
-};
 
 const RELEASE_TYPES = {
   pkgfront: "Front",
@@ -22,19 +15,6 @@ const RELEASE_TYPES = {
 const TEMPLATE = `
   <button class="back" data-id="back">← Back</button>
   <h2 data-id="title"></h2>
-
-  <div class="card">
-    <div class="field">
-      <b>Discord privacy for this game</b>
-      <div class="seg" data-id="privacy">
-        <button data-v="full">Full</button>
-        <button data-v="partial">Partial</button>
-        <button data-v="private">Private</button>
-        <button data-v="off">Off</button>
-      </div>
-    </div>
-    <div class="hint-text" data-id="privacy-help"></div>
-  </div>
 
   <div class="card">
     <div class="tabs" data-id="tabs">
@@ -103,9 +83,8 @@ async function showPage({ key: wanted, back = "home" }) {
   backTo = back;
 
   const game = await call("get_game", { key });
-  part("title").textContent = t("Cover & privacy — {name}", { name: game.name });
+  part("title").textContent = t("VN & cover — {name}", { name: game.name });
 
-  renderPrivacy(game.entry.privacy || "full");
   openTab("vndb");
 
   part("query").value = game.name;
@@ -130,14 +109,6 @@ function openTab(name) {
   for (const body of root.querySelectorAll("[data-tab-body]")) {
     body.hidden = body.dataset.tabBody !== name;
   }
-}
-
-function renderPrivacy(value) {
-  part("privacy-help").textContent = t(PRIVACY_HELP[value] || "");
-  segmented(part("privacy"), value, async (picked) => {
-    await call("update_game", { key, fields: { privacy: picked } });
-    renderPrivacy(picked);
-  });
 }
 
 async function okToUseNsfw(nsfw) {

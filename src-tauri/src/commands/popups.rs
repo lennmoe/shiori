@@ -123,6 +123,7 @@ pub fn show_mascot(app: AppHandle, shared: SharedState, id: String, shown: bool)
 pub fn toast_action(app: AppHandle, action: String) {
     match action.as_str() {
         "check" => ui_windows::open_page(&app, "home"),
+        "open" => ui_windows::show_main(&app),
         _ => {}
     }
 }

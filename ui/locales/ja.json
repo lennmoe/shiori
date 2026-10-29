@@ -16,7 +16,9 @@
     "Mascots: clicks go through": "マスコット：クリックが通り抜けます",
     "Press {} again to switch back.": "もう一度 {} を押すと元に戻ります。",
     "New VN detected": "新しいVNを検出",
-    "{} · click to check it's the right one": "{} · クリックして正しいか確認"
+    "{} · click to check it's the right one": "{} · クリックして正しいか確認",
+    "Still running in the tray": "タスクトレイで動作中です",
+    "Right-click its icon to quit": "終了するにはアイコンを右クリック"
   },
   "personalities": {
     "cheerful": {
@@ -687,10 +689,26 @@
     "Yes, that's it": "はい、これです",
     "Saved: {name}": "保存しました: {name}",
     "Discord": "Discord",
+    "Reading": "読書中",
     "Your own Discord layout is in the Presence tab.": "自分だけのDiscord表示は「ステータス表示」タブにあります。",
     "Only needed if something doesn't work as expected.": "うまく動かないときだけ使います。",
     "Set by your own layout": "自分の表示で設定されています",
     "Only when the VN has no status on your list yet.": "リストにまだステータスがないVNだけ。",
+    "Discord isn't found. Open the Discord app (not the website): it connects by itself.": "Discordが見つかりません。Discordアプリ（ブラウザ版ではなく）を開くと自動で接続します。",
+    "Sync with your VNDB list?": "VNDBリストと同期しますか？",
+    "With a VNDB token, the statuses and ratings you set here go to your VNDB list, and a VN you start leaves your wishlist.": "VNDBトークンがあれば、ここで付けたステータスと評価がVNDBリストに送られ、読み始めたVNはウィッシュリストから外れます。",
+    "No thanks": "結構です",
+    "Set it up": "設定する",
+    "Connected to Discord ✓": "Discordに接続済み ✓",
+    "Open the Discord app (not the website). It connects by itself.": "Discordアプリ（ブラウザ版ではなく）を開いてください。自動で接続します。",
+    "Welcome to Visual Novel RPC": "Visual Novel RPCへようこそ",
+    "It shows the visual novel you're reading on your Discord profile and keeps track of your time read.": "読んでいるビジュアルノベルをDiscordのプロフィールに表示し、読書時間を記録します。",
+    "Start a VN": "VNを起動",
+    "Most games are found by themselves. The first time, you're asked to check it's the right VN.": "ほとんどのゲームは自動で見つかります。初回は正しいVNか確認します。",
+    "Let's go": "はじめる",
+    "Discord privacy": "Discordのプライバシー",
+    "VN & cover — {name}": "VNと表紙 — {name}",
+    "Not matched on VNDB — pick it with “Change VN / cover…”.": "VNDBで一致なし — 「VN / 表紙を変更…」で選んでください。",
     "beta": "ベータ",
     "Beta": "ベータ"
   }

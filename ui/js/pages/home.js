@@ -7,6 +7,9 @@ import { call, confirmButton, openDialog, segmented, setCover, toast, toggle } f
 import { t } from "../i18n.js";
 
 const TEMPLATE = `
+  <div class="banner warn" data-id="no-discord" hidden>
+    <i></i>Discord isn't found. Open the Discord app (not the website): it connects by itself.
+  </div>
   <div class="banner warn" data-id="paused" hidden>
     <i></i>Presence paused — nothing is being shared on Discord.
   </div>
@@ -244,6 +247,7 @@ function renderProcess(snap) {
   }
 
   part("process-name").textContent = snap.exe;
+  part("not-vn").hidden = !!snap.emulator;
   confirmButton(part("not-vn"), "Not a VN", async () => {
     await call("not_a_vn", { exe: snap.exe });
     toast(t("{exe} won't be detected again", { exe: snap.exe }));
@@ -310,6 +314,7 @@ function tickElapsed() {
 setInterval(tickElapsed, 1000);
 
 function renderStatus(status) {
+  part("no-discord").hidden = !!status.discord_ok || !status.discord_msg;
   const discord = t(status.discord_msg || "connecting…");
   const lines = [status.vndb_msg, `Discord: ${discord}`];
   part("status").textContent = lines.filter(Boolean).join("   ·   ");

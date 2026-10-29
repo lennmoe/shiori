@@ -8,6 +8,7 @@ import { call, toast } from "./ui.js";
 import { offerUpdate } from "./components/update.js";
 import { offerRecap } from "./components/recap.js";
 import { watchNewVns } from "./components/new-vn.js";
+import { welcome } from "./components/welcome.js";
 import { loadLanguage, t, translateTree } from "./i18n.js";
 
 import "./pages/home.js";
@@ -79,7 +80,12 @@ async function showWhatsNewOnce() {
   if (last === store.version) {
     return false;
   }
-  await invoke("update_settings", { changes: { last_seen_version: store.version } });
+  const changes = { last_seen_version: store.version };
+  if (!last) {
+    changes.welcome_done = false;
+  }
+  await invoke("update_settings", { changes });
+  update("settings", { ...store.settings, ...changes });
 
   const updated = last && last !== store.version;
   if (updated) {
@@ -114,6 +120,9 @@ async function start() {
   const showedNotes = await showWhatsNewOnce();
   if (!showedNotes) {
     show(state.pending_page || "home");
+  }
+  if (store.settings.welcome_done === false) {
+    await welcome();
   }
   watchNewVns();
 

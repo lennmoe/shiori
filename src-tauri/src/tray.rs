@@ -75,3 +75,25 @@ pub fn handle_menu(app: &AppHandle, event: MenuEvent) {
         _ => {}
     }
 }
+
+pub fn closed_once(app: &AppHandle) {
+    let shared = app.state::<Arc<Shared>>();
+    let language = {
+        let mut cfg = shared.config.lock().unwrap();
+        if cfg.bool("tray_hint_shown") {
+            return;
+        }
+        let mut changes = serde_json::Map::new();
+        changes.insert("tray_hint_shown".into(), true.into());
+        let _ = cfg.update(changes);
+        lang::resolve(&cfg.str("language"))
+    };
+    let toast = ui_windows::Toast {
+        title: lang::tr("Still running in the tray", language).to_string(),
+        detail: lang::tr("Right-click its icon to quit", language).to_string(),
+        ok: true,
+        action: "open".into(),
+        ..Default::default()
+    };
+    ui_windows::show_toast(app, toast, None);
+}

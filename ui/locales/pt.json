@@ -16,7 +16,9 @@
     "Mascots: clicks go through": "Mascotes: os cliques passam por elas",
     "Press {} again to switch back.": "Aperte {} de novo para voltar.",
     "New VN detected": "Nova VN detectada",
-    "{} · click to check it's the right one": "{} · clique para conferir se é a certa"
+    "{} · click to check it's the right one": "{} · clique para conferir se é a certa",
+    "Still running in the tray": "Continua aberto na bandeja",
+    "Right-click its icon to quit": "Clique com o botão direito no ícone para sair"
   },
   "personalities": {
     "cheerful": {
@@ -686,10 +688,26 @@
     "Yes, that's it": "Sim, é essa",
     "Saved: {name}": "Salvo: {name}",
     "Discord": "Discord",
+    "Reading": "Lendo",
     "Your own Discord layout is in the Presence tab.": "Seu próprio layout do Discord fica na aba Presença.",
     "Only needed if something doesn't work as expected.": "Só é preciso se algo não funcionar como esperado.",
     "Set by your own layout": "Definido pelo seu layout",
     "Only when the VN has no status on your list yet.": "Só quando a VN ainda não tem status na sua lista.",
+    "Discord isn't found. Open the Discord app (not the website): it connects by itself.": "Discord não encontrado. Abra o app do Discord (não o site): ele conecta sozinho.",
+    "Sync with your VNDB list?": "Sincronizar com sua lista do VNDB?",
+    "With a VNDB token, the statuses and ratings you set here go to your VNDB list, and a VN you start leaves your wishlist.": "Com um token do VNDB, os status e notas que você define aqui vão para sua lista do VNDB, e uma VN que você começa sai da lista de desejos.",
+    "No thanks": "Não, obrigado",
+    "Set it up": "Configurar",
+    "Connected to Discord ✓": "Conectado ao Discord ✓",
+    "Open the Discord app (not the website). It connects by itself.": "Abra o app do Discord (não o site). Ele conecta sozinho.",
+    "Welcome to Visual Novel RPC": "Bem-vindo ao Visual Novel RPC",
+    "It shows the visual novel you're reading on your Discord profile and keeps track of your time read.": "Mostra a visual novel que você lê no seu perfil do Discord e conta seu tempo de leitura.",
+    "Start a VN": "Abra uma VN",
+    "Most games are found by themselves. The first time, you're asked to check it's the right VN.": "A maioria dos jogos é encontrada sozinha. Na primeira vez, você confirma se é a VN certa.",
+    "Let's go": "Vamos lá",
+    "Discord privacy": "Privacidade no Discord",
+    "VN & cover — {name}": "VN e capa — {name}",
+    "Not matched on VNDB — pick it with “Change VN / cover…”.": "Sem correspondência no VNDB — escolha com “Mudar VN / capa…”.",
     "beta": "beta",
     "Beta": "Beta"
   }

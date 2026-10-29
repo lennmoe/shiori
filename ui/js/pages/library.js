@@ -45,7 +45,7 @@ const TEMPLATE = `
       <button class="btn secondary" data-id="wishlist">Random from wishlist</button>
       <select data-id="status">
         <option value="">All statuses</option>
-        <option value="playing">Playing</option>
+        <option value="playing">Reading</option>
         <option value="finished">Finished</option>
         <option value="stalled">Stalled</option>
         <option value="dropped">Dropped</option>
@@ -73,7 +73,7 @@ const SORTERS = {
 };
 
 const SHELVES = [
-  ["playing", "Playing"],
+  ["playing", "Reading"],
   ["finished", "Finished"],
   ["stalled", "Stalled"],
   ["dropped", "Dropped"],
@@ -264,7 +264,11 @@ function nowBadge(game) {
 }
 
 function statusChip(game) {
-  return game.status && el("span", { class: `status ${game.status}` }, capitalize(game.status));
+  if (!game.status) {
+    return null;
+  }
+  const label = SHELVES.find(([status]) => status === game.status)?.[1] || capitalize(game.status);
+  return el("span", { class: `status ${game.status}` }, label);
 }
 
 function playButton(game, label = "▶  Play", kind = "") {

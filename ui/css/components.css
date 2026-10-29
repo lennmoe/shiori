@@ -776,3 +776,35 @@ button.chip:hover,
   opacity: 0.45;
   pointer-events: none;
 }
+
+.welcome {
+  display: grid;
+  gap: 14px;
+  width: min(460px, 80vw);
+}
+
+.welcome-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.welcome-number {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.welcome-text {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
+}

@@ -19,6 +19,13 @@ import { drawChart } from "../components/chart.js";
 import { LAUNCHERS, createShortcut, locateGame, locateTool, playGame } from "../components/play.js";
 import { t } from "../i18n.js";
 
+const PRIVACY_HELP = {
+  full: "Discord shows the name, the current section and the cover.",
+  partial: "Discord shows the name and cover, but not where you are in the story.",
+  private: "Discord only shows a generic “Visual Novel” — no name, no cover.",
+  off: "Nothing is shared on Discord while this game is open.",
+};
+
 const TEMPLATE = `
   <button class="back" data-id="back">← Library</button>
 
@@ -34,7 +41,7 @@ const TEMPLATE = `
         <h2 data-id="name"></h2>
         <button class="path" data-id="path" title="Show in folder"></button>
         <div class="row" data-id="vndb"></div>
-        <button class="link" data-id="change-cover">Change cover & privacy…</button>
+        <button class="link" data-id="change-cover">Change VN / cover…</button>
       </div>
     </div>
 
@@ -66,7 +73,7 @@ const TEMPLATE = `
         <div class="field">
           <b>Status</b>
           <div class="seg" data-id="status">
-            <button data-v="playing">Playing</button>
+            <button data-v="playing">Reading</button>
             <button data-v="finished">Finished</button>
             <button data-v="stalled">Stalled</button>
             <button data-v="dropped">Dropped</button>
@@ -92,6 +99,19 @@ const TEMPLATE = `
           </div>
         </div>
         <div class="hint-text" data-id="launcher-note"></div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <b>Discord privacy</b>
+          <div class="seg" data-id="privacy">
+            <button data-v="full">Full</button>
+            <button data-v="partial">Partial</button>
+            <button data-v="private">Private</button>
+            <button data-v="off">Off</button>
+          </div>
+        </div>
+        <div class="hint-text" data-id="privacy-help"></div>
       </div>
     </div>
 
@@ -192,6 +212,7 @@ async function load() {
 
   renderVndb(entry);
   renderStatus(entry);
+  renderPrivacy(entry.privacy || "full");
   renderVote(entry);
   renderLauncher(entry);
   renderDuplicates();
@@ -238,7 +259,7 @@ function renderVndb(entry) {
       el(
         "span",
         { class: "muted small-text" },
-        "Not matched on VNDB — pick it with “Change cover”.",
+        "Not matched on VNDB — pick it with “Change VN / cover…”.",
       ),
     );
   }
@@ -253,6 +274,14 @@ function renderStatus(entry) {
   segmented(part("status"), entry.status || "", async (value) => {
     const status = value === entry.status ? "" : value;
     await call("update_game", { key, fields: { status } });
+  });
+}
+
+function renderPrivacy(value) {
+  part("privacy-help").textContent = t(PRIVACY_HELP[value] || "");
+  segmented(part("privacy"), value, async (picked) => {
+    await call("update_game", { key, fields: { privacy: picked } });
+    renderPrivacy(picked);
   });
 }
 

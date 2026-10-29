@@ -16,7 +16,9 @@
     "Mascots: clicks go through": "Linh vật: nhấp xuyên qua",
     "Press {} again to switch back.": "Nhấn {} lần nữa để quay lại.",
     "New VN detected": "Phát hiện VN mới",
-    "{} · click to check it's the right one": "{} · bấm để kiểm tra đúng chưa"
+    "{} · click to check it's the right one": "{} · bấm để kiểm tra đúng chưa",
+    "Still running in the tray": "Vẫn đang chạy ở khay hệ thống",
+    "Right-click its icon to quit": "Nhấp chuột phải vào biểu tượng để thoát"
   },
   "personalities": {
     "cheerful": {
@@ -686,10 +688,26 @@
     "Yes, that's it": "Đúng rồi",
     "Saved: {name}": "Đã lưu: {name}",
     "Discord": "Discord",
+    "Reading": "Đang đọc",
     "Your own Discord layout is in the Presence tab.": "Bố cục Discord của riêng bạn nằm ở tab Trạng thái.",
     "Only needed if something doesn't work as expected.": "Chỉ cần khi có gì đó không hoạt động như mong đợi.",
     "Set by your own layout": "Do bố cục của bạn quyết định",
     "Only when the VN has no status on your list yet.": "Chỉ khi VN chưa có trạng thái trong danh sách.",
+    "Discord isn't found. Open the Discord app (not the website): it connects by itself.": "Không tìm thấy Discord. Mở ứng dụng Discord (không phải trang web): nó sẽ tự kết nối.",
+    "Sync with your VNDB list?": "Đồng bộ với danh sách VNDB?",
+    "With a VNDB token, the statuses and ratings you set here go to your VNDB list, and a VN you start leaves your wishlist.": "Có token VNDB, trạng thái và điểm bạn đặt ở đây sẽ gửi lên danh sách VNDB, và VN bạn bắt đầu sẽ rời danh sách mong muốn.",
+    "No thanks": "Không, cảm ơn",
+    "Set it up": "Thiết lập",
+    "Connected to Discord ✓": "Đã kết nối Discord ✓",
+    "Open the Discord app (not the website). It connects by itself.": "Mở ứng dụng Discord (không phải trang web). Nó sẽ tự kết nối.",
+    "Welcome to Visual Novel RPC": "Chào mừng đến với Visual Novel RPC",
+    "It shows the visual novel you're reading on your Discord profile and keeps track of your time read.": "Hiển thị visual novel bạn đang đọc trên hồ sơ Discord và theo dõi thời gian đọc.",
+    "Start a VN": "Mở một VN",
+    "Most games are found by themselves. The first time, you're asked to check it's the right VN.": "Hầu hết game được tự tìm thấy. Lần đầu, bạn sẽ được hỏi để kiểm tra đúng VN chưa.",
+    "Let's go": "Bắt đầu",
+    "Discord privacy": "Quyền riêng tư Discord",
+    "VN & cover — {name}": "VN & ảnh bìa — {name}",
+    "Not matched on VNDB — pick it with “Change VN / cover…”.": "Không khớp trên VNDB — chọn bằng “Đổi VN / ảnh bìa…”.",
     "beta": "beta",
     "Beta": "Beta"
   }
