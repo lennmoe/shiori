@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 use super::{blocking, SharedState};
 use crate::engines::{normalize_exe, BUILTIN_BLACKLIST};
 use crate::state::{Cmd, Shared};
-use crate::{autostart, discord, hotkey, mascot, screenshots, shell, ui_windows, updater, winapi};
+use crate::{autostart, discord, hotkey, mascot, presence, screenshots, shell, ui_windows, updater, winapi};
 
 pub fn allow_screenshot_folder(shared: &Shared) {
     let root = screenshots::root(&shared.config.lock().unwrap());
@@ -204,4 +204,88 @@ pub fn set_background(shared: SharedState, path: Option<String>) -> Result<(), S
     };
     shared.emit("settings-changed", settings);
     Ok(())
+}
+
+fn last_read(shared: &Shared) -> Option<crate::state::Snapshot> {
+    let (key, entry, cover, playtime) = {
+        let cfg = shared.config.lock().unwrap();
+        let last = |e: &Map<String, Value>| e.get("last_played").and_then(Value::as_i64).unwrap_or(0);
+        let (key, entry) = super::library::visible_games(&cfg)
+            .into_iter()
+            .filter(|(_, e)| last(e) > 0)
+            .max_by_key(|(_, e)| last(e))?;
+        let cover = cfg.cached_cover(&entry).map(|p| p.to_string_lossy().to_string());
+        let playtime = cfg.playtime(&key);
+        (key, entry, cover, playtime)
+    };
+    let text = |f: &str| entry.get(f).and_then(Value::as_str).unwrap_or("").to_string();
+    let vn = [text("vndb_id"), text("matched_vndb_id")]
+        .into_iter()
+        .find(|id| !id.is_empty())
+        .and_then(|id| shared.vndb.get(&id).ok().flatten());
+    let section = Some(text("section"))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "Chapter 2".into());
+
+    Some(crate::state::Snapshot {
+        detected: true,
+        game_name: screenshots::display_name(&key, &entry),
+        key,
+        section_label: section,
+        vn,
+        playtime_seconds: playtime,
+        cover: crate::state::Cover {
+            local_path: cover,
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+}
+
+fn preview(shared: &Shared, custom: &Value) -> Value {
+    let now = crate::config::now();
+    let current = shared.snapshot();
+    let (source, snap) = if current.detected {
+        ("live", Some(current))
+    } else {
+        match last_read(shared) {
+            Some(snap) => ("last", Some(snap)),
+            None => ("sample", None),
+        }
+    };
+
+    let vars = {
+        let cfg = shared.config.lock().unwrap();
+        let language = presence::language(&cfg);
+        match &snap {
+            Some(snap) => presence::vars(snap, &cfg.game(&snap.key), cfg.str("title_language") == "original", language),
+            None => presence::sample_vars(language),
+        }
+    };
+
+    let title = vars[0].1.clone();
+    let mut activity = discord::Activity {
+        name: title.clone(),
+        large_text: title,
+        ..Default::default()
+    };
+    let (start, playtime) = match (source, &snap) {
+        ("live", Some(snap)) => (snap.session_start, snap.playtime_seconds),
+        (_, Some(snap)) => (now - 25 * 60, snap.playtime_seconds),
+        _ => (now - 25 * 60, 35 * 3600 + 11 * 60),
+    };
+    presence::apply(&mut activity, custom, &vars, start, playtime, now);
+
+    json!({
+        "source": source,
+        "activity": activity,
+        "cover": snap.as_ref().and_then(|s| s.cover.local_path.clone()),
+        "vars": vars.into_iter().map(|(k, v)| (k.to_string(), json!(v))).collect::<Map<String, Value>>(),
+    })
+}
+
+#[tauri::command]
+pub async fn preview_presence(shared: SharedState<'_>, custom: Value) -> Result<Value, String> {
+    let shared = Arc::clone(&shared);
+    blocking(move || Ok(preview(&shared, &custom))).await
 }

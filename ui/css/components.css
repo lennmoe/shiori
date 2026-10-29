@@ -771,3 +771,8 @@ button.chip:hover,
     grid-template-columns: 1fr;
   }
 }
+
+.locked {
+  opacity: 0.45;
+  pointer-events: none;
+}

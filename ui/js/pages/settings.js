@@ -9,6 +9,7 @@ import { offerUpdate } from "../components/update.js";
 import { discordButton } from "../components/discord-button.js";
 import { languagePicker } from "../components/language-picker.js";
 import { plural, t } from "../i18n.js";
+import { presenceBuilder } from "./presence.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -19,9 +20,11 @@ const TEMPLATE = `
   <div class="card">
     <div class="tabs" data-id="tabs">
       <button data-tab="general">General</button>
+      <button data-tab="presence">Presence</button>
       <button data-tab="theme">Theme</button>
-      <button data-tab="rules">Title rules</button>
       <button data-tab="blacklist">Never detect</button>
+      <button data-tab="advanced">Advanced</button>
+      <button data-tab="labs">Beta</button>
     </div>
     <div class="settings-body" data-id="body" style="padding-top: 16px"></div>
   </div>
@@ -54,7 +57,7 @@ function build(container) {
 
   subscribe("settings", () => {
     const typing =
-      root.contains(document.activeElement) && document.activeElement.matches("input, textarea");
+      root.contains(document.activeElement) && document.activeElement.matches("input:not([type=checkbox]), textarea");
     if (root.classList.contains("active") && !typing) {
       render();
     }
@@ -66,6 +69,9 @@ function showPage(params = {}) {
     tab = params.tab;
   }
   render();
+  if (params.focus) {
+    $(`[data-section="${params.focus}"]`, root)?.scrollIntoView({ block: "start" });
+  }
 }
 
 function buildFooter() {
@@ -96,8 +102,12 @@ function render() {
   const body = part("body");
   if (tab === "theme") {
     renderThemeTab(body, save);
-  } else if (tab === "rules") {
-    body.replaceChildren(...rulesTab());
+  } else if (tab === "presence") {
+    body.replaceChildren(...presenceTab());
+  } else if (tab === "advanced") {
+    body.replaceChildren(...advancedTab());
+  } else if (tab === "labs") {
+    body.replaceChildren(...labsTab());
   } else if (tab === "blacklist") {
     body.replaceChildren(...blacklistTab());
   } else {
@@ -105,7 +115,7 @@ function render() {
   }
 }
 
-const section = (title) => el("div", { class: "section-title" }, title);
+const section = (title, id = "") => el("div", { class: "section-title", "data-section": id }, title);
 
 const hint = (text) => el("div", { class: "hint-text" }, text);
 
@@ -176,27 +186,54 @@ function languageSection() {
 function generalTab() {
   return [
     ...languageSection(),
-    ...presenceSection(),
     ...coversSection(),
     ...vndbSection(),
     ...screenshotsSection(),
     ...localeSection(),
     ...appSection(),
     ...dataSection(),
-    ...advancedSection(),
-    ...labsSection(),
   ];
 }
 
-function labsSection() {
+function labsTab() {
+  const builder = el("button", { class: "btn secondary small" }, "Open");
+  builder.onclick = () => {
+    tab = "presence";
+    render();
+  };
   return [
-    section("Labs (test)"),
     hint("Features being tried out. They may change or go away."),
     setting("labs_vn_description", "Description and characters on a VN's page", "From VNDB."),
     setting("labs_search", "Search with Ctrl+K", "Find a VN or a page from anywhere."),
     setting("labs_hover", "Covers lift when hovered"),
     setting("labs_compact_sidebar", "Compact sidebar", "Icons only. The « button at the bottom of the sidebar switches it too."),
     setting("labs_shortcuts", "Keyboard shortcuts", "1 to 6 switch pages, Alt+← goes back."),
+    el(
+      "div",
+      { class: "row" },
+      el("span", { class: "muted" }, "Your own Discord layout is in the Presence tab."),
+      builder,
+    ),
+  ];
+}
+
+function advancedTab() {
+  return [
+    hint("Only needed if something doesn't work as expected."),
+    section("Discord"),
+    ...discordSection(),
+    numberField("update_min_interval", "Min. seconds between presence updates", {
+      min: 1,
+      max: 300,
+      fallback: 5,
+    }),
+    el("div", { class: "field-label" }, "Fallback Discord asset key"),
+    textField("default_asset_key"),
+    hint(
+      "The image Discord shows when the cover can't be: a local file, an NSFW cover, or no cover.",
+    ),
+    section("Title rules"),
+    ...rulesTab(),
   ];
 }
 
@@ -239,33 +276,48 @@ function titleLanguageField() {
   return el("div", { class: "field" }, el("span", {}, "Title on Discord"), select);
 }
 
-function presenceSection() {
+function presenceTab() {
+  const custom = !!store.settings.presence_custom?.enabled;
+  return [
+    ...presenceSection(custom),
+    el("div", { class: "section-title" }, "Your own layout", " ", el("span", { class: "labs-tag" }, "beta")),
+    presenceBuilder(),
+  ];
+}
+
+function presenceSection(custom) {
   return [
     section("Presence"),
+    ...(custom ? [hint("Your own layout is on: it replaces the lines set below.")] : []),
     presenceLanguageField(),
     titleLanguageField(),
     hint("The original title comes from VNDB. VNs without one keep the romanized title."),
-    setting("show_section", "Show where you are in the story", "The “Reading・Chapter 1” line."),
-    setting("show_total_read", "Show total time read", "The “Total read: 3h 40m” line."),
-    setting(
-      "show_progress",
-      "Show how far you are",
-      "Adds “· 78%” to the time read, compared with the average length on VNDB.",
+    el(
+      "div",
+      { class: custom ? "locked" : "", title: custom ? "Set by your own layout" : "" },
+      setting("show_section", "Show where you are in the story", "The “Reading・Chapter 1” line."),
+      setting("show_total_read", "Show total time read", "The “Total read: 3h 40m” line."),
+      setting(
+        "show_progress",
+        "Show how far you are",
+        "Adds “· 78%” to the time read, compared with the average length on VNDB.",
+      ),
+      setting("show_elapsed", "Show elapsed time"),
+      setting("show_vndb_button", "Add a “View on VNDB” button"),
     ),
-    setting("show_elapsed", "Show elapsed time"),
     setting("clear_on_close", "Clear presence when the VN closes"),
-    setting("show_vndb_button", "Add a “View on VNDB” button"),
     setting(
       "idle_when_unfocused",
       "Go idle when the VN isn't the active window",
       "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.",
     ),
-    numberField("idle_seconds", "Seconds in the background before going idle", {
-      min: 0,
-      max: 3600,
-      fallback: 60,
-    }),
-  ];
+    store.settings.idle_when_unfocused &&
+      numberField("idle_seconds", "Seconds in the background before going idle", {
+        min: 0,
+        max: 3600,
+        fallback: 60,
+      }),
+  ].filter(Boolean);
 }
 
 function coversSection() {
@@ -295,7 +347,7 @@ function vndbSection() {
   };
 
   return [
-    section("VNDB list"),
+    section("VNDB list", "vndb"),
     el("div", { class: "field-label" }, "Personal token"),
     ...testedField(token, test),
     hint(
@@ -308,12 +360,13 @@ function vndbSection() {
       "Statuses set in the Library are sent to VNDB, and a VN you start reading leaves your " +
         "wishlist. Only VNs whose VNDB entry you picked or confirmed are synced.",
     ),
-    setting(
-      "vndb_mark_playing",
-      "Mark VNs as Playing on VNDB when I start them",
-      "Only when the VN has no status on your list yet. Needs the option above.",
-    ),
-  ];
+    store.settings.vndb_sync &&
+      setting(
+        "vndb_mark_playing",
+        "Mark VNs as Playing on VNDB when I start them",
+        "Only when the VN has no status on your list yet.",
+      ),
+  ].filter(Boolean);
 }
 
 function screenshotsSection() {
@@ -460,23 +513,6 @@ async function importData() {
 
   const count = await call("import_data", { path });
   toast(t("Loaded {vns} and the settings", { vns: plural(count, "VN") }));
-}
-
-function advancedSection() {
-  return [
-    section("Advanced"),
-    ...discordSection(),
-    numberField("update_min_interval", "Min. seconds between presence updates", {
-      min: 1,
-      max: 300,
-      fallback: 5,
-    }),
-    el("div", { class: "field-label" }, "Fallback Discord asset key"),
-    textField("default_asset_key"),
-    hint(
-      "The image Discord shows when the cover can't be: a local file, an NSFW cover, or no cover.",
-    ),
-  ];
 }
 
 function checkPattern(pattern) {

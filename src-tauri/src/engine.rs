@@ -11,6 +11,7 @@ use crate::config::{game_key, url_cache_key, Config};
 use crate::discord::{self, Activity};
 use crate::emulators;
 use crate::lang;
+use crate::presence;
 use crate::engines::{
     blacklist_set, clean_title, detect_engine, is_helper_exe, is_windows_app, normalize_exe,
 };
@@ -691,10 +692,7 @@ impl Engine {
         }
 
         let cfg = self.shared.config.lock().unwrap();
-        let language = match cfg.str("presence_language").as_str() {
-            "" | "app" => lang::resolve(&cfg.str("language")),
-            fixed => lang::resolve(fixed),
-        };
+        let language = presence::language(&cfg);
         let reading = lang::tr("Reading", language);
         let asset = cfg.str("default_asset_key");
         let start = cfg
@@ -767,7 +765,7 @@ impl Engine {
             snap.cover.discord_image.clone()
         };
 
-        Some(Activity {
+        let mut activity = Activity {
             name: name.clone(),
             details,
             state,
@@ -776,7 +774,26 @@ impl Engine {
             small_text: "via Visual Novel RPC".into(),
             start,
             buttons,
-        })
+            ..Default::default()
+        };
+        let custom = cfg.get("presence_custom");
+        if snap.privacy != "partial" && presence::enabled(custom) {
+            let vars = presence::vars(
+                snap,
+                &cfg.game(&snap.key),
+                cfg.str("title_language") == "original",
+                language,
+            );
+            presence::apply(
+                &mut activity,
+                custom.unwrap(),
+                &vars,
+                snap.session_start,
+                snap.playtime_seconds,
+                crate::config::now(),
+            );
+        }
+        Some(activity)
     }
 
     fn flush_playtime(&mut self) {

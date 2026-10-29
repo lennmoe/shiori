@@ -12,6 +12,7 @@ pub struct Activity {
     pub state: String,
     pub large_image: String,
     pub large_text: String,
+    pub small_image: String,
     pub small_text: String,
     pub start: Option<i64>,
     pub buttons: Vec<(String, String)>,
@@ -41,6 +42,9 @@ impl Activity {
                 .find(|s| !s.is_empty())
                 .cloned();
             assets["large_text"] = json!(cut(&text.unwrap_or_default()));
+        }
+        if !self.small_image.is_empty() {
+            assets["small_image"] = json!(self.small_image);
         }
         if !self.small_text.is_empty() {
             assets["small_text"] = json!(cut(&self.small_text));

@@ -6,6 +6,7 @@ mod discord;
 mod engine;
 mod emulators;
 mod engines;
+mod presence;
 mod state;
 mod steam;
 mod title_parser;
@@ -220,6 +221,7 @@ fn main() {
             commands::share::copy_png,
             commands::share::save_png,
             commands::share::year_recap,
+            commands::app::preview_presence,
             commands::data::backup_default_name,
             commands::data::export_data,
             commands::data::import_data,
