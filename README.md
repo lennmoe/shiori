@@ -1,118 +1,138 @@
-# Visual Novel RPC
-
-Show the visual novel you're reading on your **Discord profile**: the game, your current chapter or route, the time read and its cover.
-
-<p align="center"><img src="image/discord-status.png" width="420" alt="Discord status: Subarashiki Hibi, Reading — Wonderful Everyday, Total read: 35h 05m"></p>
+<p align="center"><img src="image/banner.jpg" width="100%" alt="Visual Novel RPC: show the visual novel you're reading on your Discord profile"></p>
 
 <p align="center">
-  <a href="https://github.com/lennmoe/vnrpc/releases/latest"><b>Download</b></a> ·
-  <a href="https://vnrpc-docs.vercel.app/"><b>Documentation</b></a> ·
-  <a href="https://vnrpc-docs.vercel.app/troubleshooting/">Troubleshooting</a> ·
-  <a href="https://discord.gg/cDTUQFq4Hn">Discord</a>
+  <a href="https://github.com/lennmoe/vnrpc/releases/latest"><img src="https://img.shields.io/github/v/release/lennmoe/vnrpc?style=for-the-badge&label=Download&color=5865F2" alt="Download"></a>
+  <a href="https://vnrpc-docs.vercel.app/"><img src="https://img.shields.io/badge/Docs-read-2B2D31?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://discord.gg/cDTUQFq4Hn"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/lennmoe/vnrpc/releases">
-    <img src="https://img.shields.io/github/downloads/lennmoe/vnrpc/total" alt="Release downloads">
-  </a>
+  <a href="https://github.com/lennmoe/vnrpc/releases"><img src="https://img.shields.io/github/downloads/lennmoe/vnrpc/total?color=3BA55D" alt="Release downloads"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" alt="Windows 10 and 11">
+  <img src="https://img.shields.io/badge/size-~10%20MB-2B2D31" alt="About 10 MB">
+  <img src="https://img.shields.io/badge/languages-7-EB459E" alt="7 languages">
 </p>
 
-<p align="center"><img src="image/now-reading.png" width="100%" alt="Now reading: Sanoba Witch, Nene Route, 22% read, with the Discord preview, over a custom background"></p>
+<p align="center">
+  A small tray app that reads the VN's window title, so most engines work with <b>no setup</b>.<br>
+  One light <code>.exe</code>, nothing else to install.
+</p>
 
-A small Windows tray app, written in Rust with [Tauri](https://tauri.app). It reads the title of the VN's window, so most engines work without any setup. One light `.exe` (about 10 MB), nothing else to install. Available in 7 languages.
+<br>
 
-## Features
+<p align="center"><img src="image/now-reading.png" width="100%" alt="Now reading: Sanoba Witch, Nene Route, 22% read, with the Discord preview"></p>
 
-- **Finds the VN by itself** (Ren'Py, KiriKiri, SiglusEngine, BGI, emulators…), or you pick the window by hand.
-- **Shows where you are**: prologue, chapter, route or ending, read from the window title.
-- **Tracks time read** for each VN, with a day-by-day history, a reading calendar with streaks, and your progress against the average length on VNDB.
-- **Library** of every VN you've read, with a page for each one: status, rating, chart, description, characters and screenshots.
-- **Screenshots** of the game window with one key, in a gallery sorted by VN or by date.
-- **Share card**: "My week / my month in visual novels", copied as an image to paste on Discord.
-- **VNDB list sync**, and a **random pick from your wishlist** when you can't decide what to read next.
-- **Play button and desktop shortcuts**, through Steam, Locale Emulator or NTLEA.
-- **Privacy per game**: everything, no chapter, just "Visual Novel", or nothing. NSFW covers stay blurred unless you allow them.
-- **Make it yours**: 16 themes or your own colors, and your own **background image**.
-- **Desktop mascots** with personalities, your own lines and voices.
-- **7 languages**: English, French, Spanish, Portuguese (Brazil), Russian, Japanese, Vietnamese.
+## Highlights
 
-## Screenshots
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="image/new-vn.png" width="100%" alt="New VN detected, with the VNDB match">
+      <h3>Finds your VN by itself</h3>
+      Ren'Py, KiriKiri, SiglusEngine, BGI, Unity, emulators… The first time, it asks you to check the VNDB match, so friends never see the wrong name or cover.
+    </td>
+    <td width="50%" valign="top">
+      <img src="image/presence.png" width="100%" alt="The presence builder with a live Discord preview">
+      <h3>Your own Discord status <sup>beta</sup></h3>
+      Write each line with <code>{title}</code>, <code>{section}</code>, <code>{progress}</code>… Add text on the cover, a small icon, a timer and buttons, and see it live.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="image/library.png" width="100%" alt="Library in grid view with the reading calendar">
+      <h3>Every hour you read</h3>
+      A Library of every VN with time read, day by day history, reading calendar and streaks, and your progress against the VNDB length.
+    </td>
+    <td width="50%" valign="top">
+      <img src="image/share-card.png" width="100%" alt="My month in visual novels">
+      <h3>Share your reading</h3>
+      “My week / month in visual novels” as an image to paste on Discord, and a yearly recap on <a href="https://wrapped.maia.moe">wrapped.maia.moe</a>.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="image/gallery.png" width="100%" alt="Screenshot gallery">
+      <h3>Screenshots in one key</h3>
+      Capture the game window while you read, then browse them by VN or by date.
+    </td>
+    <td width="50%" valign="top">
+      <img src="image/mascot.png" width="100%" alt="A desktop mascot over a game">
+      <h3>Desktop mascots</h3>
+      Characters on your desktop who talk about what you read, with personalities, your own lines and voices.
+    </td>
+  </tr>
+</table>
 
-### Library
+## Get started
 
-Every VN you've read and your reading days over the year. [Docs](https://vnrpc-docs.vercel.app/library/)
+1. **Download** [`vnrpc.exe`](https://github.com/lennmoe/vnrpc/releases/latest) and run it.
+2. **Open Discord** (the desktop app), with *Settings → Activity Privacy → Share your detected activities* on.
+3. **Start a VN.** That's it: it shows up on your profile.
 
-<p align="center"><img src="image/library.png" width="100%" alt="Library in grid view with the reading calendar"></p>
+The app updates itself and shows what changed after each update. Full guide: [Install](https://vnrpc-docs.vercel.app/install/) · [Troubleshooting](https://vnrpc-docs.vercel.app/troubleshooting/)
 
-### A VN's page
+## Everything it does
 
-Time read, progress against the VNDB length, status, rating, how to launch it, and its reading chart.
+| | |
+|---|---|
+| **Discord** | Chapter, route or ending read from the window title · original or romanized title · privacy per VN (everything, no chapter, just “Visual Novel”, or nothing) · NSFW covers stay hidden unless you allow them |
+| **Reading** | Time read per VN and per day · calendar and streaks · progress against the VNDB length · status and rating · description and characters from VNDB |
+| **VNDB** | List sync · random pick from your wishlist when you can't decide |
+| **Playing** | Play button and desktop shortcuts, through Steam, Locale Emulator or NTLEA |
+| **Make it yours** | 16 themes or your own colors · your own background image · 7 languages: English, French, Spanish, Portuguese (Brazil), Russian, Japanese, Vietnamese |
 
-<p align="center"><img src="image/vn-page.png" width="100%" alt="A VN's page: stats, progress, status, launcher and chart"></p>
+<details>
+<summary><b>More screenshots</b></summary>
 
-Its description and characters, straight from VNDB.
+<br>
 
-<p align="center"><img src="image/characters.png" width="100%" alt="The characters of Sanoba Witch with their role and description"></p>
+**A VN's page**: stats, progress, status, launcher and reading chart.
 
-### Screenshots
+<img src="image/vn-page.png" width="100%" alt="A VN's page">
 
-One key in game, then browse, copy or delete them. [Docs](https://vnrpc-docs.vercel.app/screenshots/)
+**Characters**, straight from VNDB.
 
-<p align="center"><img src="image/gallery.png" width="100%" alt="Screenshot gallery with thumbnails"></p>
-<p align="center"><img src="image/gallery-folder.png" width="100%" alt="Screenshot gallery in folder view, sorted by date"></p>
+<img src="image/characters.png" width="100%" alt="The characters of Sanoba Witch">
 
-### Share card
+**Screenshots by date.**
 
-Your week or month in visual novels, ready to paste on Discord. [Docs](https://vnrpc-docs.vercel.app/share/)
+<img src="image/gallery-folder.png" width="100%" alt="Screenshot gallery in folder view">
 
-<p align="center"><img src="image/share-card.png" width="720" alt="My September in visual novels"></p>
+**Random pick** from your VNDB wishlist.
 
-### Random pick
+<img src="image/wishlist.png" width="100%" alt="Random pick from the VNDB wishlist">
 
-Can't decide? Draw a VN from your VNDB wishlist. [Docs](https://vnrpc-docs.vercel.app/vndb/)
+**Themes** and **background image**.
 
-<p align="center"><img src="image/wishlist.png" width="100%" alt="Random pick from the VNDB wishlist"></p>
+<img src="image/themes.png" width="100%" alt="The library in six themes">
+<img src="image/background.png" width="100%" alt="Background image settings">
 
-### Themes and background
+**7 languages.**
 
-Pick a theme with a click, make your own colors, and put any picture behind the app. [Docs](https://vnrpc-docs.vercel.app/themes/)
+<img src="image/settings.png" width="100%" alt="Settings with the language picker open">
 
-<p align="center"><img src="image/themes.png" width="100%" alt="The library in the Sakura, Dracula, Nord, Catppuccin Latte, Tokyo Night and Neon Mint themes"></p>
-<p align="center"><img src="image/background.png" width="100%" alt="Background image settings: blur, darkness and panel opacity"></p>
-
-### Languages
-
-<p align="center"><img src="image/settings.png" width="100%" alt="Settings with the language picker open"></p>
-
-### Desktop mascots
-
-Characters who stand on your desktop and talk about what you read. Pick a personality or write their lines, add voices, or make them click-through while you play. [Docs](https://vnrpc-docs.vercel.app/mascot/)
-
-<p align="center"><img src="image/mascot.png" width="100%" alt="A tsundere desktop mascot over a game"></p>
-
-## Install
-
-1. Download [`vnrpc.exe`](https://github.com/lennmoe/vnrpc/releases/latest) and run it.
-2. Keep the Discord desktop app open, with **Settings → Activity Privacy → Share your detected activities** turned on.
-
-The app updates itself: it checks for a new release when it starts and shows what changed after an update. Full guide: [Install](https://vnrpc-docs.vercel.app/install/).
+</details>
 
 ## Community
 
 Questions, bug reports and ideas: join the **[Discord server](https://discord.gg/cDTUQFq4Hn)**, or [open an issue](https://github.com/lennmoe/vnrpc/issues).
 
-## Documentation
+Everything is explained in the **[documentation](https://vnrpc-docs.vercel.app/)**: [Discord status](https://vnrpc-docs.vercel.app/discord-status/), [chapters & routes](https://vnrpc-docs.vercel.app/chapters/), [covers](https://vnrpc-docs.vercel.app/covers/), [Library](https://vnrpc-docs.vercel.app/library/), [screenshots](https://vnrpc-docs.vercel.app/screenshots/), [share card](https://vnrpc-docs.vercel.app/share/), [VNDB](https://vnrpc-docs.vercel.app/vndb/), [Japanese locale](https://vnrpc-docs.vercel.app/japanese-locale/), [themes](https://vnrpc-docs.vercel.app/themes/), [mascots](https://vnrpc-docs.vercel.app/mascot/), [all settings](https://vnrpc-docs.vercel.app/settings/), [your data](https://vnrpc-docs.vercel.app/data/).
 
-Everything is explained on **[vnrpc-docs.vercel.app](https://vnrpc-docs.vercel.app/)**:
+## Where your data is
 
-- [Discord status & privacy](https://vnrpc-docs.vercel.app/discord-status/) and [chapters & routes](https://vnrpc-docs.vercel.app/chapters/)
-- [Covers](https://vnrpc-docs.vercel.app/covers/), [Library](https://vnrpc-docs.vercel.app/library/), [Screenshots](https://vnrpc-docs.vercel.app/screenshots/), [Share card](https://vnrpc-docs.vercel.app/share/)
-- [VNDB list & wishlist](https://vnrpc-docs.vercel.app/vndb/), [Japanese locale](https://vnrpc-docs.vercel.app/japanese-locale/), [Themes](https://vnrpc-docs.vercel.app/themes/), [Desktop mascot](https://vnrpc-docs.vercel.app/mascot/)
-- [All settings](https://vnrpc-docs.vercel.app/settings/), [Your data & backups](https://vnrpc-docs.vercel.app/data/), [Troubleshooting](https://vnrpc-docs.vercel.app/troubleshooting/)
+Everything is in `%APPDATA%\moe.lenn.vnrpc-tauri\`: `config.yaml` (settings), `games\<title>.yaml` (one file per VN, safe to edit), `mascots\`, `backgrounds\` and `cache\`. Screenshots go to `Pictures\Visual Novel RPC\<VN title>\` unless you pick another folder. If the app crashes, `crash.log` and `crash.dmp` are saved there too. See [Your data & backups](https://vnrpc-docs.vercel.app/data/).
 
-## Run from source
+## Translate it
 
-Needs [Rust](https://rustup.rs), the MSVC build tools and Node.js, on Windows 10 or 11 (WebView2 is already part of Windows).
+Each language lives in a single file, `ui/locales/<code>.json`: the interface, the Discord status and the mascot lines. Want to add yours? Copy `en.json`, translate it, and say hi on the [Discord](https://discord.gg/cDTUQFq4Hn).
+
+<details>
+<summary><b>For developers</b></summary>
+
+<br>
+
+Written in Rust with [Tauri](https://tauri.app). Needs [Rust](https://rustup.rs), the MSVC build tools and Node.js, on Windows 10 or 11 (WebView2 is already part of Windows).
 
 ```
 npm install
@@ -135,8 +155,6 @@ cd ..
 npx prettier --write "ui/**/*.{js,css,html}"
 ```
 
-### Where things are
-
 The engine is in Rust (`src-tauri/src`). The interface is plain HTML, CSS and JavaScript modules (`ui/`), with no build step.
 
 | `src-tauri/src` | |
@@ -144,7 +162,7 @@ The engine is in Rust (`src-tauri/src`). The interface is plain HTML, CSS and Ja
 | `engine.rs`, `state.rs` | the loop: detection, reading time, idle mode, Discord |
 | `engines.rs`, `emulators.rs`, `title_parser.rs` | engine and emulator detection, title cleaning, chapter and route parsing |
 | `config.rs`, `vndb.rs`, `vndb_list.rs`, `steam.rs` | Library files, VNDB search, covers, characters, list and wishlist |
-| `discord.rs` | Rich Presence over Discord's IPC pipe |
+| `discord.rs`, `presence.rs` | Rich Presence over Discord's IPC pipe, your own status layout |
 | `screenshots.rs`, `capture.rs`, `hotkey.rs`, `sound.rs` | capture key, window capture, shutter sound |
 | `mascot.rs`, `personalities.rs`, `ui_windows.rs`, `tray.rs` | desktop mascots, speech balloon, toast, main window, tray |
 | `launcher.rs`, `backup.rs`, `updater.rs`, `autostart.rs` | Play (Steam, Locale Emulator, NTLEA), export and import, updates, startup |
@@ -154,19 +172,13 @@ The engine is in Rust (`src-tauri/src`). The interface is plain HTML, CSS and Ja
 
 | `ui/js` | |
 |---|---|
-| `pages/` | one file per page: home, cover, library, game, wishlist, screenshots, share, mascots, settings, what's new |
-| `components/` | chart, calendar, share card, theme tab, language picker, Play, update… |
-| `labs/` | features being tried out, each one can be turned off in Settings |
+| `pages/` | one file per page: home, cover, library, game, wishlist, screenshots, share, mascots, settings (with the presence builder), what's new |
+| `components/` | chart, calendar, share card, yearly recap, new VN check, welcome, theme tab, Play, update… |
+| `labs/` | features in beta, each one can be turned off in Settings → Beta |
 | `popups/` | the mascot, its speech balloon, the screenshot toast |
 | `app.js`, `router.js`, `store.js`, `ui.js`, `i18n.js` | startup, navigation, shared state, small widgets, translations |
 
-## Languages
-
-Each language lives in a single file, `ui/locales/<code>.json`: the interface, the Discord status and the mascot lines. Want to add yours? Copy `en.json`, translate it, and say hi on the [Discord](https://discord.gg/cDTUQFq4Hn).
-
-## Where your data is
-
-Everything is in `%APPDATA%\moe.lenn.vnrpc-tauri\`: `config.yaml` (settings), `games\<title>.yaml` (one file per VN, safe to edit), `mascots\`, `backgrounds\` and `cache\`. Screenshots go to `Pictures\Visual Novel RPC\<VN title>\` unless you pick another folder. If the app crashes, `crash.log` and `crash.dmp` are saved there too. See [Your data & backups](https://vnrpc-docs.vercel.app/data/).
+</details>
 
 ## Credits
 
