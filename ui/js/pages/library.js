@@ -263,6 +263,12 @@ function nowBadge(game) {
   return isPlaying(game) && el("span", { class: "now-badge" }, t("Now reading"));
 }
 
+function readText(game) {
+  return game.from_vndb && !game.playtime
+    ? t("From your VNDB list")
+    : t("{time} read", { time: formatPlaytime(game.playtime) });
+}
+
 function statusChip(game) {
   if (!game.status) {
     return null;
@@ -287,7 +293,7 @@ function row(game, most) {
     { class: "meta" },
     nowBadge(game),
     statusChip(game),
-    el("span", {}, t("{time} read", { time: formatPlaytime(game.playtime) })),
+    el("span", {}, readText(game)),
     game.last_played > 0 && el("span", {}, `·  ${lastPlayed(game.last_played)}`),
     game.vndb_id && el("span", {}, `·  ${game.vndb_id}`),
   );
@@ -319,7 +325,7 @@ function tile(game) {
     { class: `lib-tile${isPlaying(game) ? " now-playing" : ""}`, ...opener(game) },
     el("div", { class: "tile-cover" }, coverOf(game), statusChip(game), nowBadge(game), playButton(game, "▶")),
     el("div", { class: "name" }, game.name),
-    el("div", { class: "muted small-text" }, t("{time} read", { time: formatPlaytime(game.playtime) })),
+    el("div", { class: "muted small-text" }, readText(game)),
   );
 }
 
@@ -343,7 +349,11 @@ function line(game) {
     coverOf(game),
     el("div", { class: "name" }, game.name, nowBadge(game)),
     el("span", {}, statusChip(game) || ""),
-    el("span", { class: "muted" }, formatPlaytime(game.playtime)),
+    el(
+      "span",
+      { class: "muted" },
+      game.from_vndb && !game.playtime ? "—" : formatPlaytime(game.playtime),
+    ),
     el("span", { class: "muted" }, game.last_played > 0 ? lastPlayed(game.last_played) : "—"),
     el("span", {}, playButton(game, "▶", "secondary")),
   );

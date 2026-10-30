@@ -710,6 +710,11 @@
     "VN & cover — {name}": "VNと表紙 — {name}",
     "Not matched on VNDB — pick it with “Change VN / cover…”.": "VNDBで一致なし — 「VN / 表紙を変更…」で選んでください。",
     "beta": "ベータ",
-    "Beta": "ベータ"
+    "Beta": "ベータ",
+    "Add my finished VNs from VNDB to the Library": "VNDBで読了したVNをライブラリに追加",
+    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.": "このPCにないものも含みます。新しいものはアプリ起動時に追加され、ライブラリから削除したVNは戻りません。",
+    "Added {vns} from your VNDB list": "VNDBリストから{vns}を追加しました",
+    "Nothing new on your VNDB list": "VNDBリストに新しいものはありません",
+    "From your VNDB list": "VNDBリストから"
   }
 }

@@ -499,6 +499,13 @@ impl Engine {
         };
 
         let vn_id = text(&entry, "vndb_id");
+        {
+            let mut cfg = self.shared.config.lock().unwrap();
+            if vndb_list::absorb_import(&mut cfg, &key, &vn_id) {
+                entry = cfg.game(&key);
+                self.shared.emit("library-changed", json!({ "key": key }));
+            }
+        }
         let mark_playing = self.shared.config.lock().unwrap().bool("vndb_mark_playing");
         if mark_playing && !vn_id.is_empty() && text(&entry, "vndb_synced") != vn_id {
             let status = Some(text(&entry, "status"))

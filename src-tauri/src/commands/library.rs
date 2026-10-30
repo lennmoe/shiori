@@ -76,6 +76,8 @@ pub fn get_library(shared: SharedState) -> Vec<Value> {
                 "finished_at": entry.get("finished_at").and_then(Value::as_i64).unwrap_or(0),
                 "nsfw": entry.get("cover_nsfw").and_then(Value::as_bool).unwrap_or(false),
                 "has_path": !launcher::launch_exe(&entry).is_empty(),
+                "from_vndb": entry.get("vndb_list_only").and_then(Value::as_bool).unwrap_or(false)
+                    && launcher::launch_exe(&entry).is_empty(),
                 "vndb_id": vn_id,
                 "cover": cover_of(&cfg, &entry),
             })
@@ -174,9 +176,27 @@ pub fn remove_game(shared: SharedState, key: String) -> Result<(), String> {
     if snap.detected && snap.key == key {
         return Err("Close the game before removing it.".into());
     }
-    shared.config.lock().unwrap().remove_game(&key);
+    {
+        let mut cfg = shared.config.lock().unwrap();
+        if let Some(id) = key.strip_prefix(vndb_list::IMPORTED_PREFIX) {
+            let mut ignored = cfg
+                .get("vndb_import_ignored")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+            ignored.push(json!(id));
+            let _ = cfg.update(Map::from_iter([("vndb_import_ignored".into(), json!(ignored))]));
+        }
+        cfg.remove_game(&key);
+    }
     changed(&shared, &key);
     Ok(())
+}
+
+#[tauri::command]
+pub async fn import_vndb_finished(shared: SharedState<'_>) -> Result<usize, String> {
+    let shared = Arc::clone(&shared);
+    blocking(move || vndb_list::import_finished(&shared)).await
 }
 
 #[tauri::command(async)]

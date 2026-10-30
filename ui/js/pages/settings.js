@@ -366,7 +366,27 @@ function vndbSection() {
         "Mark VNs as Playing on VNDB when I start them",
         "Only when the VN has no status on your list yet.",
       ),
+    store.settings.vndb_token && importFinishedToggle(),
   ].filter(Boolean);
+}
+
+function importFinishedToggle() {
+  return toggle(
+    "Add my finished VNs from VNDB to the Library",
+    store.settings.vndb_import_finished,
+    async (on) => {
+      await save({ vndb_import_finished: on });
+      if (on) {
+        const count = await call("import_vndb_finished");
+        toast(
+          count
+            ? t("Added {vns} from your VNDB list", { vns: plural(count, "VN") })
+            : t("Nothing new on your VNDB list"),
+        );
+      }
+    },
+    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.",
+  );
 }
 
 function screenshotsSection() {

@@ -709,6 +709,11 @@
     "VN & cover — {name}": "Новелла и обложка — {name}",
     "Not matched on VNDB — pick it with “Change VN / cover…”.": "Нет совпадения на VNDB — выбери через «Сменить новеллу / обложку…».",
     "beta": "бета",
-    "Beta": "Бета"
+    "Beta": "Бета",
+    "Add my finished VNs from VNDB to the Library": "Добавить пройденные новеллы с VNDB в библиотеку",
+    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.": "Даже те, которых нет на этом ПК. Новые добавляются при каждом запуске, а удалённая из библиотеки новелла не вернётся.",
+    "Added {vns} from your VNDB list": "Добавлено из списка VNDB: {vns}",
+    "Nothing new on your VNDB list": "В списке VNDB ничего нового",
+    "From your VNDB list": "Из списка VNDB"
   }
 }

@@ -709,6 +709,11 @@
     "VN & cover — {name}": "VN e capa — {name}",
     "Not matched on VNDB — pick it with “Change VN / cover…”.": "Sem correspondência no VNDB — escolha com “Mudar VN / capa…”.",
     "beta": "beta",
-    "Beta": "Beta"
+    "Beta": "Beta",
+    "Add my finished VNs from VNDB to the Library": "Adicionar minhas VNs terminadas no VNDB à biblioteca",
+    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.": "Mesmo as que não estão neste PC. As novas são adicionadas sempre que o app abre, e uma VN removida da biblioteca não volta.",
+    "Added {vns} from your VNDB list": "{vns} adicionadas da sua lista do VNDB",
+    "Nothing new on your VNDB list": "Nada novo na sua lista do VNDB",
+    "From your VNDB list": "Da sua lista do VNDB"
   }
 }

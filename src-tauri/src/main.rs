@@ -120,6 +120,13 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         .name("hotkey".into())
         .spawn(move || hotkey::run(for_hotkey))?;
 
+    if shared.config.lock().unwrap().bool("vndb_import_finished") {
+        let for_import = Arc::clone(&shared);
+        std::thread::spawn(move || {
+            let _ = vndb_list::import_finished(&for_import);
+        });
+    }
+
     if !cfg!(debug_assertions) {
         autostart::refresh();
     }
@@ -197,6 +204,7 @@ fn main() {
             commands::library::remove_game,
             commands::library::confirm_match,
             commands::library::match_checked,
+            commands::library::import_vndb_finished,
             commands::library::set_game_path,
             commands::library::set_tool_path,
             commands::library::play_game,

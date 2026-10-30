@@ -709,6 +709,11 @@
     "VN & cover — {name}": "VN & ảnh bìa — {name}",
     "Not matched on VNDB — pick it with “Change VN / cover…”.": "Không khớp trên VNDB — chọn bằng “Đổi VN / ảnh bìa…”.",
     "beta": "beta",
-    "Beta": "Beta"
+    "Beta": "Beta",
+    "Add my finished VNs from VNDB to the Library": "Thêm các VN đã đọc xong trên VNDB vào thư viện",
+    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.": "Kể cả những VN không có trên máy này. VN mới được thêm mỗi lần mở ứng dụng, và VN bạn xóa khỏi thư viện sẽ không quay lại.",
+    "Added {vns} from your VNDB list": "Đã thêm {vns} từ danh sách VNDB",
+    "Nothing new on your VNDB list": "Không có gì mới trong danh sách VNDB",
+    "From your VNDB list": "Từ danh sách VNDB"
   }
 }

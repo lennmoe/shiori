@@ -20,6 +20,7 @@ pub const LIST_LABELS: [(&str, i64); 4] = [
     ("dropped", 4),
 ];
 const WISHLIST_LABEL: i64 = 5;
+const FINISHED_LABEL: i64 = 2;
 
 #[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct VnResult {
@@ -415,15 +416,32 @@ impl Vndb {
     }
 
     pub fn wishlist(&self, token: &str) -> Result<Vec<VnResult>, String> {
+        let list = self.labelled(token, WISHLIST_LABEL, "")?;
+        Ok(list.into_iter().map(|(vn, _)| vn).collect())
+    }
+
+    pub fn finished_list(&self, token: &str) -> Result<Vec<(VnResult, Value)>, String> {
+        self.labelled(token, FINISHED_LABEL, "finished,vote")
+    }
+
+    fn labelled(
+        &self,
+        token: &str,
+        label: i64,
+        extra: &str,
+    ) -> Result<Vec<(VnResult, Value)>, String> {
         let user = self.token_user(token)?;
-        let fields: Vec<String> = FIELDS.split(',').map(|f| format!("vn.{f}")).collect();
+        let mut fields: Vec<String> = FIELDS.split(',').map(|f| format!("vn.{f}")).collect();
+        if !extra.is_empty() {
+            fields.push(extra.to_string());
+        }
         let fields = fields.join(",");
 
         let mut out = Vec::new();
         for page in 1..=50 {
             let body = json!({
                 "user": user["id"],
-                "filters": ["label", "=", WISHLIST_LABEL],
+                "filters": ["label", "=", label],
                 "fields": fields,
                 "sort": "id",
                 "results": 100,
@@ -434,7 +452,7 @@ impl Vndb {
             for entry in data["results"].as_array().into_iter().flatten() {
                 let mut result = VnResult::from_api(&entry["vn"]);
                 result.id = text(&entry["id"]);
-                out.push(result);
+                out.push((result, entry.clone()));
             }
 
             if data["more"].as_bool() != Some(true) {
