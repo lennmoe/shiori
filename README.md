@@ -147,7 +147,7 @@ Build the `.exe` and the installer (close the app first). The result is `src-tau
 npm run build
 ```
 
-For a release, rename the installer to `shiori_setup.exe` and upload `shiori.exe` **first**: versions before 2.1.10 update from the first `.exe` they find in the release.
+For a release, rename the installer to `shiori_setup.exe` and upload `shiori.exe` **first**: versions before 2.2.0 update from the first `.exe` they find in the release.
 
 Tests and formatting:
 
