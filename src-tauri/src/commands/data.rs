@@ -63,13 +63,7 @@ pub async fn install_update(
 ) -> Result<(), String> {
     let path = blocking(move || {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-        match updater::download(&release, &updater::staging_path(&exe)) {
-            Ok(path) => Ok(path),
-            Err(_) => updater::download(
-                &release,
-                &std::env::temp_dir().join("VisualNovelRPC.new.exe"),
-            ),
-        }
+        updater::download(&release, &updater::staging_path(&exe))
     })
     .await?;
 

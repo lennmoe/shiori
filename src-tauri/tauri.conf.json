@@ -31,7 +31,16 @@
     }
   },
   "bundle": {
-    "active": false,
-    "icon": ["icons/icon.ico", "icons/icon.png"]
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "languages": ["English", "French", "Spanish", "PortugueseBR", "Japanese", "Russian", "Vietnamese"],
+        "displayLanguageSelector": true
+      }
+    }
   }
 }

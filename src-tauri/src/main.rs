@@ -128,7 +128,11 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if !cfg!(debug_assertions) {
-        autostart::refresh();
+        if data_dir_override().is_none() {
+            autostart::refresh();
+            updater::sync_installed_version();
+        }
+        updater::clean_leftovers();
     }
     tray::build(app.handle())?;
     mascot::apply_settings(app.handle());
@@ -155,6 +159,10 @@ fn import_python_data(data_dir: &std::path::Path) {
 }
 
 fn main() {
+    updater::wait_for_previous();
+    if updater::heal_name() {
+        return;
+    }
     shell::set_app_id();
     let mut builder = tauri::Builder::default();
 
