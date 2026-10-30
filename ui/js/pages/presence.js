@@ -243,7 +243,7 @@ async function preview() {
   const small = part("small");
   small.hidden = !activity.small_image;
   if (activity.small_image) {
-    small.src = activity.small_image.startsWith("https://raw.githubusercontent.com/lennmoe/vnrpc/")
+    small.src = activity.small_image.startsWith("https://raw.githubusercontent.com/lennmoe/shiori/")
       ? "assets/app_icon.png"
       : activity.small_image;
     small.title = activity.small_text || "";

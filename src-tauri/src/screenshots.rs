@@ -20,7 +20,14 @@ const IMAGE_EXTS: [&str; 5] = ["png", "jpg", "jpeg", "webp", "bmp"];
 const RESERVED: [&str; 4] = ["CON", "PRN", "AUX", "NUL"];
 
 pub fn default_root() -> PathBuf {
-    shell::pictures_folder().join("Visual Novel RPC")
+    let pictures = shell::pictures_folder();
+    let root = pictures.join("Shiori RPC");
+    let before_rename = pictures.join("Visual Novel RPC");
+    if !root.exists() && before_rename.exists() {
+        before_rename
+    } else {
+        root
+    }
 }
 
 pub fn root(cfg: &Config) -> PathBuf {
@@ -235,7 +242,7 @@ fn write_png(
     encoder.set_depth(png::BitDepth::Eight);
 
     encoder.add_text_chunk("Creation Time".into(), taken.into())?;
-    encoder.add_text_chunk("Software".into(), "Visual Novel RPC".into())?;
+    encoder.add_text_chunk("Software".into(), "Shiori RPC".into())?;
     if !game.is_empty() {
         encoder.add_itxt_chunk("Title".into(), game.into())?;
     }

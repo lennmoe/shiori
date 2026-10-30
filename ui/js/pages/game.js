@@ -149,7 +149,7 @@ const TEMPLATE = `
     <button
       class="btn secondary"
       data-id="shortcut"
-      title="Starts the game with the options above (Locale Emulator, Steam…) and Visual Novel RPC"
+      title="Starts the game with the options above (Locale Emulator, Steam…) and Shiori RPC"
     >
       Desktop shortcut
     </button>

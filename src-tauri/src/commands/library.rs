@@ -297,7 +297,7 @@ pub fn create_shortcut(shared: SharedState, key: String) -> Result<String, Launc
         target: &app_exe,
         arguments: &format!("--play \"{key}\""),
         icon: &game_exe,
-        description: &format!("Play {name} with Visual Novel RPC"),
+        description: &format!("Play {name} with Shiori RPC"),
     };
     shell::create_shortcut(&dest, &shortcut).map_err(LaunchError::Failed)?;
     Ok(dest.to_string_lossy().to_string())

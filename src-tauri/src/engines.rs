@@ -33,6 +33,7 @@ pub const BUILTIN_BLACKLIST: &[&str] = &[
     "applicationframehost.exe",
     "systemsettings.exe",
     "taskmgr.exe",
+    "shiori.exe",
     "vnrpc.exe",
     "visualnovelrpc.exe",
     "msedgewebview2.exe",

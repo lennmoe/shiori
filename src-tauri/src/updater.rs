@@ -7,12 +7,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
-pub const REPO: &str = "lennmoe/vnrpc";
+pub const REPO: &str = "lennmoe/shiori";
 pub const CURRENT: &str = env!("CARGO_PKG_VERSION");
 
 fn http() -> reqwest::blocking::Client {
     reqwest::blocking::Client::builder()
-        .user_agent(format!("VisualNovelRPC/{CURRENT}"))
+        .user_agent(format!("ShioriRPC/{CURRENT}"))
         .timeout(Duration::from_secs(10))
         .build()
         .expect("http client")
@@ -104,7 +104,7 @@ fn pick_asset(names: &[&str]) -> Option<usize> {
     let lower: Vec<String> = names.iter().map(|name| name.to_lowercase()).collect();
     lower
         .iter()
-        .position(|name| name == "vnrpc.exe")
+        .position(|name| name == "shiori.exe")
         .or_else(|| {
             lower
                 .iter()
@@ -237,7 +237,7 @@ pub fn sync_installed_version() {
     use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_SET_VALUE};
 
     let Ok(key) = winreg::RegKey::predef(HKEY_CURRENT_USER).open_subkey_with_flags(
-        r"Software\Microsoft\Windows\CurrentVersion\Uninstall\VisualNovelRPC",
+        r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Shiori RPC",
         KEY_READ | KEY_SET_VALUE,
     ) else {
         return;
@@ -252,7 +252,7 @@ pub fn sync_installed_version() {
 
 pub fn download(release: &Release, dest: &Path) -> Result<PathBuf, String> {
     let bytes = reqwest::blocking::Client::builder()
-        .user_agent(format!("VisualNovelRPC/{CURRENT}"))
+        .user_agent(format!("ShioriRPC/{CURRENT}"))
         .timeout(Duration::from_secs(120))
         .build()
         .map_err(|e| e.to_string())?
@@ -352,31 +352,31 @@ mod tests {
 
     #[test]
     fn never_updates_from_the_installer() {
-        let setup = "vnrpc_setup.exe";
-        assert_eq!(pick_asset(&[setup, "vnrpc.exe"]), Some(1));
+        let setup = "shiori_setup.exe";
+        assert_eq!(pick_asset(&[setup, "shiori.exe"]), Some(1));
         assert_eq!(pick_asset(&[setup, "other.exe"]), Some(1));
         assert_eq!(pick_asset(&[setup]), None);
     }
 
     #[test]
     fn recognises_what_a_failed_update_left_behind() {
-        assert_eq!(base_stem("vnrpc.new.new"), "vnrpc");
-        assert_eq!(base_stem("vnrpc"), "vnrpc");
-        assert!(is_leftover("vnrpc.new.exe", "vnrpc"));
-        assert!(is_leftover("VNRPC.new.new.exe", "vnrpc"));
-        assert!(is_leftover("vnrpc.old.exe", "vnrpc"));
-        assert!(is_leftover("vnrpc.new.exe.part", "vnrpc"));
-        assert!(!is_leftover("vnrpc.exe", "vnrpc"));
-        assert!(!is_leftover("vnrpc.backup.exe", "vnrpc"));
-        assert!(!is_leftover("other.new.exe", "vnrpc"));
+        assert_eq!(base_stem("shiori.new.new"), "shiori");
+        assert_eq!(base_stem("shiori"), "shiori");
+        assert!(is_leftover("shiori.new.exe", "shiori"));
+        assert!(is_leftover("SHIORI.new.new.exe", "shiori"));
+        assert!(is_leftover("shiori.old.exe", "shiori"));
+        assert!(is_leftover("shiori.new.exe.part", "shiori"));
+        assert!(!is_leftover("shiori.exe", "shiori"));
+        assert!(!is_leftover("shiori.backup.exe", "shiori"));
+        assert!(!is_leftover("other.new.exe", "shiori"));
     }
 
     #[test]
     fn swaps_the_exe_even_in_a_non_ascii_folder() {
-        let dir = std::env::temp_dir().join(format!("vnrpc-swap-é更新-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("shiori-swap-é更新-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
-        let target = dir.join("vnrpc.exe");
+        let target = dir.join("shiori.exe");
         let staged = staging_path(&target);
         fs::write(&target, "old").unwrap();
         fs::write(&staged, "new").unwrap();

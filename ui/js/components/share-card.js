@@ -176,7 +176,7 @@ function drawHeader(ctx, data, p, icon) {
   ctx.font = font(22);
   ctx.fillText(data.subtitle, PAD, 104);
 
-  const brand = "Visual Novel RPC";
+  const brand = "Shiori RPC";
   ctx.font = font(17, 600);
   const brandX = WIDTH - PAD - ctx.measureText(brand).width;
   ctx.textBaseline = "middle";

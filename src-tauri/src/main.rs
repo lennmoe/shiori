@@ -74,7 +74,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         Some(dir) => dir,
         None => {
             let data_dir = app.path().app_data_dir()?;
-            import_python_data(&data_dir);
+            import_old_data(&data_dir);
             data_dir
         }
     };
@@ -148,11 +148,13 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn import_python_data(data_dir: &std::path::Path) {
+fn import_old_data(data_dir: &std::path::Path) {
     let Ok(appdata) = std::env::var("APPDATA") else {
         return;
     };
-    let source = PathBuf::from(appdata).join("VisualNovelRPC");
+    let appdata = PathBuf::from(appdata);
+    Config::migrate_from(data_dir, &appdata.join("moe.lenn.vnrpc-tauri"));
+    let source = appdata.join("VisualNovelRPC");
     if source.is_dir() {
         Config::import_from(data_dir, &source);
     }

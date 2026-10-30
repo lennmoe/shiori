@@ -3680,6 +3680,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "shiori"
+version = "2.1.9"
+dependencies = [
+ "base64 0.23.1",
+ "chrono",
+ "fancy-regex",
+ "image",
+ "png 0.18.1",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha1_smol",
+ "sha2 0.11.0",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-single-instance",
+ "webview2-com",
+ "windows",
+ "winreg",
+ "zip",
+]
+
+[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4731,31 +4756,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "vnrpc"
-version = "2.1.9"
-dependencies = [
- "base64 0.23.1",
- "chrono",
- "fancy-regex",
- "image",
- "png 0.18.1",
- "reqwest",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha1_smol",
- "sha2 0.11.0",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-single-instance",
- "webview2-com",
- "windows",
- "winreg",
- "zip",
-]
 
 [[package]]
 name = "vswhom"

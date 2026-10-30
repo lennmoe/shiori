@@ -713,7 +713,7 @@ impl Engine {
                 details: reading.into(),
                 large_image: asset,
                 large_text: "Visual Novel".into(),
-                small_text: "via Visual Novel RPC".into(),
+                small_text: "via Shiori RPC".into(),
                 start,
                 ..Default::default()
             });
@@ -778,7 +778,7 @@ impl Engine {
             state,
             large_image,
             large_text: hover,
-            small_text: "via Visual Novel RPC".into(),
+            small_text: "via Shiori RPC".into(),
             start,
             buttons,
             ..Default::default()

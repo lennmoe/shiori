@@ -13,7 +13,7 @@ const MANIFEST: &str = "vnrpc-backup.json";
 
 pub fn default_name() -> String {
     chrono::Local::now()
-        .format("VisualNovelRPC-backup-%Y-%m-%d.zip")
+        .format("ShioriRPC-backup-%Y-%m-%d.zip")
         .to_string()
 }
 
@@ -125,12 +125,12 @@ fn read_yaml(zip: &mut ZipArchive<File>, name: &str) -> Result<Map<String, Value
 
 pub fn import(cfg: &mut Config, src: &Path) -> Result<usize, String> {
     let file = File::open(src).map_err(|e| e.to_string())?;
-    let mut zip = ZipArchive::new(file).map_err(|_| "not a Visual Novel RPC backup".to_string())?;
+    let mut zip = ZipArchive::new(file).map_err(|_| "not a Shiori RPC backup".to_string())?;
 
     let manifest: Value = read_entry(&mut zip, MANIFEST)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .ok_or("not a Visual Novel RPC backup")?;
+        .ok_or("not a Shiori RPC backup")?;
     if manifest["format"].as_i64().unwrap_or(0) > FORMAT {
         return Err("this backup was made by a newer version of the app: update it first".into());
     }

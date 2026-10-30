@@ -8,7 +8,7 @@ use reqwest::Method;
 use serde_json::{json, Value};
 
 const API: &str = "https://api.vndb.org/kana";
-const USER_AGENT: &str = concat!("VisualNovelRPC/", env!("CARGO_PKG_VERSION"));
+const USER_AGENT: &str = concat!("ShioriRPC/", env!("CARGO_PKG_VERSION"));
 const MIN_INTERVAL: Duration = Duration::from_millis(1100);
 const FIELDS: &str =
     "id,title,alttitle,titles.title,titles.latin,aliases,released,rating,length_minutes,image.url,image.dims,image.sexual,image.violence";

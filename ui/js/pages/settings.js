@@ -75,7 +75,7 @@ function showPage(params = {}) {
 }
 
 function buildFooter() {
-  part("version").textContent = `Visual Novel RPC ${store.version}`;
+  part("version").textContent = `Shiori RPC ${store.version}`;
 
   const check = part("check-update");
   check.onclick = async () => {
@@ -500,7 +500,7 @@ async function exportData() {
   const path = await pickSaveFile({
     title: "Export data",
     defaultPath: await invoke("backup_default_name"),
-    filters: [{ name: "Visual Novel RPC backup", extensions: ["zip"] }],
+    filters: [{ name: "Shiori RPC backup", extensions: ["zip"] }],
   });
   if (!path) {
     return;
@@ -512,7 +512,7 @@ async function exportData() {
 async function importData() {
   const path = await pickFile({
     title: "Import data",
-    filters: [{ name: "Visual Novel RPC backup", extensions: ["zip"] }],
+    filters: [{ name: "Shiori RPC backup", extensions: ["zip"] }],
   });
   if (!path) {
     return;

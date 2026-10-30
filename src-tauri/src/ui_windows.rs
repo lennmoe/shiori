@@ -73,7 +73,7 @@ fn popup(
 
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(page.into()))
         .additional_browser_args(BROWSER_ARGS)
-        .title("Visual Novel RPC")
+        .title("Shiori RPC")
         .inner_size(width, height)
         .decorations(false)
         .transparent(true)

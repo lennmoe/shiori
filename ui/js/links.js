@@ -1,4 +1,4 @@
-export const REPO = "https://github.com/lennmoe/vnrpc";
+export const REPO = "https://github.com/lennmoe/shiori";
 export const RELEASES_PAGE = `${REPO}/releases`;
 
 export const DISCORD_INVITE = "https://discord.gg/cDTUQFq4Hn";
@@ -24,7 +24,7 @@ export function bugReportUrl(version) {
     "",
     "",
     "---",
-    `Visual Novel RPC ${version} · ${windowsVersion()}`,
+    `Shiori RPC ${version} · ${windowsVersion()}`,
   ].join("\n");
 
   return issueUrl({ title: "Bug: ", body, label: "bug" });
@@ -39,7 +39,7 @@ export function suggestionUrl(version) {
     "",
     "",
     "---",
-    `Visual Novel RPC ${version}`,
+    `Shiori RPC ${version}`,
   ].join("\n");
 
   return issueUrl({ title: "Idea: ", body, label: "enhancement" });

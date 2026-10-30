@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VisualNovelRPC",
+  "productName": "Shiori RPC",
   "version": "2.1.9",
-  "identifier": "moe.lenn.vnrpc-tauri",
+  "identifier": "moe.lenn.shiori",
   "build": {
     "frontendDist": "../ui"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Visual Novel RPC",
+        "title": "Shiori RPC",
         "width": 1200,
         "height": 760,
         "minWidth": 900,

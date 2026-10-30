@@ -16,8 +16,8 @@ use windows::Win32::UI::Shell::{
     SHFILEOPSTRUCTW,
 };
 
-pub const APP_ID: &str = "moe.lenn.vnrpc-tauri";
-const SHORTCUT_APP_ID: &str = "moe.lenn.vnrpc-tauri.play";
+pub const APP_ID: &str = "moe.lenn.shiori";
+const SHORTCUT_APP_ID: &str = "moe.lenn.shiori.play";
 
 pub fn set_app_id() {
     unsafe {

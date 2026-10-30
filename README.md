@@ -1,13 +1,13 @@
-<p align="center"><img src="image/banner.jpg" width="100%" alt="Visual Novel RPC: show the visual novel you're reading on your Discord profile"></p>
+<p align="center"><img src="image/banner.jpg" width="100%" alt="Shiori RPC: show the visual novel you're reading on your Discord profile"></p>
 
 <p align="center">
-  <a href="https://github.com/lennmoe/vnrpc/releases/latest"><img src="https://img.shields.io/github/v/release/lennmoe/vnrpc?style=for-the-badge&label=Download&color=5865F2" alt="Download"></a>
+  <a href="https://github.com/lennmoe/shiori/releases/latest"><img src="https://img.shields.io/github/v/release/lennmoe/shiori?style=for-the-badge&label=Download&color=5865F2" alt="Download"></a>
   <a href="https://vnrpc-docs.vercel.app/"><img src="https://img.shields.io/badge/Docs-read-2B2D31?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/cDTUQFq4Hn"><img src="https://img.shields.io/badge/Discord-join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/lennmoe/vnrpc/releases"><img src="https://img.shields.io/github/downloads/lennmoe/vnrpc/total?color=3BA55D" alt="Release downloads"></a>
+  <a href="https://github.com/lennmoe/shiori/releases"><img src="https://img.shields.io/github/downloads/lennmoe/shiori/total?color=3BA55D" alt="Release downloads"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" alt="Windows 10 and 11">
   <img src="https://img.shields.io/badge/size-~10%20MB-2B2D31" alt="About 10 MB">
   <img src="https://img.shields.io/badge/languages-7-EB459E" alt="7 languages">
@@ -17,6 +17,8 @@
   A small tray app that reads the VN's window title, so most engines work with <b>no setup</b>.<br>
   One light <code>.exe</code>, nothing else to install.
 </p>
+
+<p align="center"><sub>Formerly <b>Visual Novel RPC</b>.</sub></p>
 
 <br>
 
@@ -65,7 +67,7 @@
 
 ## Get started
 
-1. **Download** [`vnrpc.exe`](https://github.com/lennmoe/vnrpc/releases/latest) and run it.
+1. **Download** [`shiori_setup.exe`](https://github.com/lennmoe/shiori/releases/latest) and run it. No admin rights needed, and you can uninstall it from Windows settings. Prefer no install? Take `shiori.exe`, it runs from any folder.
 2. **Open Discord** (the desktop app), with *Settings → Activity Privacy → Share your detected activities* on.
 3. **Start a VN.** That's it: it shows up on your profile.
 
@@ -115,13 +117,13 @@ The app updates itself and shows what changed after each update. Full guide: [In
 
 ## Community
 
-Questions, bug reports and ideas: join the **[Discord server](https://discord.gg/cDTUQFq4Hn)**, or [open an issue](https://github.com/lennmoe/vnrpc/issues).
+Questions, bug reports and ideas: join the **[Discord server](https://discord.gg/cDTUQFq4Hn)**, or [open an issue](https://github.com/lennmoe/shiori/issues).
 
 Everything is explained in the **[documentation](https://vnrpc-docs.vercel.app/)**: [Discord status](https://vnrpc-docs.vercel.app/discord-status/), [chapters & routes](https://vnrpc-docs.vercel.app/chapters/), [covers](https://vnrpc-docs.vercel.app/covers/), [Library](https://vnrpc-docs.vercel.app/library/), [screenshots](https://vnrpc-docs.vercel.app/screenshots/), [share card](https://vnrpc-docs.vercel.app/share/), [VNDB](https://vnrpc-docs.vercel.app/vndb/), [Japanese locale](https://vnrpc-docs.vercel.app/japanese-locale/), [themes](https://vnrpc-docs.vercel.app/themes/), [mascots](https://vnrpc-docs.vercel.app/mascot/), [all settings](https://vnrpc-docs.vercel.app/settings/), [your data](https://vnrpc-docs.vercel.app/data/).
 
 ## Where your data is
 
-Everything is in `%APPDATA%\moe.lenn.vnrpc-tauri\`: `config.yaml` (settings), `games\<title>.yaml` (one file per VN, safe to edit), `mascots\`, `backgrounds\` and `cache\`. Screenshots go to `Pictures\Visual Novel RPC\<VN title>\` unless you pick another folder. If the app crashes, `crash.log` and `crash.dmp` are saved there too. See [Your data & backups](https://vnrpc-docs.vercel.app/data/).
+Everything is in `%APPDATA%\moe.lenn.shiori\`: `config.yaml` (settings), `games\<title>.yaml` (one file per VN, safe to edit), `mascots\`, `backgrounds\` and `cache\`. Screenshots go to `Pictures\Shiori RPC\<VN title>\` unless you pick another folder. If the app crashes, `crash.log` and `crash.dmp` are saved there too. See [Your data & backups](https://vnrpc-docs.vercel.app/data/).
 
 ## Translate it
 
@@ -139,11 +141,13 @@ npm install
 npm run dev
 ```
 
-Build the `.exe` (close the app first). The result is `src-tauri\target\release\vnrpc.exe`, with its symbols in `vnrpc.pdb`: keep that file for each release to read crash reports with `tools/symbolize`.
+Build the `.exe` and the installer (close the app first). The result is `src-tauri\target\release\shiori.exe`, with its symbols in `shiori.pdb` (keep that file for each release to read crash reports with `tools/symbolize`), and the installer in `src-tauri\target\release\bundle\nsis\`.
 
 ```
 npm run build
 ```
+
+For a release, rename the installer to `shiori_setup.exe` and upload `shiori.exe` **first**: versions before 2.1.10 update from the first `.exe` they find in the release.
 
 Tests and formatting:
 

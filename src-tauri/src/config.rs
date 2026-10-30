@@ -198,6 +198,15 @@ fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+fn rebase(value: &mut Value, old: &str, new: &str) {
+    match value {
+        Value::String(text) if text.starts_with(old) => *text = text.replacen(old, new, 1),
+        Value::Array(items) => items.iter_mut().for_each(|item| rebase(item, old, new)),
+        Value::Object(fields) => fields.values_mut().for_each(|item| rebase(item, old, new)),
+        _ => {}
+    }
+}
+
 pub struct Config {
     pub dir: PathBuf,
     data: Map<String, Value>,
@@ -244,6 +253,46 @@ impl Config {
             }
         }
         true
+    }
+
+    pub fn migrate_from(dir: &Path, source: &Path) -> bool {
+        if dir.join("config.yaml").exists() || !source.join("config.yaml").exists() {
+            return false;
+        }
+        let _ = fs::create_dir_all(dir);
+        for item in fs::read_dir(source).into_iter().flatten().flatten() {
+            let name = item.file_name();
+            let to = dir.join(&name);
+            if ["config.yaml", "crash.dmp", "crash.log", "events.log"]
+                .iter()
+                .any(|skip| name == *skip)
+            {
+                continue;
+            }
+            if item.path().is_dir() {
+                let _ = copy_dir(&item.path(), &to);
+            } else {
+                let _ = fs::copy(item.path(), &to);
+            }
+        }
+
+        let old = source.to_string_lossy().to_string();
+        let new = dir.to_string_lossy().to_string();
+        for entry in fs::read_dir(dir.join("games"))
+            .into_iter()
+            .flatten()
+            .flatten()
+        {
+            if let Some(mut game) = read_yaml(&entry.path()) {
+                game.values_mut().for_each(|value| rebase(value, &old, &new));
+                let _ = write_yaml(&entry.path(), &game);
+            }
+        }
+        let Some(mut settings) = read_yaml(&source.join("config.yaml")) else {
+            return false;
+        };
+        settings.values_mut().for_each(|value| rebase(value, &old, &new));
+        write_yaml(&dir.join("config.yaml"), &settings).is_ok()
     }
 
     pub fn load(dir: &Path) -> Config {
@@ -672,6 +721,41 @@ mod tests {
 
     fn add(cfg: &mut Config, key: &str, fields: Value) {
         cfg.set_game(key, fields.as_object().cloned().unwrap_or_default());
+    }
+
+    #[test]
+    fn moves_everything_to_the_new_folder_and_fixes_its_paths() {
+        let root = std::env::temp_dir().join(format!("vnrpc-test-move-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let (old, new) = (root.join("old"), root.join("new"));
+        let inside = |path: &str| old.join(path).to_string_lossy().to_string();
+        fs::create_dir_all(old.join("games")).unwrap();
+        fs::create_dir_all(old.join("backgrounds")).unwrap();
+        fs::write(old.join("backgrounds").join("bg.png"), "picture").unwrap();
+        fs::write(old.join("crash.log"), "old crash").unwrap();
+        let settings = json!({
+            "background_image": inside("backgrounds/bg.png"),
+            "screenshot_dir": r"D:\Shots",
+            "mascots": [{ "image": inside("mascots/a.png") }],
+        });
+        write_yaml(&old.join("config.yaml"), settings.as_object().unwrap()).unwrap();
+        let game = json!({ "title": "Eustia", "cover_value": inside("covers/a.png") });
+        write_yaml(&old.join("games").join("Eustia.yaml"), game.as_object().unwrap()).unwrap();
+
+        assert!(Config::migrate_from(&new, &old));
+
+        let moved = |path: &str| new.join(path).to_string_lossy().to_string();
+        let settings = read_yaml(&new.join("config.yaml")).unwrap();
+        assert_eq!(settings["background_image"], json!(moved("backgrounds/bg.png")));
+        assert_eq!(settings["screenshot_dir"], json!(r"D:\Shots"));
+        assert_eq!(settings["mascots"][0]["image"], json!(moved("mascots/a.png")));
+        let game = read_yaml(&new.join("games").join("Eustia.yaml")).unwrap();
+        assert_eq!(game["cover_value"], json!(moved("covers/a.png")));
+        assert!(new.join("backgrounds").join("bg.png").exists());
+        assert!(!new.join("crash.log").exists());
+        assert!(old.join("config.yaml").exists());
+        assert!(!Config::migrate_from(&new, &old));
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]

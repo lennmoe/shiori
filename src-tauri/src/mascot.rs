@@ -482,7 +482,7 @@ fn build_window(
     alive(label);
     let built = WebviewWindowBuilder::new(app, label, WebviewUrl::App("mascot.html".into()))
         .additional_browser_args(ui_windows::BROWSER_ARGS)
-        .title("Visual Novel RPC mascot")
+        .title("Shiori RPC mascot")
         .decorations(false)
         .transparent(true)
         .shadow(false)
@@ -1005,7 +1005,7 @@ pub fn show_menu(app: &AppHandle, label: &str) {
         let open = MenuItem::with_id(
             app,
             "mascot-open",
-            lang::tr("Open Visual Novel RPC", language),
+            lang::tr("Open Shiori RPC", language),
             true,
             None::<&str>,
         )?;
