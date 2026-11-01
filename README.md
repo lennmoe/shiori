@@ -10,7 +10,7 @@
   <a href="https://github.com/lennmoe/shiori/releases"><img src="https://img.shields.io/github/downloads/lennmoe/shiori/total?color=3BA55D" alt="Release downloads"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" alt="Windows 10 and 11">
   <img src="https://img.shields.io/badge/size-~10%20MB-2B2D31" alt="About 10 MB">
-  <img src="https://img.shields.io/badge/languages-7-EB459E" alt="7 languages">
+  <img src="https://img.shields.io/badge/languages-8-EB459E" alt="8 languages">
 </p>
 
 <p align="center">
@@ -81,7 +81,7 @@ The app updates itself and shows what changed after each update. Full guide: [In
 | **Reading** | Time read per VN and per day · calendar and streaks · progress against the VNDB length · status and rating · description and characters from VNDB |
 | **VNDB** | List sync · random pick from your wishlist when you can't decide |
 | **Playing** | Play button and desktop shortcuts, through Steam, Locale Emulator or NTLEA |
-| **Make it yours** | 16 themes or your own colors · your own background image · 7 languages: English, French, Spanish, Portuguese (Brazil), Russian, Japanese, Vietnamese |
+| **Make it yours** | 16 themes or your own colors · your own background image · 8 languages: English, French, Spanish, Portuguese (Brazil), Russian, Japanese, Vietnamese, Traditional Chinese |
 
 <details>
 <summary><b>More screenshots</b></summary>
@@ -109,7 +109,7 @@ The app updates itself and shows what changed after each update. Full guide: [In
 <img src="image/themes.png" width="100%" alt="The library in six themes">
 <img src="image/background.png" width="100%" alt="Background image settings">
 
-**7 languages.**
+**Language settings.**
 
 <img src="image/settings.png" width="100%" alt="Settings with the language picker open">
 
