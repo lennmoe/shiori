@@ -1,8 +1,7 @@
 import { $, $$ } from "../dom.js";
-import { labOn } from "./util.js";
 
 document.addEventListener("keydown", (event) => {
-  if (!labOn("labs_shortcuts") || $("dialog[open]") || $(".labs-search-overlay")) {
+  if ($("dialog[open]") || $(".labs-search-overlay")) {
     return;
   }
   if (event.target.closest?.("input, textarea, select")) {

@@ -9,6 +9,7 @@ import { t } from "../i18n.js";
 const BATCH = 60;
 const ALL = "";
 const VIEWS = ["right", "folder"];
+const THUMB_WORKERS = 4;
 
 const TEMPLATE = `
   <button class="back" data-id="back" hidden>← Back</button>
@@ -68,12 +69,19 @@ let shownCount = 0;
 let backTo = null;
 let backKey = "";
 let hotkey = "";
+let rendered = "";
+let viewerPath = "";
+let tileObserver;
+let waitingTiles = [];
+let thumbsRunning = 0;
 
 const part = (id) => $(`[data-id="${id}"]`, root);
 
 function build(container) {
   root = container;
   root.append(html(TEMPLATE));
+
+  tileObserver = new IntersectionObserver(queueTiles, { root: part("strip"), rootMargin: "300px" });
 
   part("back").onclick = goBack;
   part("game").onchange = (event) => {
@@ -116,8 +124,12 @@ function build(container) {
   subscribe("screenshots", () => root.classList.contains("active") && reload());
 }
 
-function applyView() {
-  const view = VIEWS.includes(store.settings.screenshots_view) ? store.settings.screenshots_view : "right";
+function currentView() {
+  return VIEWS.includes(store.settings.screenshots_view) ? store.settings.screenshots_view : "right";
+}
+
+function applyView(scroll = true) {
+  const view = currentView();
   part("gallery").dataset.view = view;
   for (const item of part("view-list").querySelectorAll("[data-v]")) {
     item.classList.toggle("on", item.dataset.v === view);
@@ -128,7 +140,8 @@ function applyView() {
   for (const item of part("view-list").querySelectorAll("[data-order]")) {
     item.classList.toggle("on", item.dataset.order === order());
   }
-  highlight();
+  highlight(scroll);
+  fillViewer();
 }
 
 const order = () => (store.settings.screenshots_order === "date" ? "date" : "game");
@@ -171,9 +184,11 @@ async function showPage({ key = ALL, select = null, back = null } = {}) {
   backTo = back;
   backKey = key;
   part("back").hidden = !back;
-  filterKey = key || ALL;
-  index = -1;
-  applyView();
+  if (filterKey !== (key || ALL)) {
+    filterKey = key || ALL;
+    index = -1;
+  }
+  applyView(false);
   await reload(select);
 }
 
@@ -200,8 +215,16 @@ async function reload(select = null) {
   part("count").textContent = shots.length ? plural(shots.length, "screenshot") : "";
 
   const wanted = shots.findIndex((s) => s.path === keep);
-  fillStrip(Math.max(BATCH, wanted + 1));
-  selectShot(wanted >= 0 ? wanted : shots.length ? 0 : -1);
+  const next = wanted >= 0 ? wanted : shots.length ? 0 : -1;
+  const signature = JSON.stringify(sections);
+  const unchanged = signature === rendered;
+  if (!unchanged) {
+    rendered = signature;
+    fillStrip(Math.max(BATCH, wanted + 1));
+  }
+  if (!unchanged || next !== index) {
+    selectShot(next);
+  }
 }
 
 function renderMenu(extra) {
@@ -218,6 +241,8 @@ function renderMenu(extra) {
 
 function fillStrip(upto) {
   const strip = part("strip");
+  tileObserver.disconnect();
+  waitingTiles = [];
   strip.replaceChildren();
   shownCount = 0;
   let n = 0;
@@ -250,12 +275,35 @@ function fillStrip(upto) {
   }
 }
 
+function queueTiles(entries) {
+  const visible = entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target);
+  for (const button of visible) {
+    tileObserver.unobserve(button);
+  }
+  waitingTiles.push(...visible.reverse());
+  loadThumbs();
+}
+
+function loadThumbs() {
+  while (thumbsRunning < THUMB_WORKERS && waitingTiles.length) {
+    const button = waitingTiles.pop();
+    thumbsRunning += 1;
+    invoke("thumbnail", { path: button.dataset.path, width: 420, height: 236 })
+      .then((thumb) => ($("img", button).src = fileUrl(thumb)))
+      .catch(() => {})
+      .finally(() => {
+        thumbsRunning -= 1;
+        loadThumbs();
+      });
+  }
+}
+
 function tile(path, i) {
-  const img = el("img", { alt: "" });
+  const img = el("img", { alt: "", decoding: "async" });
   const name = path.split(/[\\/]/).pop().replace(/\.[^.]+$/, "");
   const button = el(
     "button",
-    { class: "tile", "data-index": i, title: name },
+    { class: "tile", "data-index": i, "data-path": path, title: name },
     img,
     el("span", { class: "tile-name" }, name),
   );
@@ -265,20 +313,27 @@ function tile(path, i) {
     openCurrent();
   };
 
-  invoke("thumbnail", { path, width: 420, height: 236 })
-    .then((thumb) => (img.src = fileUrl(thumb)))
-    .catch(() => {});
+  tileObserver.observe(button);
   return button;
 }
 
-function highlight() {
+function highlight(scroll = true) {
   for (const button of part("strip").querySelectorAll(".tile")) {
     const on = Number(button.dataset.index) === index;
     button.classList.toggle("on", on);
-    if (on) {
+    if (on && scroll) {
       button.scrollIntoView({ block: "nearest" });
     }
   }
+}
+
+function fillViewer() {
+  const shot = currentShot();
+  if (!shot || viewerPath === shot.path || currentView() === "folder") {
+    return;
+  }
+  viewerPath = shot.path;
+  part("image").replaceChildren(el("img", { src: fileUrl(shot.path), alt: "", decoding: "async" }));
 }
 
 function emptyViewer() {
@@ -286,6 +341,7 @@ function emptyViewer() {
     ? t("Press {key} while reading to capture the game's window.", { key: hotkey })
     : t("Pick a screenshot key in Settings to capture the game's window.");
 
+  viewerPath = "";
   part("image").replaceChildren(
     el(
       "div",
@@ -323,8 +379,7 @@ async function selectShot(i) {
     fillStrip(i + 1);
   }
   highlight();
-
-  part("image").replaceChildren(el("img", { src: fileUrl(shot.path), alt: "" }));
+  fillViewer();
 
   const info = await call("screenshot_info", { path: shot.path });
   if (currentShot() !== shot) {

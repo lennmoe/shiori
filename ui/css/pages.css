@@ -747,6 +747,10 @@
   border-radius: 6px;
 }
 
+.side-strip .tile img:not([src]) {
+  content: linear-gradient(var(--surface-alt), var(--surface-alt));
+}
+
 .share-preview {
   flex: 1;
   min-height: 0;

@@ -2,7 +2,7 @@ import { $$, el } from "../dom.js";
 import { show } from "../router.js";
 import { invoke } from "../tauri.js";
 import { t } from "../i18n.js";
-import { labOn, raw } from "./util.js";
+import { raw } from "./util.js";
 
 let overlay = null;
 
@@ -80,7 +80,7 @@ async function open() {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.ctrlKey && event.key.toLowerCase() === "k" && labOn("labs_search")) {
+  if (event.ctrlKey && event.key.toLowerCase() === "k") {
     event.preventDefault();
     if (overlay) {
       close();

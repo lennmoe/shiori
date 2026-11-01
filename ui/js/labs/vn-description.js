@@ -4,7 +4,7 @@ import { call } from "../ui.js";
 import { store } from "../store.js";
 import { dayMonth } from "../format.js";
 import { t } from "../i18n.js";
-import { labOn, raw, vndbText } from "./util.js";
+import { raw, vndbText } from "./util.js";
 
 const ROLES = {
   main: "Protagonist",
@@ -90,7 +90,7 @@ document.addEventListener("game-loaded", (event) => {
   page?.querySelector(".labs-description-card")?.remove();
   const entry = event.detail.entry;
   const vnId = entry.vndb_id || entry.matched_vndb_id;
-  if (!page || !vnId || !labOn("labs_vn_description")) {
+  if (!page || !vnId) {
     return;
   }
 

@@ -24,7 +24,6 @@ const TEMPLATE = `
       <button data-tab="theme">Theme</button>
       <button data-tab="blacklist">Never detect</button>
       <button data-tab="advanced">Advanced</button>
-      <button data-tab="labs">Beta</button>
     </div>
     <div class="settings-body" data-id="body" style="padding-top: 16px"></div>
   </div>
@@ -106,8 +105,6 @@ function render() {
     body.replaceChildren(...presenceTab());
   } else if (tab === "advanced") {
     body.replaceChildren(...advancedTab());
-  } else if (tab === "labs") {
-    body.replaceChildren(...labsTab());
   } else if (tab === "blacklist") {
     body.replaceChildren(...blacklistTab());
   } else {
@@ -192,28 +189,6 @@ function generalTab() {
     ...localeSection(),
     ...appSection(),
     ...dataSection(),
-  ];
-}
-
-function labsTab() {
-  const builder = el("button", { class: "btn secondary small" }, "Open");
-  builder.onclick = () => {
-    tab = "presence";
-    render();
-  };
-  return [
-    hint("Features being tried out. They may change or go away."),
-    setting("labs_vn_description", "Description and characters on a VN's page", "From VNDB."),
-    setting("labs_search", "Search with Ctrl+K", "Find a VN or a page from anywhere."),
-    setting("labs_hover", "Covers lift when hovered"),
-    setting("labs_compact_sidebar", "Compact sidebar", "Icons only. The « button at the bottom of the sidebar switches it too."),
-    setting("labs_shortcuts", "Keyboard shortcuts", "1 to 6 switch pages, Alt+← goes back."),
-    el(
-      "div",
-      { class: "row" },
-      el("span", { class: "muted" }, "Your own Discord layout is in the Presence tab."),
-      builder,
-    ),
   ];
 }
 

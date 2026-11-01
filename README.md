@@ -10,7 +10,7 @@
   <a href="https://github.com/lennmoe/shiori/releases"><img src="https://img.shields.io/github/downloads/lennmoe/shiori/total?color=3BA55D" alt="Release downloads"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows" alt="Windows 10 and 11">
   <img src="https://img.shields.io/badge/size-~10%20MB-2B2D31" alt="About 10 MB">
-  <img src="https://img.shields.io/badge/languages-8-EB459E" alt="8 languages">
+  <img src="image/languages.svg" alt="Languages: English, French, Spanish, Portuguese (Brazil), Russian, Japanese, Vietnamese, Traditional Chinese">
 </p>
 
 <p align="center">
@@ -178,7 +178,7 @@ The engine is in Rust (`src-tauri/src`). The interface is plain HTML, CSS and Ja
 |---|---|
 | `pages/` | one file per page: home, cover, library, game, wishlist, screenshots, share, mascots, settings (with the presence builder), what's new |
 | `components/` | chart, calendar, share card, yearly recap, new VN check, welcome, theme tab, Play, update… |
-| `labs/` | features in beta, each one can be turned off in Settings → Beta |
+| `labs/` | VN description and characters, Ctrl+K search, compact sidebar, keyboard shortcuts |
 | `popups/` | the mascot, its speech balloon, the screenshot toast |
 | `app.js`, `router.js`, `store.js`, `ui.js`, `i18n.js` | startup, navigation, shared state, small widgets, translations |
 

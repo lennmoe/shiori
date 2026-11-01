@@ -14,16 +14,27 @@ use crate::winapi;
 pub const BROWSER_ARGS: &str =
     "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows";
 
+static CREATING: Mutex<()> = Mutex::new(());
+
+fn focus_main(window: &WebviewWindow) {
+    let _ = window.unminimize();
+    let _ = window.show();
+    let _ = window.set_focus();
+}
+
 pub fn show_main(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
+        focus_main(&window);
         return;
     }
 
     let app = app.clone();
     std::thread::spawn(move || {
+        let _creating = CREATING.lock().unwrap();
+        if let Some(window) = app.get_webview_window("main") {
+            focus_main(&window);
+            return;
+        }
         let Some(conf) = app
             .config()
             .app
@@ -66,6 +77,7 @@ fn popup(
     width: f64,
     height: f64,
 ) -> Option<WebviewWindow> {
+    let _creating = CREATING.lock().unwrap();
     if let Some(existing) = app.get_webview_window(label) {
         return Some(existing);
     }

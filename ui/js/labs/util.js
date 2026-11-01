@@ -1,8 +1,5 @@
 import { el } from "../dom.js";
-import { store } from "../store.js";
 import { call } from "../ui.js";
-
-export const labOn = (key) => store.settings[key] !== false;
 
 const VNDB = "https://vndb.org";
 

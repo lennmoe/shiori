@@ -116,25 +116,32 @@ fn modified(path: &Path) -> std::time::SystemTime {
         .unwrap_or(std::time::UNIX_EPOCH)
 }
 
-pub fn list_shots(folder: Option<&Path>) -> Vec<PathBuf> {
+fn shots_by_date(folder: Option<&Path>) -> Vec<(PathBuf, std::time::SystemTime)> {
     let Some(folder) = folder else {
         return vec![];
     };
 
-    let mut shots: Vec<PathBuf> = fs::read_dir(folder)
+    let mut shots: Vec<(PathBuf, std::time::SystemTime)> = fs::read_dir(folder)
         .into_iter()
         .flatten()
         .flatten()
-        .map(|entry| entry.path())
-        .filter(|path| path.is_file())
-        .filter(|path| {
+        .filter(|entry| {
+            let path = entry.path();
             let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase());
             ext.is_some_and(|ext| IMAGE_EXTS.contains(&ext.as_str()))
         })
+        .filter_map(|entry| {
+            let meta = entry.metadata().ok().filter(|meta| meta.is_file())?;
+            Some((entry.path(), meta.modified().unwrap_or(std::time::UNIX_EPOCH)))
+        })
         .collect();
 
-    shots.sort_by_key(|path| std::cmp::Reverse(modified(path)));
+    shots.sort_by_key(|(_, time)| std::cmp::Reverse(*time));
     shots
+}
+
+pub fn list_shots(folder: Option<&Path>) -> Vec<PathBuf> {
+    shots_by_date(folder).into_iter().map(|(path, _)| path).collect()
 }
 
 pub fn move_shots(from: &Path, to: &Path) -> Result<(), String> {
@@ -175,25 +182,24 @@ pub fn games_with_shots(cfg: &mut Config) -> Vec<GameShots> {
     let mut out = Vec::new();
     for (key, name) in games {
         let folder = folder_for(cfg, &key, false);
-        let shots = list_shots(folder.as_deref());
-        if !shots.is_empty() {
-            let times = shots
+        let found = shots_by_date(folder.as_deref());
+        if !found.is_empty() {
+            let times = found
                 .iter()
-                .map(|p| {
-                    modified(p)
-                        .duration_since(std::time::UNIX_EPOCH)
+                .map(|(_, time)| {
+                    time.duration_since(std::time::UNIX_EPOCH)
                         .map_or(0, |d| d.as_secs())
                 })
                 .collect();
-            let shots = shots
+            let shots = found
                 .iter()
-                .map(|p| p.to_string_lossy().to_string())
+                .map(|(path, _)| path.to_string_lossy().to_string())
                 .collect();
             out.push(GameShots { key, name, shots, times });
         }
     }
 
-    out.sort_by_key(|game| std::cmp::Reverse(modified(Path::new(&game.shots[0]))));
+    out.sort_by_key(|game: &GameShots| std::cmp::Reverse(game.times[0]));
     out
 }
 
