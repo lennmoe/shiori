@@ -900,10 +900,15 @@
     "Voted": "Voted",
     "Blacklist": "Blacklist",
     "{position} / {count} in this list": "{position} / {count} in this list",
+    "Doesn't talk": "Doesn't talk",
+    "No bubble or voice. The others talk instead.": "No bubble or voice. The others talk instead.",
     "Add an open app…": "Add an open app…",
     "Hide them over these apps": "Hide them over these apps",
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "When one of these is the window in front, the mascots turn invisible and come back when you switch.",
     "Hide them over fullscreen apps": "Hide them over fullscreen apps",
-    "Movies, videos, games… except the VN you're reading.": "Movies, videos, games… except the VN you're reading."
+    "Movies, videos, games… except the VN you're reading.": "Movies, videos, games… except the VN you're reading.",
+    "Voices & moments…": "Voices & moments…",
+    "Untick so this mascot stays quiet here. The others talk instead.": "Untick so this mascot stays quiet here. The others talk instead.",
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Untick a moment to keep this mascot quiet then: the others talk instead."
   }
 }

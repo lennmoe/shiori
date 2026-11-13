@@ -899,10 +899,15 @@
     "Voted": "Оценённые",
     "Blacklist": "Чёрный список",
     "{position} / {count} in this list": "{position} / {count} в этом списке",
+    "Doesn't talk": "Молчит",
+    "No bubble or voice. The others talk instead.": "Без облачка и голоса. Говорят другие.",
     "Add an open app…": "Добавить открытое приложение…",
     "Hide them over these apps": "Прятать их поверх этих приложений",
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Когда одно из них — активное окно, маскоты становятся невидимыми и возвращаются, когда ты переключаешься.",
     "Hide them over fullscreen apps": "Прятать их поверх полноэкранных приложений",
-    "Movies, videos, games… except the VN you're reading.": "Фильмы, видео, игры… кроме новеллы, которую ты читаешь."
+    "Movies, videos, games… except the VN you're reading.": "Фильмы, видео, игры… кроме новеллы, которую ты читаешь.",
+    "Voices & moments…": "Голоса и моменты…",
+    "Untick so this mascot stays quiet here. The others talk instead.": "Сними галочку, чтобы этот маскот здесь молчал. Вместо него говорят другие.",
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Сними галочку с момента, чтобы этот маскот тогда молчал: вместо него говорят другие."
   }
 }

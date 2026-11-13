@@ -313,7 +313,24 @@ function card(item, personalities) {
   );
   viewOnly.onclick = (event) => event.stopPropagation();
 
-  const voices = el("button", { class: "btn secondary small" }, "Voices…");
+  const silent = toggle(
+    "Doesn't talk",
+    !!store.settings.mascot_silent?.[item.id],
+    (on) => {
+      const all = { ...(store.settings.mascot_silent || {}) };
+      if (on) {
+        all[item.id] = true;
+      } else {
+        delete all[item.id];
+      }
+      store.settings.mascot_silent = all;
+      call("update_settings", { changes: { mascot_silent: all } });
+    },
+    "No bubble or voice. The others talk instead.",
+  );
+  silent.onclick = (event) => event.stopPropagation();
+
+  const voices = el("button", { class: "btn secondary small" }, "Voices & moments…");
   voices.onclick = (event) => {
     event.stopPropagation();
     editVoices(item);
@@ -367,6 +384,7 @@ function card(item, personalities) {
         bubble,
       ),
       el("div", { class: "mascot-size" }, viewOnly),
+      el("div", { class: "mascot-size" }, silent),
       el("div", { class: "row" }, share, remove),
     ),
   );
@@ -474,7 +492,24 @@ async function editVoices(item) {
 
   const render = async () => {
     const voices = await call("mascot_voices", { id: item.id });
+    const muted = store.settings.mascot_muted_moments?.[item.id] || [];
     const rows = VOICE_MOMENTS.map(([moment, label]) => {
+      const talks = el("input", { type: "checkbox", checked: !muted.includes(moment) });
+      talks.onchange = () => {
+        const all = { ...(store.settings.mascot_muted_moments || {}) };
+        const list = (all[item.id] || []).filter((m) => m !== moment);
+        if (!talks.checked) {
+          list.push(moment);
+        }
+        if (list.length) {
+          all[item.id] = list;
+        } else {
+          delete all[item.id];
+        }
+        store.settings.mascot_muted_moments = all;
+        row.classList.toggle("off", !talks.checked);
+        call("update_settings", { changes: { mascot_muted_moments: all } });
+      };
       const files = (voices[moment] || []).map((path) => {
         const play = el("button", { class: "btn secondary small", title: "Play" }, "▶");
         play.onclick = () => playPreview(path, item.id);
@@ -495,14 +530,20 @@ async function editVoices(item) {
         }
       };
 
-      return el(
+      const row = el(
         "div",
-        { class: "voice-moment" },
-        el("div", { class: "row" }, el("b", {}, label), add),
+        { class: `voice-moment ${talks.checked ? "" : "off"}` },
+        el(
+          "div",
+          { class: "row" },
+          el("label", { class: "voice-talks", title: "Untick so this mascot stays quiet here. The others talk instead." }, talks, el("b", {}, label)),
+          add,
+        ),
         files.length
           ? el("div", { class: "voice-files" }, ...files)
           : el("span", { class: "small-text muted" }, "No sound: it only shows the text."),
       );
+      return row;
     });
     body.replaceChildren(
       el(
@@ -512,6 +553,7 @@ async function editVoices(item) {
           "with the lines in order: the 1st sound (by file name) with the 1st line, and so on. " +
           "Elsewhere, one is picked at random.",
       ),
+      el("p", { class: "muted small-text" }, "Untick a moment to keep this mascot quiet then: the others talk instead."),
       volume,
       ...rows,
     );

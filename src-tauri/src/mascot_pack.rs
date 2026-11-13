@@ -59,6 +59,8 @@ pub fn export(shared: &Shared, id: &str, dest: &Path) -> Result<(), String> {
         "view_only": mascot::view_only_of(shared, id),
         "balloon": mascot::setting_for(shared, BALLOONS, id),
         "voice_volume": mascot::setting_for(shared, VOLUMES, id),
+        "silent": mascot::setting_for(shared, mascot::SILENT, id),
+        "muted_moments": mascot::setting_for(shared, mascot::MUTED_MOMENTS, id),
     });
 
     let part = dest.with_extension("part");
@@ -157,6 +159,19 @@ fn import_into(
     }
     if let Some(balloon) = clean_balloon(&manifest["balloon"]) {
         mascot::set_setting_for(shared, BALLOONS, &id, balloon);
+    }
+    if manifest["silent"].as_bool() == Some(true) {
+        mascot::set_setting_for(shared, mascot::SILENT, &id, json!(true));
+    }
+    let muted: Vec<&str> = manifest["muted_moments"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .filter(|moment| mascot::VOICE_EVENTS.contains(moment))
+        .collect();
+    if !muted.is_empty() {
+        mascot::set_setting_for(shared, mascot::MUTED_MOMENTS, &id, json!(muted));
     }
     if let Some(volume) = manifest["voice_volume"].as_u64() {
         mascot::set_setting_for(shared, VOLUMES, &id, json!(volume.min(100)));

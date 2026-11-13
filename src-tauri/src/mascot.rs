@@ -492,6 +492,16 @@ pub(crate) fn set_height(shared: &Shared, id: &str, height: u32) -> u32 {
     height
 }
 
+pub(crate) const SILENT: &str = "mascot_silent";
+pub(crate) const MUTED_MOMENTS: &str = "mascot_muted_moments";
+
+fn muted_for(shared: &Shared, id: &str, moment: &str) -> bool {
+    setting_for(shared, SILENT, id).as_bool() == Some(true)
+        || setting_for(shared, MUTED_MOMENTS, id)
+            .as_array()
+            .is_some_and(|moments| moments.iter().any(|m| m.as_str() == Some(moment)))
+}
+
 pub(crate) fn setting_for(shared: &Shared, key: &str, id: &str) -> Value {
     shared
         .config
@@ -531,6 +541,8 @@ pub fn remove_from_gallery(shared: &Shared, id: &str) -> Result<(), String> {
     let _ = std::fs::remove_dir_all(voices_dir(shared, id));
     set_setting_for(shared, "mascot_balloons", id, Value::Null);
     set_setting_for(shared, "mascot_voice_volumes", id, Value::Null);
+    set_setting_for(shared, SILENT, id, Value::Null);
+    set_setting_for(shared, MUTED_MOMENTS, id, Value::Null);
     set_name(shared, id, "");
     Ok(())
 }
@@ -1011,9 +1023,14 @@ fn lines_for(shared: &Shared, id: &str, language: &str) -> Lines {
     }
 }
 
-fn say_as(
+fn say_as(app: &AppHandle, label: Option<&str>, event: &str, line: impl Fn(&Lines) -> Said, seconds: u64) {
+    say_at(app, label, event, event, line, seconds);
+}
+
+fn say_at(
     app: &AppHandle,
     label: Option<&str>,
+    moment: &str,
     event: &str,
     line: impl Fn(&Lines) -> Said,
     seconds: u64,
@@ -1021,7 +1038,15 @@ fn say_as(
     if tucked() {
         return;
     }
-    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+    let everyone = shared(app);
+    let silent = |label: &str| muted_for(&everyone, id_of(label), moment);
+    if label.is_some_and(|label| silent(label)) {
+        return;
+    }
+    let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect::<Vec<_>>())
+        .into_iter()
+        .filter(|label| !silent(label))
+        .collect();
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
         _ if labels.is_empty() => return,
@@ -1394,9 +1419,10 @@ fn about_reading(reading: &Reading, line: &str) -> String {
 
 fn say_or_talk_about_reading(app: &AppHandle, label: Option<&str>, event: &str, list: fn(&Lines) -> &Vec<String>) {
     if let Some(reading) = reading_now(app).filter(|_| random(2) == 0) {
-        say_as(
+        say_at(
             app,
             label,
+            event,
             "reading",
             |lines| {
                 let said = pick(&lines.reading);

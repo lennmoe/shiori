@@ -1542,6 +1542,19 @@
   justify-content: space-between;
 }
 
+.voice-talks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.voice-moment.off .voice-files,
+.voice-moment.off > span,
+.voice-moment.off .voice-talks b {
+  opacity: 0.45;
+}
+
 .voice-files {
   display: grid;
   gap: 4px;

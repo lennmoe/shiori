@@ -67,6 +67,8 @@ fn defaults() -> Map<String, Value> {
         "mascot_voice_volume": 80,
         "mascot_voice_volumes": {},
         "mascot_balloons": {},
+        "mascot_silent": {},
+        "mascot_muted_moments": {},
         "mascot_hide_apps": [],
         "mascot_hide_fullscreen": false,
         "language": "auto",

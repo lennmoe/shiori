@@ -900,10 +900,15 @@
     "Voted": "已評分",
     "Blacklist": "黑名單",
     "{position} / {count} in this list": "呢份清單嘅 {position} / {count}",
+    "Doesn't talk": "唔講嘢",
+    "No bubble or voice. The others talk instead.": "冇泡泡同語音，由其他吉祥物講。",
     "Add an open app…": "加入一個已開啟嘅應用程式…",
     "Hide them over these apps": "喺呢啲應用程式前面隱藏",
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "當其中一個係前景視窗，吉祥物會變成睇唔到，轉咗視窗就會返嚟。",
     "Hide them over fullscreen apps": "喺全螢幕應用程式前面隱藏",
-    "Movies, videos, games… except the VN you're reading.": "電影、影片、遊戲……你讀緊嘅 VN 除外。"
+    "Movies, videos, games… except the VN you're reading.": "電影、影片、遊戲……你讀緊嘅 VN 除外。",
+    "Voices & moments…": "語音與時機…",
+    "Untick so this mascot stays quiet here. The others talk instead.": "取消勾選後，這個吉祥物在此時不說話，由其他吉祥物代替。",
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "取消勾選某個時機，這個吉祥物屆時就不說話，由其他吉祥物代替。"
   }
 }
