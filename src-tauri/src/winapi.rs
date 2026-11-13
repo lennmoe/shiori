@@ -3,12 +3,15 @@ use std::ffi::c_void;
 use windows::core::{BOOL, PWSTR};
 use windows::Win32::Foundation::{CloseHandle, HWND, LPARAM};
 use windows::Win32::Foundation::{POINT, RECT};
-use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MonitorFromPoint, MONITORINFO, MONITOR_DEFAULTTONEAREST};
+use windows::Win32::Graphics::Gdi::{
+    GetMonitorInfoW, MonitorFromPoint, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+};
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetClassNameW, GetClientRect, GetCursorPos, GetForegroundWindow, GetSystemMetrics, GetWindow,
+    GetWindowRect,
     GetWindowLongW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId, IsWindow,
     IsWindowVisible, SetWindowLongW, SystemParametersInfoW, GWL_EXSTYLE, GW_OWNER,
     SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, SPI_GETWORKAREA,
@@ -91,6 +94,34 @@ pub fn is_window_visible(h: isize) -> bool {
 
 pub fn foreground_window() -> isize {
     unsafe { GetForegroundWindow().0 as isize }
+}
+
+pub fn window_exe(h: isize) -> String {
+    match window_pid(h) {
+        0 => String::new(),
+        pid => process_image_path(pid),
+    }
+}
+
+pub fn is_fullscreen(h: isize) -> bool {
+    if h == 0 || matches!(class_name(h).as_str(), "Progman" | "WorkerW" | "Shell_TrayWnd") {
+        return false;
+    }
+    let mut rect = RECT::default();
+    let mut info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+    let found = unsafe {
+        GetWindowRect(hwnd(h), &mut rect).is_ok()
+            && GetMonitorInfoW(MonitorFromWindow(hwnd(h), MONITOR_DEFAULTTONEAREST), &mut info).as_bool()
+    };
+    let screen = info.rcMonitor;
+    found
+        && rect.left <= screen.left
+        && rect.top <= screen.top
+        && rect.right >= screen.right
+        && rect.bottom >= screen.bottom
 }
 
 unsafe extern "system" fn collect(h: HWND, lparam: LPARAM) -> BOOL {

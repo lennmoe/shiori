@@ -899,6 +899,11 @@
     "Wishlist": "願望清單",
     "Voted": "已評分",
     "Blacklist": "黑名單",
-    "{position} / {count} in this list": "此清單中的 {position} / {count}"
+    "{position} / {count} in this list": "此清單中的 {position} / {count}",
+    "Add an open app…": "加入一個已開啟的應用程式…",
+    "Hide them over these apps": "在這些應用程式前隱藏",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "當其中一個是前景視窗時，吉祥物會變成看不見，切換視窗後恢復。",
+    "Hide them over fullscreen apps": "在全螢幕應用程式前隱藏",
+    "Movies, videos, games… except the VN you're reading.": "電影、影片、遊戲……你正在讀的 VN 除外。"
   }
 }

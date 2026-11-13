@@ -69,6 +69,9 @@ listenHere("voice", (event) => {
   voice.play().catch(() => {});
 });
 
+listenHere("tuck", (event) => document.body.classList.toggle("tucked", !!event.payload));
+invoke("mascot_tucked").then((tucked) => document.body.classList.toggle("tucked", !!tucked));
+
 listenHere("mascot-refresh", start);
 setInterval(() => invoke("mascot_alive"), 10000);
 start();

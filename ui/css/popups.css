@@ -10,6 +10,12 @@ body.mascot-window img {
   object-fit: contain;
   cursor: grab;
   -webkit-user-drag: none;
+  transition: opacity 0.25s ease;
+}
+
+body.mascot-window.tucked img {
+  opacity: 0;
+  pointer-events: none;
 }
 
 body.balloon-window {

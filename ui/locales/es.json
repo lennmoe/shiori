@@ -898,6 +898,11 @@
     "Wishlist": "Lista de deseos",
     "Voted": "Votadas",
     "Blacklist": "Lista negra",
-    "{position} / {count} in this list": "{position} / {count} en esta lista"
+    "{position} / {count} in this list": "{position} / {count} en esta lista",
+    "Add an open app…": "Añadir una app abierta…",
+    "Hide them over these apps": "Ocultarlas sobre estas apps",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Cuando una de ellas es la ventana activa, las mascotas se vuelven invisibles y vuelven al cambiar de ventana.",
+    "Hide them over fullscreen apps": "Ocultarlas sobre apps en pantalla completa",
+    "Movies, videos, games… except the VN you're reading.": "Películas, vídeos, juegos… menos la VN que estás leyendo."
   }
 }

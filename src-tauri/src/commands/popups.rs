@@ -145,6 +145,11 @@ pub fn set_mascot_custom_lines(shared: SharedState, id: String, lines: serde_jso
 }
 
 #[tauri::command(async)]
+pub fn mascot_tucked() -> bool {
+    mascot::tucked()
+}
+
+#[tauri::command(async)]
 pub fn set_mascot_view_only(shared: SharedState, id: String, view_only: bool) {
     mascot::set_view_only(&shared, &[id], view_only);
 }

@@ -44,7 +44,9 @@ pub fn update_settings(
         let normalized = hotkey::normalize(key);
         changes.insert("screenshot_hotkey".into(), json!(normalized));
     }
-    const NOT_ON_SCREEN: [&str; 5] = [
+    const NOT_ON_SCREEN: [&str; 7] = [
+        "mascot_hide_apps",
+        "mascot_hide_fullscreen",
         "mascot_chatter_minutes",
         "mascot_balloons",
         "mascot_voice_volume",

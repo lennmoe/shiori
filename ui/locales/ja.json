@@ -899,6 +899,11 @@
     "Wishlist": "ウィッシュリスト",
     "Voted": "投票済み",
     "Blacklist": "ブラックリスト",
-    "{position} / {count} in this list": "このリストの{position} / {count}"
+    "{position} / {count} in this list": "このリストの{position} / {count}",
+    "Add an open app…": "開いているアプリを追加…",
+    "Hide them over these apps": "これらのアプリの前では隠す",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "これらが前面のウィンドウになると、マスコットは見えなくなり、切り替えると戻ります。",
+    "Hide them over fullscreen apps": "全画面のアプリの前では隠す",
+    "Movies, videos, games… except the VN you're reading.": "映画、動画、ゲーム…読んでいるVNは除きます。"
   }
 }

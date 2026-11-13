@@ -898,6 +898,11 @@
     "Wishlist": "Danh sách mong muốn",
     "Voted": "Đã chấm điểm",
     "Blacklist": "Danh sách đen",
-    "{position} / {count} in this list": "{position} / {count} trong danh sách này"
+    "{position} / {count} in this list": "{position} / {count} trong danh sách này",
+    "Add an open app…": "Thêm một ứng dụng đang mở…",
+    "Hide them over these apps": "Ẩn chúng khi dùng các ứng dụng này",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Khi một trong số này là cửa sổ phía trước, linh vật sẽ ẩn đi và quay lại khi bạn chuyển cửa sổ.",
+    "Hide them over fullscreen apps": "Ẩn chúng khi ứng dụng toàn màn hình",
+    "Movies, videos, games… except the VN you're reading.": "Phim, video, game… trừ VN bạn đang đọc."
   }
 }

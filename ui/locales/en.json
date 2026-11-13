@@ -899,6 +899,11 @@
     "Wishlist": "Wishlist",
     "Voted": "Voted",
     "Blacklist": "Blacklist",
-    "{position} / {count} in this list": "{position} / {count} in this list"
+    "{position} / {count} in this list": "{position} / {count} in this list",
+    "Add an open app…": "Add an open app…",
+    "Hide them over these apps": "Hide them over these apps",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "When one of these is the window in front, the mascots turn invisible and come back when you switch.",
+    "Hide them over fullscreen apps": "Hide them over fullscreen apps",
+    "Movies, videos, games… except the VN you're reading.": "Movies, videos, games… except the VN you're reading."
   }
 }

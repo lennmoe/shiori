@@ -94,6 +94,67 @@ function build(container) {
 
 const save = (changes) => call("update_settings", { changes });
 
+function hideApps() {
+  const chips = el("div", { class: "chips" });
+  const picker = el("select", {});
+  const current = () => store.settings.mascot_hide_apps || [];
+  const keep = (apps) => {
+    store.settings.mascot_hide_apps = apps;
+    save({ mascot_hide_apps: apps });
+    render();
+  };
+
+  const render = () => {
+    chips.replaceChildren(
+      ...current().map((exe) =>
+        el(
+          "span",
+          { class: "chip" },
+          exe,
+          el("button", { title: "Remove", onclick: () => keep(current().filter((e) => e !== exe)) }, "✕"),
+        ),
+      ),
+    );
+  };
+
+  const fill = async () => {
+    const windows = await call("list_windows");
+    const taken = new Set(current());
+    const seen = new Set();
+    const items = [el("option", { value: "" }, t("Add an open app…"))];
+    for (const win of windows) {
+      const exe = win.exe_path.split("\\").pop().toLowerCase();
+      if (!exe || seen.has(exe) || taken.has(exe)) {
+        continue;
+      }
+      seen.add(exe);
+      items.push(el("option", { value: exe }, `${win.title}  —  ${exe}`));
+    }
+    picker.replaceChildren(...items);
+  };
+  picker.onmousedown = fill;
+  picker.onfocus = fill;
+  picker.onchange = () => {
+    if (picker.value) {
+      keep([...current(), picker.value]);
+      picker.value = "";
+      fill();
+    }
+  };
+
+  render();
+  fill();
+  return [
+    el("div", { class: "field" }, el("span", {}, "Hide them over these apps"), picker),
+    chips,
+    el(
+      "div",
+      { class: "hint-text" },
+      "When one of these is the window in front, the mascots turn invisible and come back when you switch.",
+    ),
+  ];
+}
+
 function options() {
   const settings = store.settings;
   const backToCorner = el("button", { class: "btn secondary" }, "Put them back in the corner");
@@ -147,6 +208,13 @@ function options() {
       { class: "hint-text" },
       "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable " +
         "again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.",
+    ),
+    ...hideApps(),
+    toggle(
+      "Hide them over fullscreen apps",
+      settings.mascot_hide_fullscreen,
+      (on) => save({ mascot_hide_fullscreen: on }),
+      "Movies, videos, games… except the VN you're reading.",
     ),
     toggle(
       "Keep them above other windows",

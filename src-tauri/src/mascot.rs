@@ -49,6 +49,7 @@ static LAST_SAID: AtomicU64 = AtomicU64::new(0);
 static LAST_SEEN: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
 static FORCE: Mutex<Vec<String>> = Mutex::new(Vec::new());
 static EXITING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static TUCKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub fn exiting() {
     EXITING.store(true, Ordering::SeqCst);
@@ -857,7 +858,7 @@ fn click_through_loop(app: &AppHandle, label: &str, token: u64) {
                 && (x as u32) < character.alpha.width()
                 && (y as u32) < character.alpha.height();
             let opaque = inside && character.alpha.get_pixel(x as u32, y as u32).0[3] > 10;
-            Some(opaque && !character.view_only)
+            Some(opaque && !character.view_only && !tucked())
         });
         let Some(over_character) = over_character else {
             return;
@@ -1017,6 +1018,9 @@ fn say_as(
     line: impl Fn(&Lines) -> Said,
     seconds: u64,
 ) {
+    if tucked() {
+        return;
+    }
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
@@ -1119,6 +1123,63 @@ pub fn start_watchdog(app: &AppHandle) {
         if let Some((label, reason)) = reason {
             crate::crash::event(format!("rebuild mascot: {reason}"));
             force_rebuild(&app, &label);
+        }
+    });
+}
+
+pub fn tucked() -> bool {
+    TUCKED.load(Ordering::SeqCst)
+}
+
+fn should_tuck(app: &AppHandle) -> bool {
+    let shared = shared(app);
+    let (enabled, apps, fullscreen) = {
+        let cfg = shared.config.lock().unwrap();
+        let apps: Vec<String> = cfg
+            .get("mascot_hide_apps")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(str::to_lowercase)
+            .collect();
+        (cfg.bool("mascot_enabled"), apps, cfg.bool("mascot_hide_fullscreen"))
+    };
+    if !enabled || (apps.is_empty() && !fullscreen) {
+        return false;
+    }
+    let front = winapi::foreground_window();
+    let pid = winapi::window_pid(front);
+    if front == 0 || pid == std::process::id() {
+        return false;
+    }
+    let exe = winapi::window_exe(front);
+    let name = exe.rsplit('\\').next().unwrap_or("").to_lowercase();
+    if !name.is_empty() && apps.contains(&name) {
+        return true;
+    }
+    if fullscreen && winapi::is_fullscreen(front) {
+        let snap = shared.snapshot();
+        return !(snap.detected && (snap.pid == pid || snap.hwnd == front));
+    }
+    false
+}
+
+pub fn start_tuck_watch(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || loop {
+        std::thread::sleep(Duration::from_millis(800));
+        let tuck = should_tuck(&app);
+        if tuck == TUCKED.swap(tuck, Ordering::SeqCst) {
+            continue;
+        }
+        crate::crash::note(if tuck { "mascots tucked away" } else { "mascots back" });
+        if tuck {
+            ui_windows::hide_balloon(&app);
+        }
+        let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect());
+        for label in labels {
+            let _ = app.emit_to(label.as_str(), "tuck", tuck);
         }
     });
 }

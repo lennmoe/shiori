@@ -898,6 +898,11 @@
     "Wishlist": "Список желаний",
     "Voted": "Оценённые",
     "Blacklist": "Чёрный список",
-    "{position} / {count} in this list": "{position} / {count} в этом списке"
+    "{position} / {count} in this list": "{position} / {count} в этом списке",
+    "Add an open app…": "Добавить открытое приложение…",
+    "Hide them over these apps": "Прятать их поверх этих приложений",
+    "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Когда одно из них — активное окно, маскоты становятся невидимыми и возвращаются, когда ты переключаешься.",
+    "Hide them over fullscreen apps": "Прятать их поверх полноэкранных приложений",
+    "Movies, videos, games… except the VN you're reading.": "Фильмы, видео, игры… кроме новеллы, которую ты читаешь."
   }
 }
