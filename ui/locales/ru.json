@@ -20,7 +20,8 @@
     "New VN detected": "Обнаружена новая новелла",
     "{} · click to check it's the right one": "{} · нажми, чтобы проверить",
     "Still running in the tray": "Продолжает работать в трее",
-    "Right-click its icon to quit": "Чтобы выйти, нажми правой кнопкой на значок"
+    "Right-click its icon to quit": "Чтобы выйти, нажми правой кнопкой на значок",
+    "Idle": "Нет активности"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "Очищать статус при закрытии новеллы",
     "Add a “View on VNDB” button": "Добавить кнопку «Открыть на VNDB»",
     "Go idle when the VN isn't the active window": "Становиться неактивным, когда новелла не в фокусе",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "Очищает твой статус в Discord и останавливает прошедшее время и время чтения, пока ты не вернёшься в игру.",
+    "Stops the elapsed time and the time read until you go back to the game.": "Останавливает прошедшее время и время чтения, пока ты не вернёшься в игру.",
     "Seconds in the background before going idle": "Секунд в фоне до перехода в неактивный режим",
     "Covers & matching": "Обложки и сопоставление",
     "Allow NSFW-flagged covers": "Разрешить обложки с пометкой NSFW",
@@ -906,6 +907,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Когда одно из них — активное окно, маскоты становятся невидимыми и возвращаются, когда ты переключаешься.",
     "Hide them over fullscreen apps": "Прятать их поверх полноэкранных приложений",
     "Movies, videos, games… except the VN you're reading.": "Фильмы, видео, игры… кроме новеллы, которую ты читаешь.",
+    "While idle": "Во время бездействия",
+    "Show “Idle” instead of “Reading”": "Показывать «Нет активности» вместо «Читает»",
+    "Clear my Discord status": "Очищать мой статус в Discord",
     "Change picture…": "Сменить картинку…",
     "Voices & moments…": "Голоса и моменты…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Сними галочку, чтобы этот маскот здесь молчал. Вместо него говорят другие.",

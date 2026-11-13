@@ -20,7 +20,8 @@
     "New VN detected": "侦测到新的视觉小说",
     "{} · click to check it's the right one": "{} · 点击确认是否正确",
     "Still running in the tray": "仍在系统托盘中执行",
-    "Right-click its icon to quit": "右键点击图示即可结束"
+    "Right-click its icon to quit": "右键点击图示即可结束",
+    "Idle": "闲置"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "关闭视觉小说时清除状态",
     "Add a “View on VNDB” button": "加入「在 VNDB 上查看」按钮",
     "Go idle when the VN isn't the active window": "视觉小说不是使用中视窗时进入閒置状态",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "清除 Discord 状态并停止经过时间和阅读时间计时，直到回到遊戏。",
+    "Stops the elapsed time and the time read until you go back to the game.": "在你回到游戏前，暂停已用时间和阅读时间。",
     "Seconds in the background before going idle": "在背景经过多少秒後进入閒置状态",
     "Covers & matching": "封面与配对",
     "Allow NSFW-flagged covers": "允许成人内容封面",
@@ -907,6 +908,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "当其中一个是前台窗口时，吉祥物会变为不可见，切换窗口后恢复。",
     "Hide them over fullscreen apps": "在全屏应用前隐藏",
     "Movies, videos, games… except the VN you're reading.": "电影、视频、游戏……你正在读的 VN 除外。",
+    "While idle": "闲置时",
+    "Show “Idle” instead of “Reading”": "显示“闲置”而不是“阅读中”",
+    "Clear my Discord status": "清除我的 Discord 状态",
     "Change picture…": "更换图片…",
     "Voices & moments…": "语音与时机…",
     "Untick so this mascot stays quiet here. The others talk instead.": "取消勾选后，这个吉祥物在此时不说话，由其他吉祥物代替。",

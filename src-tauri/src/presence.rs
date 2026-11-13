@@ -102,7 +102,7 @@ pub fn vars(snap: &Snapshot, entry: &Map<String, Value>, original_first: bool, l
         ("title", title),
         ("romanized", romanized),
         ("original", original),
-        ("reading", lang::tr("Reading", language).to_string()),
+        ("reading", lang::tr(if snap.idle { "Idle" } else { "Reading" }, language).to_string()),
         ("section", snap.section_label.clone()),
         ("total_read", time_line("Total read: {}", &total, language)),
         ("today_read", time_line("Today: {}", &today, language)),

@@ -40,6 +40,7 @@ fn defaults() -> Map<String, Value> {
         "clear_on_close": true,
         "idle_when_unfocused": false,
         "idle_seconds": 60,
+        "idle_presence": "idle",
         "update_min_interval": 5,
         "start_minimized": false,
         "theme": "system",

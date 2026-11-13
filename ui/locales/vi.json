@@ -20,7 +20,8 @@
     "New VN detected": "Phát hiện VN mới",
     "{} · click to check it's the right one": "{} · bấm để kiểm tra đúng chưa",
     "Still running in the tray": "Vẫn đang chạy ở khay hệ thống",
-    "Right-click its icon to quit": "Nhấp chuột phải vào biểu tượng để thoát"
+    "Right-click its icon to quit": "Nhấp chuột phải vào biểu tượng để thoát",
+    "Idle": "Đang rảnh"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "Xóa trạng thái khi đóng VN",
     "Add a “View on VNDB” button": "Thêm nút “Xem trên VNDB”",
     "Go idle when the VN isn't the active window": "Chuyển sang không hoạt động khi VN không phải cửa sổ đang dùng",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "Xóa trạng thái Discord và dừng thời gian trôi qua lẫn thời gian đọc cho đến khi bạn quay lại trò chơi.",
+    "Stops the elapsed time and the time read until you go back to the game.": "Dừng thời gian đã trôi qua và thời gian đọc cho đến khi bạn quay lại game.",
     "Seconds in the background before going idle": "Số giây chạy nền trước khi chuyển sang không hoạt động",
     "Covers & matching": "Ảnh bìa & khớp dữ liệu",
     "Allow NSFW-flagged covers": "Cho phép ảnh bìa bị đánh dấu NSFW",
@@ -906,6 +907,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Khi một trong số này là cửa sổ phía trước, linh vật sẽ ẩn đi và quay lại khi bạn chuyển cửa sổ.",
     "Hide them over fullscreen apps": "Ẩn chúng khi ứng dụng toàn màn hình",
     "Movies, videos, games… except the VN you're reading.": "Phim, video, game… trừ VN bạn đang đọc.",
+    "While idle": "Khi không hoạt động",
+    "Show “Idle” instead of “Reading”": "Hiện “Đang rảnh” thay vì “Đang đọc”",
+    "Clear my Discord status": "Xóa trạng thái Discord của tôi",
     "Change picture…": "Đổi hình…",
     "Voices & moments…": "Giọng nói và thời điểm…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Bỏ chọn để linh vật này im lặng lúc này. Các linh vật khác sẽ nói thay.",

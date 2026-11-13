@@ -20,7 +20,8 @@
     "New VN detected": "新しいVNを検出",
     "{} · click to check it's the right one": "{} · クリックして正しいか確認",
     "Still running in the tray": "タスクトレイで動作中です",
-    "Right-click its icon to quit": "終了するにはアイコンを右クリック"
+    "Right-click its icon to quit": "終了するにはアイコンを右クリック",
+    "Idle": "放置中"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "VNを閉じたらステータスを消す",
     "Add a “View on VNDB” button": "「VNDBで見る」ボタンを追加",
     "Go idle when the VN isn't the active window": "VNがアクティブウィンドウでないときは非アクティブにする",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "ゲームに戻るまで、Discordのステータスを消し、経過時間と読書時間を止めます。",
+    "Stops the elapsed time and the time read until you go back to the game.": "ゲームに戻るまで経過時間と読書時間を止めます。",
     "Seconds in the background before going idle": "非アクティブになるまでのバックグラウンド秒数",
     "Covers & matching": "表紙と照合",
     "Allow NSFW-flagged covers": "NSFWとされた表紙を許可",
@@ -907,6 +908,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "これらが前面のウィンドウになると、マスコットは見えなくなり、切り替えると戻ります。",
     "Hide them over fullscreen apps": "全画面のアプリの前では隠す",
     "Movies, videos, games… except the VN you're reading.": "映画、動画、ゲーム…読んでいるVNは除きます。",
+    "While idle": "離席中",
+    "Show “Idle” instead of “Reading”": "「読書中」の代わりに「放置中」と表示",
+    "Clear my Discord status": "Discordのステータスを消す",
     "Change picture…": "画像を変更…",
     "Voices & moments…": "ボイスとタイミング…",
     "Untick so this mascot stays quiet here. The others talk instead.": "チェックを外すと、このマスコットはここでは話しません。代わりに他のマスコットが話します。",

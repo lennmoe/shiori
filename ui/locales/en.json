@@ -20,7 +20,8 @@
     "New VN detected": "New VN detected",
     "{} · click to check it's the right one": "{} · click to check it's the right one",
     "Still running in the tray": "Still running in the tray",
-    "Right-click its icon to quit": "Right-click its icon to quit"
+    "Right-click its icon to quit": "Right-click its icon to quit",
+    "Idle": "Idle"
   },
   "personalities": {
     "cheerful": {
@@ -574,7 +575,7 @@
     "Clear presence when the VN closes": "Clear presence when the VN closes",
     "Add a “View on VNDB” button": "Add a “View on VNDB” button",
     "Go idle when the VN isn't the active window": "Go idle when the VN isn't the active window",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.",
+    "Stops the elapsed time and the time read until you go back to the game.": "Stops the elapsed time and the time read until you go back to the game.",
     "Seconds in the background before going idle": "Seconds in the background before going idle",
     "Covers & matching": "Covers & matching",
     "Allow NSFW-flagged covers": "Allow NSFW-flagged covers",
@@ -907,6 +908,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "When one of these is the window in front, the mascots turn invisible and come back when you switch.",
     "Hide them over fullscreen apps": "Hide them over fullscreen apps",
     "Movies, videos, games… except the VN you're reading.": "Movies, videos, games… except the VN you're reading.",
+    "While idle": "While idle",
+    "Show “Idle” instead of “Reading”": "Show “Idle” instead of “Reading”",
+    "Clear my Discord status": "Clear my Discord status",
     "Change picture…": "Change picture…",
     "Voices & moments…": "Voices & moments…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Untick so this mascot stays quiet here. The others talk instead.",

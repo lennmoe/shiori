@@ -703,18 +703,21 @@ impl Engine {
     }
 
     fn activity_for(&self, snap: &Snapshot) -> Option<Activity> {
-        if !snap.detected || snap.privacy == "off" || snap.idle {
+        if !snap.detected || snap.privacy == "off" {
             return None;
         }
 
         let cfg = self.shared.config.lock().unwrap();
+        if snap.idle && cfg.str("idle_presence") == "hide" {
+            return None;
+        }
         let language = presence::language(&cfg);
-        let reading = lang::tr("Reading", language);
+        let reading = lang::tr(if snap.idle { "Idle" } else { "Reading" }, language);
         let asset = cfg.str("default_asset_key");
         let start = cfg
             .bool("show_elapsed")
             .then_some(snap.session_start)
-            .filter(|s| *s > 0);
+            .filter(|s| *s > 0 && !snap.idle);
 
         if snap.privacy == "private" {
             return Some(Activity {
@@ -808,6 +811,9 @@ impl Engine {
                 snap.playtime_seconds,
                 crate::config::now(),
             );
+            if snap.idle {
+                activity.start = None;
+            }
         }
         Some(activity)
     }

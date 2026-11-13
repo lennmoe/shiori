@@ -284,7 +284,7 @@ function presenceSection(custom) {
     setting(
       "idle_when_unfocused",
       "Go idle when the VN isn't the active window",
-      "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.",
+      "Stops the elapsed time and the time read until you go back to the game.",
     ),
     store.settings.idle_when_unfocused &&
       numberField("idle_seconds", "Seconds in the background before going idle", {
@@ -292,7 +292,23 @@ function presenceSection(custom) {
         max: 3600,
         fallback: 60,
       }),
+    store.settings.idle_when_unfocused && idlePresence(),
   ].filter(Boolean);
+}
+
+function idlePresence() {
+  const select = el(
+    "select",
+    {},
+    ...[
+      ["idle", "Show “Idle” instead of “Reading”"],
+      ["hide", "Clear my Discord status"],
+    ].map(([value, label]) =>
+      el("option", { value, selected: value === (store.settings.idle_presence || "idle") }, t(label)),
+    ),
+  );
+  select.onchange = () => save({ idle_presence: select.value });
+  return el("div", { class: "field" }, el("span", {}, "While idle"), select);
 }
 
 function coversSection() {

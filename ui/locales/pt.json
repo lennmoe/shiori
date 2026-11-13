@@ -20,7 +20,8 @@
     "New VN detected": "Nova VN detectada",
     "{} · click to check it's the right one": "{} · clique para conferir se é a certa",
     "Still running in the tray": "Continua aberto na bandeja",
-    "Right-click its icon to quit": "Clique com o botão direito no ícone para sair"
+    "Right-click its icon to quit": "Clique com o botão direito no ícone para sair",
+    "Idle": "Inativo"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "Limpar a presença quando a VN fechar",
     "Add a “View on VNDB” button": "Adicionar um botão “Ver no VNDB”",
     "Go idle when the VN isn't the active window": "Ficar inativo quando a VN não é a janela ativa",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "Limpa seu status do Discord e para o tempo decorrido e o tempo lido até você voltar ao jogo.",
+    "Stops the elapsed time and the time read until you go back to the game.": "Para o tempo decorrido e o tempo de leitura até você voltar ao jogo.",
     "Seconds in the background before going idle": "Segundos em segundo plano antes de ficar inativo",
     "Covers & matching": "Capas e correspondência",
     "Allow NSFW-flagged covers": "Permitir capas marcadas como NSFW",
@@ -906,6 +907,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Quando um deles é a janela em primeiro plano, os mascotes ficam invisíveis e voltam quando você troca de janela.",
     "Hide them over fullscreen apps": "Escondê-los sobre apps em tela cheia",
     "Movies, videos, games… except the VN you're reading.": "Filmes, vídeos, jogos… menos a VN que você está lendo.",
+    "While idle": "Enquanto inativo",
+    "Show “Idle” instead of “Reading”": "Mostrar “Inativo” em vez de “Lendo”",
+    "Clear my Discord status": "Limpar meu status do Discord",
     "Change picture…": "Trocar a imagem…",
     "Voices & moments…": "Vozes e momentos…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Desmarque para este mascote ficar quieto aqui. Os outros falam no lugar.",

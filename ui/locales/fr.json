@@ -20,7 +20,8 @@
     "New VN detected": "Nouveau VN détecté",
     "{} · click to check it's the right one": "{} · clique pour vérifier que c'est le bon",
     "Still running in the tray": "Toujours ouvert dans la barre des tâches",
-    "Right-click its icon to quit": "Clic droit sur son icône pour quitter"
+    "Right-click its icon to quit": "Clic droit sur son icône pour quitter",
+    "Idle": "Inactif"
   },
   "personalities": {
     "cheerful": {
@@ -578,7 +579,7 @@
     "Clear presence when the VN closes": "Effacer la présence quand le VN se ferme",
     "Add a “View on VNDB” button": "Ajouter un bouton « Voir sur VNDB »",
     "Go idle when the VN isn't the active window": "Passer en inactif quand le VN n'est pas la fenêtre active",
-    "Clears your Discord status and stops the elapsed time and the time read until you go back to the game.": "Efface ton statut Discord et arrête le temps écoulé et le temps de lecture jusqu'à ce que tu reviennes au jeu.",
+    "Stops the elapsed time and the time read until you go back to the game.": "Arrête le temps écoulé et le temps de lecture jusqu'à ce que tu reviennes au jeu.",
     "Seconds in the background before going idle": "Secondes en arrière-plan avant de passer en inactif",
     "Covers & matching": "Covers et correspondance",
     "Allow NSFW-flagged covers": "Autoriser les covers marquées NSFW",
@@ -906,6 +907,9 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Quand l'une d'elles est la fenêtre au premier plan, les mascottes deviennent invisibles, puis reviennent quand tu changes de fenêtre.",
     "Hide them over fullscreen apps": "Les cacher devant les applis en plein écran",
     "Movies, videos, games… except the VN you're reading.": "Films, vidéos, jeux… sauf le VN que tu lis.",
+    "While idle": "En inactivité",
+    "Show “Idle” instead of “Reading”": "Afficher « Inactif » au lieu de « En lecture »",
+    "Clear my Discord status": "Effacer mon statut Discord",
     "Change picture…": "Changer l'image…",
     "Voices & moments…": "Voix et moments…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Décoche pour que cette mascotte se taise ici. Les autres parlent à sa place.",
