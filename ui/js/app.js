@@ -89,6 +89,18 @@ function renderTopbar(snap) {
   }
 }
 
+function renderClip(state) {
+  const recording = !!state?.recording;
+  $("#top-rec").hidden = !recording;
+  document.documentElement.classList.toggle("recording-clip", recording);
+  if (recording) {
+    const seconds = state.seconds || 0;
+    $("#top-rec-time").textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+}
+
+$("#top-rec").onclick = () => call("toggle_clip");
+
 function renderSidebar() {
   const snap = store.snapshot;
   $("#pause-label").textContent = snap.paused ? t("Resume") : t("Pause");
@@ -152,6 +164,8 @@ async function start() {
   await listen("screenshots-changed", (event) => update("screenshots", event.payload));
   await listen("navigate", (event) => show(event.payload));
   await listen("toast", (event) => update("notice", event.payload));
+  await listen("clip-state", (event) => renderClip(event.payload));
+  invoke("clip_state").then(renderClip).catch(() => {});
 
   const showedNotes = await showWhatsNewOnce();
   if (!showedNotes) {

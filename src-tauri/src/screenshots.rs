@@ -16,7 +16,7 @@ use crate::sound;
 use crate::state::Shared;
 use crate::ui_windows::{self, Toast};
 
-const IMAGE_EXTS: [&str; 5] = ["png", "jpg", "jpeg", "webp", "bmp"];
+const IMAGE_EXTS: [&str; 6] = ["png", "jpg", "jpeg", "webp", "bmp", "mp4"];
 const RESERVED: [&str; 4] = ["CON", "PRN", "AUX", "NUL"];
 
 pub fn default_root() -> PathBuf {

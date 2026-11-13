@@ -537,3 +537,40 @@ html.has-bg .now-chip {
     justify-content: center;
   }
 }
+
+.top-rec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--red);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.top-rec[hidden] {
+  display: none;
+}
+
+.top-rec:hover {
+  background: color-mix(in srgb, var(--red) 28%, transparent);
+}
+
+.top-rec i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: rec-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes rec-blink {
+  50% {
+    opacity: 0.25;
+  }
+}

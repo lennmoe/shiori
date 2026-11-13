@@ -23,6 +23,8 @@ png = "0.18.1"
 base64 = "0.23.1"
 zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 flate2 = "1.1.10"
+windows-capture = "2.0.1"
+wasapi = "0.27.0"
 tauri-plugin-dialog = "2"
 webview2-com = "0.39.1"
 sha2 = "0.11.0"
@@ -31,8 +33,16 @@ ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "
 [dependencies.windows]
 version = "0.62"
 features = [
+  "Foundation",
+  "Media_Editing",
+  "Media_MediaProperties",
+  "Storage",
+  "Storage_Search",
+  "Storage_Streams",
   "Win32_Foundation",
   "Win32_Globalization",
+  "Win32_Graphics_Dwm",
+  "Win32_System_Performance",
   "Win32_Graphics_Gdi",
   "Win32_Storage_EnhancedStorage",
   "Win32_Storage_FileSystem",

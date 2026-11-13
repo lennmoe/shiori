@@ -14,6 +14,7 @@ mod vndb;
 mod vndb_list;
 
 mod capture;
+mod clip;
 mod clipboard;
 mod hotkey;
 mod shell;
@@ -143,6 +144,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     mascot::start_chatter(app.handle());
     mascot::start_watchdog(app.handle());
     mascot::start_tuck_watch(app.handle());
+    clip::start_replay_watch(&shared);
 
     if !start_minimized {
         ui_windows::show_main(app.handle());
@@ -239,6 +241,9 @@ fn main() {
             commands::covers::set_cover_url,
             commands::covers::prepare_image,
             commands::screenshots::list_screenshots,
+            commands::screenshots::toggle_clip,
+            commands::screenshots::clip_state,
+            commands::screenshots::save_replay,
             commands::screenshots::screenshot_info,
             commands::screenshots::thumbnail,
             commands::screenshots::delete_screenshot,
@@ -312,6 +317,7 @@ fn main() {
                 mascot::exiting();
             }
             if let RunEvent::Exit = event {
+                clip::stop_on_exit();
                 mascot::exiting();
                 crash::event("exit");
             }

@@ -25,6 +25,23 @@ pub fn list_screenshots(shared: SharedState, key: Option<String>) -> Value {
 }
 
 #[tauri::command(async)]
+pub fn toggle_clip(shared: SharedState) {
+    let shared = std::sync::Arc::clone(&shared);
+    std::thread::spawn(move || crate::clip::toggle(&shared));
+}
+
+#[tauri::command(async)]
+pub fn save_replay(shared: SharedState) {
+    let shared = std::sync::Arc::clone(&shared);
+    std::thread::spawn(move || crate::clip::save_replay(&shared));
+}
+
+#[tauri::command(async)]
+pub fn clip_state() -> Value {
+    crate::clip::state()
+}
+
+#[tauri::command(async)]
 pub fn screenshot_info(path: String) -> ShotInfo {
     screenshots::info(Path::new(&path))
 }

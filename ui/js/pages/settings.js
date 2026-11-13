@@ -399,6 +399,8 @@ function screenshotsSection() {
   volume.onchange = () => save({ screenshot_volume: Number(volume.value) });
   showVolume();
 
+  const clips = clipsSection();
+
   const listen = el("button", { class: "btn secondary small", title: "Listen" }, "▶");
   listen.onclick = () => invoke("play_shutter", { volume: Number(volume.value) });
 
@@ -422,6 +424,131 @@ function screenshotsSection() {
       placeholder: store.defaultScreenshotRoot,
     }),
     hint("Each VN gets its own folder in there. Screenshots already taken aren't moved."),
+    ...clips,
+  ];
+}
+
+function clipsSection() {
+  const choice = (setting, current, options) => {
+    const select = el(
+      "select",
+      {},
+      ...options.map(([value, label]) =>
+        el("option", { value, selected: value === current }, t(label, { n: value })),
+      ),
+    );
+    select.onchange = () => save({ [setting]: Number(select.value) });
+    return select;
+  };
+  const lengths = [
+    [30, "{n} seconds"],
+    [60, "1 minute"],
+    [120, "2 minutes"],
+    [300, "5 minutes"],
+  ];
+  const field = (label, input) => el("div", { class: "field" }, el("span", {}, label), input);
+
+  const group = (title, on, setting, hintText, fields, extra = {}) => {
+    const body = el("div", { class: "clip-group-body" }, ...fields);
+    body.hidden = !on;
+    const head = toggle(
+      title,
+      on,
+      (value) => {
+        body.hidden = !value;
+        save({ [setting]: value, ...(value ? extra : {}) });
+      },
+      hintText,
+    );
+    return el("div", { class: "clip-group" }, head, body);
+  };
+
+  const keyGroup = group(
+    "Record with a key",
+    store.settings.clip_key_enabled !== false,
+    "clip_key_enabled",
+    "Press the key while reading to start filming the game's window, and again to stop.",
+    [
+      field("Clip key", hotkeyInput(store.settings.clip_hotkey, (value) => save({ clip_hotkey: value }))),
+      field(
+        "Longest clip",
+        choice("clip_max_seconds", store.settings.clip_max_seconds ?? 60, [
+          ...lengths,
+          [600, "10 minutes"],
+          [1800, "30 minutes"],
+          [0, "No limit"],
+        ]),
+      ),
+    ],
+  );
+
+  const replaySeconds = store.settings.clip_replay_seconds || 0;
+  const replayGroup = group(
+    "Instant replay",
+    store.settings.clip_replay_enabled ?? replaySeconds > 0,
+    "clip_replay_enabled",
+    "Shiori keeps the last moments in memory, so you can save something after it happened. Uses a bit " +
+      "of your graphics card while it's on.",
+    [
+      field("How much to keep", choice("clip_replay_seconds", replaySeconds || 60, lengths)),
+      field(
+        "Save key",
+        hotkeyInput(store.settings.clip_replay_hotkey, (value) => save({ clip_replay_hotkey: value })),
+      ),
+    ],
+    replaySeconds ? {} : { clip_replay_seconds: 60 },
+  );
+
+  const quality = el(
+    "select",
+    {},
+    ...[
+      ["normal", "Normal (smaller files)"],
+      ["high", "High"],
+      ["best", "Best (big files)"],
+    ].map(([value, label]) =>
+      el("option", { value, selected: value === (store.settings.clip_quality || "high") }, t(label)),
+    ),
+  );
+  quality.onchange = () => save({ clip_quality: quality.value });
+
+  const videoGroup = el(
+    "div",
+    { class: "clip-group" },
+    el("div", { class: "clip-group-title" }, "Video"),
+    el(
+      "div",
+      { class: "clip-group-body" },
+      field("Smoothness", choice("clip_fps", store.settings.clip_fps ?? 30, [
+        [30, "30 fps"],
+        [60, "60 fps"],
+      ])),
+      field("Quality", quality),
+      toggle(
+        "Record the game's sound",
+        store.settings.clip_audio !== false,
+        (on) => save({ clip_audio: on }),
+        "Only the VN's sound: not Discord or your music.",
+      ),
+    ),
+  );
+
+  const options = el("div", { class: "clip-groups" }, keyGroup, replayGroup, videoGroup);
+  options.hidden = store.settings.clip_enabled === false;
+
+  return [
+    section("Clips"),
+    toggle(
+      "Turn on clips",
+      store.settings.clip_enabled !== false,
+      (on) => {
+        options.hidden = !on;
+        save({ clip_enabled: on });
+      },
+      "Off: the clip keys stay free for other apps and nothing is recorded. Clips are saved as MP4 next " +
+        "to your screenshots.",
+    ),
+    options,
   ];
 }
 

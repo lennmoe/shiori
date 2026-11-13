@@ -529,9 +529,11 @@
   width: 160px;
   height: 90px;
   cursor: pointer;
+  position: relative;
 }
 
-.shot-strip img {
+.shot-strip img,
+.shot-strip video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2168,4 +2170,83 @@
 
 .vndb-tools {
   margin-bottom: 6px;
+}
+
+.viewer-image video {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  background: #000;
+}
+
+.side-strip .tile {
+  position: relative;
+}
+
+.side-strip .tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #000;
+  pointer-events: none;
+}
+
+.gallery[data-view="folder"] .side-strip .tile video {
+  flex: none;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.tile-clip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  padding-left: 2px;
+  pointer-events: none;
+}
+
+.clip-groups {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.clip-groups[hidden] {
+  display: none;
+}
+
+.clip-group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 14px;
+  background: color-mix(in srgb, var(--surface-alt) 45%, transparent);
+}
+
+.clip-group-title {
+  padding: 9px 0 4px;
+  font-weight: 600;
+}
+
+.clip-group-body {
+  border-top: 1px solid var(--border);
+  margin-bottom: 6px;
+  padding-top: 4px;
+}
+
+.clip-group-body[hidden] {
+  display: none;
+}
+
+.clip-group-title + .clip-group-body {
+  border-top: 0;
+  padding-top: 0;
 }

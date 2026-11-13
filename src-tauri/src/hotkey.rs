@@ -118,6 +118,8 @@ pub fn normalize(text: &str) -> String {
 
 const HOTKEY_ID: i32 = 1;
 const MASCOT_HOTKEY_ID: i32 = 2;
+const CLIP_HOTKEY_ID: i32 = 3;
+const REPLAY_HOTKEY_ID: i32 = 4;
 
 fn game_in_front(pid: u32) -> bool {
     pid != 0 && winapi::window_pid(winapi::foreground_window()) == pid
@@ -150,6 +152,10 @@ pub fn run(shared: Arc<Shared>) {
     let mut mascot_active: Option<(u32, u32)> = None;
     let mut reported = false;
     let mut mascot_reported = false;
+    let mut clip_active: Option<(u32, u32)> = None;
+    let mut clip_reported = false;
+    let mut replay_active: Option<(u32, u32)> = None;
+    let mut replay_reported = false;
     let mut msg = MSG::default();
 
     loop {
@@ -159,7 +165,13 @@ pub fn run(shared: Arc<Shared>) {
                 if msg.message != WM_HOTKEY {
                     continue;
                 }
-                if msg.wParam.0 == MASCOT_HOTKEY_ID as usize {
+                if msg.wParam.0 == REPLAY_HOTKEY_ID as usize {
+                    let shared = Arc::clone(&shared);
+                    std::thread::spawn(move || crate::clip::save_replay(&shared));
+                } else if msg.wParam.0 == CLIP_HOTKEY_ID as usize {
+                    let shared = Arc::clone(&shared);
+                    std::thread::spawn(move || crate::clip::toggle(&shared));
+                } else if msg.wParam.0 == MASCOT_HOTKEY_ID as usize {
                     let key = shared.config.lock().unwrap().str("mascot_click_hotkey");
                     crate::mascot::toggle_view_only(&shared.app, &key);
                 } else if game_in_front(pid) {
@@ -169,9 +181,16 @@ pub fn run(shared: Arc<Shared>) {
             }
         }
 
-        let (hotkey, mascot_hotkey) = {
+        let (hotkey, mascot_hotkey, clip_hotkey, replay_hotkey, replay_on, key_on) = {
             let cfg = shared.config.lock().unwrap();
-            (cfg.str("screenshot_hotkey"), cfg.str("mascot_click_hotkey"))
+            (
+                cfg.str("screenshot_hotkey"),
+                cfg.str("mascot_click_hotkey"),
+                cfg.str("clip_hotkey"),
+                cfg.str("clip_replay_hotkey"),
+                crate::clip::replay_length(&cfg) > 0,
+                crate::clip::key_on(&cfg),
+            )
         };
         let wanted = if game_in_front(pid) {
             parse(&hotkey)
@@ -179,6 +198,11 @@ pub fn run(shared: Arc<Shared>) {
             None
         };
         let mascot_wanted = parse(&mascot_hotkey).filter(|combo| Some(*combo) != wanted);
+        let clip_wanted = if key_on && (game_in_front(pid) || crate::clip::is_recording()) {
+            parse(&clip_hotkey).filter(|combo| Some(*combo) != wanted && Some(*combo) != mascot_wanted)
+        } else {
+            None
+        };
 
         if !keep(HOTKEY_ID, &mut active, wanted) && !reported {
             reported = true;
@@ -186,6 +210,32 @@ pub fn run(shared: Arc<Shared>) {
                 "toast",
                 serde_json::json!({
                     "title": "Couldn't watch the screenshot key: another app already uses it",
+                    "ok": false,
+                }),
+            );
+        }
+        let replay_wanted = if replay_on && game_in_front(pid) {
+            parse(&replay_hotkey)
+                .filter(|combo| Some(*combo) != wanted && Some(*combo) != mascot_wanted && Some(*combo) != clip_wanted)
+        } else {
+            None
+        };
+        if !keep(REPLAY_HOTKEY_ID, &mut replay_active, replay_wanted) && !replay_reported {
+            replay_reported = true;
+            shared.emit(
+                "toast",
+                serde_json::json!({
+                    "title": "Couldn't watch the replay key: another app already uses it",
+                    "ok": false,
+                }),
+            );
+        }
+        if !keep(CLIP_HOTKEY_ID, &mut clip_active, clip_wanted) && !clip_reported {
+            clip_reported = true;
+            shared.emit(
+                "toast",
+                serde_json::json!({
+                    "title": "Couldn't watch the clip key: another app already uses it",
                     "ok": false,
                 }),
             );

@@ -40,9 +40,11 @@ pub fn update_settings(
     app: AppHandle,
     mut changes: Map<String, Value>,
 ) -> Result<(), String> {
-    if let Some(Value::String(key)) = changes.get("screenshot_hotkey") {
-        let normalized = hotkey::normalize(key);
-        changes.insert("screenshot_hotkey".into(), json!(normalized));
+    for name in ["screenshot_hotkey", "clip_hotkey", "clip_replay_hotkey"] {
+        if let Some(Value::String(key)) = changes.get(name) {
+            let normalized = hotkey::normalize(key);
+            changes.insert(name.into(), json!(normalized));
+        }
     }
     const NOT_ON_SCREEN: [&str; 9] = [
         "mascot_hide_apps",

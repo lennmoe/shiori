@@ -590,17 +590,23 @@ async function renderShots() {
 
   strip.replaceChildren();
   for (const path of game.shots) {
-    const img = el("img", { alt: "" });
+    const clip = /\.mp4$/i.test(path);
+    const img = clip
+      ? el("video", { muted: true, preload: "metadata", playsinline: true, src: `${fileUrl(path)}#t=0.5` })
+      : el("img", { alt: "" });
     strip.append(
       el(
         "button",
         { onclick: () => show("screenshots", { key, select: path, back: "game" }) },
         img,
+        clip && el("span", { class: "tile-clip" }, "▶"),
       ),
     );
-    invoke("thumbnail", { path, width: 320, height: 180 }).then(
-      (thumb) => (img.src = fileUrl(thumb)),
-    );
+    if (!clip) {
+      invoke("thumbnail", { path, width: 320, height: 180 }).then(
+        (thumb) => (img.src = fileUrl(thumb)),
+      );
+    }
   }
 }
 

@@ -76,6 +76,7 @@ let waitingTiles = [];
 let thumbsRunning = 0;
 
 const part = (id) => $(`[data-id="${id}"]`, root);
+const isClip = (path) => /\.mp4$/i.test(path || "");
 
 function build(container) {
   root = container;
@@ -291,6 +292,10 @@ function queueTiles(entries) {
 function loadThumbs() {
   while (thumbsRunning < THUMB_WORKERS && waitingTiles.length) {
     const button = waitingTiles.pop();
+    if (isClip(button.dataset.path)) {
+      $("video", button).src = `${fileUrl(button.dataset.path)}#t=0.5`;
+      continue;
+    }
     thumbsRunning += 1;
     invoke("thumbnail", { path: button.dataset.path, width: 420, height: 236 })
       .then((thumb) => ($("img", button).src = fileUrl(thumb)))
@@ -303,12 +308,15 @@ function loadThumbs() {
 }
 
 function tile(path, i) {
-  const img = el("img", { alt: "", decoding: "async", draggable: "false" });
+  const img = isClip(path)
+    ? el("video", { muted: true, preload: "metadata", playsinline: true, disablepictureinpicture: true })
+    : el("img", { alt: "", decoding: "async", draggable: "false" });
   const name = path.split(/[\\/]/).pop().replace(/\.[^.]+$/, "");
   const button = el(
     "button",
     { class: "tile", "data-index": i, "data-path": path, title: name },
     img,
+    isClip(path) && el("span", { class: "tile-clip" }, "▶"),
     el("span", { class: "tile-name" }, name),
   );
   button.onclick = () => selectShot(i);
@@ -319,7 +327,9 @@ function tile(path, i) {
   button.oncontextmenu = async (event) => {
     event.preventDefault();
     await selectShot(i);
-    copy();
+    if (!isClip(path)) {
+      copy();
+    }
   };
 
   tileObserver.observe(button);
@@ -342,7 +352,11 @@ function fillViewer() {
     return;
   }
   viewerPath = shot.path;
-  part("image").replaceChildren(el("img", { src: fileUrl(shot.path), alt: "", decoding: "async", draggable: "false" }));
+  part("image").replaceChildren(
+    isClip(shot.path)
+      ? el("video", { src: fileUrl(shot.path), controls: true, preload: "metadata", playsinline: true })
+      : el("img", { src: fileUrl(shot.path), alt: "", decoding: "async", draggable: "false" }),
+  );
 }
 
 function emptyViewer() {
@@ -378,6 +392,7 @@ async function selectShot(i) {
   for (const button of part("actions").querySelectorAll("button")) {
     button.disabled = !shot;
   }
+  part("copy").hidden = !!shot && isClip(shot.path);
 
   if (!shot) {
     emptyViewer();
@@ -413,7 +428,7 @@ function step(delta) {
 
 async function copy() {
   const shot = currentShot();
-  if (!shot) {
+  if (!shot || isClip(shot.path)) {
     return;
   }
   await call("copy_image_file", { path: shot.path });
