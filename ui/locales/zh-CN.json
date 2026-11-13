@@ -907,8 +907,10 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "当其中一个是前台窗口时，吉祥物会变为不可见，切换窗口后恢复。",
     "Hide them over fullscreen apps": "在全屏应用前隐藏",
     "Movies, videos, games… except the VN you're reading.": "电影、视频、游戏……你正在读的 VN 除外。",
+    "Change picture…": "更换图片…",
     "Voices & moments…": "语音与时机…",
     "Untick so this mascot stays quiet here. The others talk instead.": "取消勾选后，这个吉祥物在此时不说话，由其他吉祥物代替。",
-    "Untick a moment to keep this mascot quiet then: the others talk instead.": "取消勾选某个时机，这个吉祥物届时就不说话，由其他吉祥物代替。"
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "取消勾选某个时机，这个吉祥物届时就不说话，由其他吉祥物代替。",
+    "The default mascot's picture can't be changed.": "无法更换默认吉祥物的图片。"
   }
 }

@@ -906,8 +906,10 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Khi một trong số này là cửa sổ phía trước, linh vật sẽ ẩn đi và quay lại khi bạn chuyển cửa sổ.",
     "Hide them over fullscreen apps": "Ẩn chúng khi ứng dụng toàn màn hình",
     "Movies, videos, games… except the VN you're reading.": "Phim, video, game… trừ VN bạn đang đọc.",
+    "Change picture…": "Đổi hình…",
     "Voices & moments…": "Giọng nói và thời điểm…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Bỏ chọn để linh vật này im lặng lúc này. Các linh vật khác sẽ nói thay.",
-    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Bỏ chọn một thời điểm để linh vật này im lặng lúc đó: các linh vật khác sẽ nói thay."
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Bỏ chọn một thời điểm để linh vật này im lặng lúc đó: các linh vật khác sẽ nói thay.",
+    "The default mascot's picture can't be changed.": "Không thể đổi hình của linh vật mặc định."
   }
 }

@@ -101,6 +101,11 @@ pub fn remove_mascot(app: AppHandle, shared: SharedState, id: String) -> Result<
     Ok(())
 }
 
+#[tauri::command]
+pub async fn change_mascot_image(app: AppHandle, id: String, path: String) -> Result<(), String> {
+    super::blocking(move || mascot::change_image(&app, &id, Path::new(&path))).await
+}
+
 #[tauri::command(async)]
 pub fn rename_mascot(app: AppHandle, shared: SharedState, id: String, name: String) {
     mascot::set_name(&shared, &id, &name);

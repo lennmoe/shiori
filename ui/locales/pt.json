@@ -906,8 +906,10 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Quando um deles é a janela em primeiro plano, os mascotes ficam invisíveis e voltam quando você troca de janela.",
     "Hide them over fullscreen apps": "Escondê-los sobre apps em tela cheia",
     "Movies, videos, games… except the VN you're reading.": "Filmes, vídeos, jogos… menos a VN que você está lendo.",
+    "Change picture…": "Trocar a imagem…",
     "Voices & moments…": "Vozes e momentos…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Desmarque para este mascote ficar quieto aqui. Os outros falam no lugar.",
-    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Desmarque um momento para este mascote ficar quieto nele: os outros falam no lugar."
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Desmarque um momento para este mascote ficar quieto nele: os outros falam no lugar.",
+    "The default mascot's picture can't be changed.": "A imagem do mascote padrão não pode ser trocada."
   }
 }

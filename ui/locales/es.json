@@ -906,8 +906,10 @@
     "When one of these is the window in front, the mascots turn invisible and come back when you switch.": "Cuando una de ellas es la ventana activa, las mascotas se vuelven invisibles y vuelven al cambiar de ventana.",
     "Hide them over fullscreen apps": "Ocultarlas sobre apps en pantalla completa",
     "Movies, videos, games… except the VN you're reading.": "Películas, vídeos, juegos… menos la VN que estás leyendo.",
+    "Change picture…": "Cambiar la imagen…",
     "Voices & moments…": "Voces y momentos…",
     "Untick so this mascot stays quiet here. The others talk instead.": "Desmarca para que esta mascota se calle aquí. Las demás hablan en su lugar.",
-    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Desmarca un momento para que esta mascota se calle entonces: las demás hablan en su lugar."
+    "Untick a moment to keep this mascot quiet then: the others talk instead.": "Desmarca un momento para que esta mascota se calle entonces: las demás hablan en su lugar.",
+    "The default mascot's picture can't be changed.": "La imagen de la mascota predeterminada no se puede cambiar."
   }
 }

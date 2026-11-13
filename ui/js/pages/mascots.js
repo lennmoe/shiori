@@ -75,6 +75,7 @@ const PACK_EXTENSION = "shiorimascot";
 const MASCOT_FILTERS = [
   { name: "Images or shared mascots", extensions: ["png", "webp", "gif", PACK_EXTENSION] },
 ];
+const MASCOT_IMAGE_FILTERS = [{ name: "Images", extensions: ["png", "webp", "gif"] }];
 const PACK_FILTERS = [{ name: "Shared mascot", extensions: [PACK_EXTENSION] }];
 const AUDIO_FILTERS = [
   { name: "Audio", extensions: ["mp3", "wav", "ogg", "m4a", "opus", "flac"] },
@@ -251,9 +252,12 @@ function cutoutRow() {
   return el("div", { class: "field" }, el("span", {}, "AI model for cutouts (185 MB)"), remove);
 }
 
+const pictureChanged = {};
+
 function card(item, personalities) {
+  const fresh = pictureChanged[item.id] ? `?v=${pictureChanged[item.id]}` : "";
   const picture = el("img", {
-    src: item.built_in ? "assets/mascot.png" : fileUrl(item.file),
+    src: item.built_in ? "assets/mascot.png" : fileUrl(item.file) + fresh,
     alt: "",
     draggable: "false",
   });
@@ -262,6 +266,20 @@ function card(item, personalities) {
   if (!item.built_in) {
     remove = el("button", { class: "btn danger small" });
     confirmButton(remove, "Remove", () => call("remove_mascot", { id: item.id }));
+  }
+
+  let changePicture = null;
+  if (!item.built_in) {
+    changePicture = el("button", { class: "btn secondary small" }, "Change picture…");
+    changePicture.onclick = async (event) => {
+      event.stopPropagation();
+      const path = await pickFile({ title: "Choose a mascot image", filters: MASCOT_IMAGE_FILTERS });
+      if (path) {
+        await call("change_mascot_image", { id: item.id, path });
+        pictureChanged[item.id] = Date.now();
+        load();
+      }
+    };
   }
 
   const flip = () => call("show_mascot", { id: item.id, shown: !item.shown });
@@ -385,7 +403,7 @@ function card(item, personalities) {
       ),
       el("div", { class: "mascot-size" }, viewOnly),
       el("div", { class: "mascot-size" }, silent),
-      el("div", { class: "row" }, share, remove),
+      el("div", { class: "row" }, share, changePicture, remove),
     ),
   );
 }

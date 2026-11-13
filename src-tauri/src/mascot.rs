@@ -215,13 +215,34 @@ pub fn gallery(shared: &Shared) -> Vec<GalleryItem> {
     items
 }
 
-pub fn add_to_gallery(shared: &Shared, source: &Path) -> Result<String, String> {
+fn image_ext(source: &Path) -> Result<String, String> {
     image::open(source).map_err(|_| "That file isn't an image.".to_string())?;
-    let ext = source
+    source
         .extension()
         .map(|e| e.to_string_lossy().to_lowercase())
         .filter(|ext| IMAGE_EXTS.contains(&ext.as_str()))
-        .ok_or("Use a PNG, WebP or GIF image.")?;
+        .ok_or_else(|| "Use a PNG, WebP or GIF image.".to_string())
+}
+
+pub fn change_image(app: &AppHandle, id: &str, source: &Path) -> Result<(), String> {
+    if id == BUILT_IN_ID {
+        return Err("The default mascot's picture can't be changed.".into());
+    }
+    let shared = shared(app);
+    let ext = image_ext(source)?;
+    let dir = gallery_dir(&shared);
+    let fresh = dir.join(format!("{id}.new"));
+    std::fs::copy(source, &fresh).map_err(|e| e.to_string())?;
+    if let Some(old) = file_for(&shared, id) {
+        let _ = std::fs::remove_file(old);
+    }
+    std::fs::rename(&fresh, dir.join(format!("{id}.{ext}"))).map_err(|e| e.to_string())?;
+    crate::crash::note(format!("new picture for {id}"));
+    resize(app, id, height_for(&shared, id))
+}
+
+pub fn add_to_gallery(shared: &Shared, source: &Path) -> Result<String, String> {
+    let ext = image_ext(source)?;
 
     let stem = source.file_stem().unwrap_or_default().to_string_lossy().to_lowercase();
     let base = safe_filename(&stem);
