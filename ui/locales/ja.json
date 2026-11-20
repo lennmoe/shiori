@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "クリックするたびに次のセリフを吹き出し・画像・ボイス付きで表示します。1つずつ確認できます。",
     "Show this mascot first.": "先にこのマスコットを表示してください。",
     "The mascots are tucked away right now.": "マスコットは今しまわれています。",
-    "No line for this moment.": "この場面のセリフはありません。"
+    "No line for this moment.": "この場面のセリフはありません。",
+    "Load from VNDB…": "VNDBから読み込む…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "VNDBのリストとShioriを比べます：ステータス、評価、読了日、読書時間、足りないVN。取り込むものは自分で選べます。それまで何も変わりません。",
+    "Reading your VNDB list…": "VNDBのリストを読み込み中…",
+    "Your VNDB list and Shiori already match.": "VNDBのリストとShioriはすでに一致しています。",
+    "Apply {changes}": "{changes}を適用",
+    "Apply": "適用",
+    "change": "件の変更",
+    "changes": "件の変更",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "適用するまで何も変わりません。VNDBの値にチェックしない限り、Shioriの値がそのまま残ります。",
+    "Load from VNDB": "VNDBから読み込む",
+    "Updated {vns} from VNDB": "VNDBから{vns}を更新しました",
+    "Nothing to update": "更新するものはありません",
+    "All": "すべて",
+    "Ratings": "評価",
+    "New": "新規",
+    "Finished on": "読了日",
+    "Add to Library": "ライブラリに追加",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "Shioriで{shiori}、VNDBで{vndb} → Shiori以前 +{before}",
+    "incl. {time} before Shiori": "うちShiori以前 {time}",
+    "Remove time before Shiori?": "Shiori以前の時間を削除しますか？",
+    "Only the time Shiori tracked stays in Total read.": "合計にはShioriが記録した時間だけが残ります。"
   }
 }

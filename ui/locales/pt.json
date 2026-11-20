@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Cada clique mostra a próxima fala com o balão, a imagem e a voz, para conferir uma por uma.",
     "Show this mascot first.": "Mostre este mascote primeiro.",
     "The mascots are tucked away right now.": "Os mascotes estão escondidos agora.",
-    "No line for this moment.": "Nenhuma fala para este momento."
+    "No line for this moment.": "Nenhuma fala para este momento.",
+    "Load from VNDB…": "Carregar do VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "Compare sua lista do VNDB com o Shiori: status, notas, datas de término, tempo de leitura e VNs que faltam. Você escolhe o que pegar; nada muda antes disso.",
+    "Reading your VNDB list…": "Lendo sua lista do VNDB…",
+    "Your VNDB list and Shiori already match.": "Sua lista do VNDB e o Shiori já estão iguais.",
+    "Apply {changes}": "Aplicar {changes}",
+    "Apply": "Aplicar",
+    "change": "alteração",
+    "changes": "alterações",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Nada muda até você aplicar. O Shiori mantém o próprio valor, a menos que você marque o do VNDB.",
+    "Load from VNDB": "Carregar do VNDB",
+    "Updated {vns} from VNDB": "{vns} atualizadas do VNDB",
+    "Nothing to update": "Nada para atualizar",
+    "All": "Tudo",
+    "Ratings": "Notas",
+    "New": "Novas",
+    "Finished on": "Terminada em",
+    "Add to Library": "Adicionar à biblioteca",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} no Shiori, {vndb} no VNDB → +{before} antes do Shiori",
+    "incl. {time} before Shiori": "inclui {time} antes do Shiori",
+    "Remove time before Shiori?": "Remover o tempo de antes do Shiori?",
+    "Only the time Shiori tracked stays in Total read.": "Só o tempo registrado pelo Shiori fica no total lido."
   }
 }

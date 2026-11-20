@@ -20,7 +20,6 @@ pub const LIST_LABELS: [(&str, i64); 4] = [
     ("dropped", 4),
 ];
 const WISHLIST_LABEL: i64 = 5;
-const FINISHED_LABEL: i64 = 2;
 
 #[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct VnResult {
@@ -682,8 +681,33 @@ impl Vndb {
             .collect())
     }
 
-    pub fn finished_list(&self, token: &str) -> Result<Vec<(VnResult, Value)>, String> {
-        self.labelled(token, FINISHED_LABEL, "finished,vote")
+    pub fn whole_list(&self, token: &str) -> Result<Vec<(VnResult, Value)>, String> {
+        self.labelled(token, 0, "labels.id,started,finished,vote")
+    }
+
+    pub fn length_votes(&self, uid: &str) -> Result<HashMap<String, i64>, String> {
+        if !uid.starts_with('u') || !uid[1..].chars().all(|c| c.is_ascii_digit()) {
+            return Err("unknown VNDB user".into());
+        }
+        let mut out = HashMap::new();
+        for page in 1..=40 {
+            let bytes = match self.download(&format!("https://vndb.org/{uid}/lengthvotes?p={page}")) {
+                Ok(bytes) => bytes,
+                Err(e) if page == 1 => return Err(e),
+                Err(_) => break,
+            };
+            let html = String::from_utf8_lossy(&bytes);
+            let votes = parse_length_votes(&html);
+            let more = ["\"", ";", "&"].iter().any(|end| html.contains(&format!("p={}{end}", page + 1)));
+            let empty = votes.is_empty();
+            for (id, minutes) in votes {
+                out.entry(id).or_insert(minutes);
+            }
+            if empty || !more {
+                break;
+            }
+        }
+        Ok(out)
     }
 
     fn labelled(
@@ -701,14 +725,16 @@ impl Vndb {
 
         let mut out = Vec::new();
         for page in 1..=50 {
-            let body = json!({
+            let mut body = json!({
                 "user": user["id"],
-                "filters": ["label", "=", label],
                 "fields": fields,
                 "sort": "id",
                 "results": 100,
                 "page": page,
             });
+            if label > 0 {
+                body["filters"] = json!(["label", "=", label]);
+            }
             let data = self.request(Method::POST, "/ulist", Some(&body), token)?;
 
             for entry in data["results"].as_array().into_iter().flatten() {
@@ -725,12 +751,66 @@ impl Vndb {
     }
 }
 
+pub fn parse_length_votes(html: &str) -> Vec<(String, i64)> {
+    let Some(table) = html.split("<table class=\"stripe\">").nth(1) else {
+        return Vec::new();
+    };
+    let table = table.split("</table>").next().unwrap_or("");
+    let mut out = Vec::new();
+    for row in table.split("<tr>").skip(1) {
+        let Some(start) = row.find("<a href=\"/v") else { continue };
+        let digits: String = row[start + 11..].chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() {
+            continue;
+        }
+        let Some(cell) = row.split("<td class=\"tc3\">").nth(1) else { continue };
+        let cell = cell.split("</td>").next().unwrap_or("");
+        let plain: String = {
+            let mut text = String::new();
+            let mut tag = false;
+            for c in cell.chars() {
+                match c {
+                    '<' => tag = true,
+                    '>' => tag = false,
+                    _ if !tag => text.push(c),
+                    _ => {}
+                }
+            }
+            text
+        };
+        let mut minutes = 0;
+        let mut number = String::new();
+        for c in plain.chars() {
+            if c.is_ascii_digit() {
+                number.push(c);
+            } else if c == 'h' || c == 'm' {
+                let value: i64 = number.parse().unwrap_or(0);
+                minutes += if c == 'h' { value * 60 } else { value };
+                number.clear();
+            } else {
+                number.clear();
+            }
+        }
+        if minutes > 0 {
+            out.push((format!("v{digits}"), minutes));
+        }
+    }
+    out
+}
+
+#[derive(Default)]
+pub struct ListDates {
+    pub started: Option<String>,
+    pub finished: Option<String>,
+}
+
 pub fn push_list_status(
     vndb: &Vndb,
     token: &str,
     id: &str,
     status: &str,
     keep_existing: bool,
+    dates: &ListDates,
 ) -> Result<String, String> {
     let entry = vndb.list_entry(token, id)?.unwrap_or(Value::Null);
     let label_ids: Vec<i64> = entry["labels"]
@@ -765,10 +845,10 @@ pub fn push_list_status(
     let mut changes = json!({"labels_set": [label], "labels_unset": others});
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     if entry["started"].is_null() {
-        changes["started"] = json!(today);
+        changes["started"] = json!(dates.started.clone().unwrap_or_else(|| today.clone()));
     }
     if status == "finished" && entry["finished"].is_null() {
-        changes["finished"] = json!(today);
+        changes["finished"] = json!(dates.finished.clone().unwrap_or(today));
     }
 
     vndb.update_list_entry(token, id, &changes)?;
@@ -838,6 +918,12 @@ pub fn best_match(results: Vec<VnResult>, query: &str) -> Option<VnResult> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_length_votes_from_the_vndb_page() {
+        let html = r#"<table class="stripe"><thead><tr><td>Date</td></tr></thead><tr><td class="tc1">2025-06-03</td><td class="tc2"><a href="/v47172" lang="zh-Latn">Epiao</a></td><td class="tc3">9h<span class="small">14m</span></td></tr><tr><td class="tc1">2025-01-01</td><td class="tc2"><a href="/v4">Clannad</a></td><td class="tc3"><span class="small">45m</span></td></tr></table>"#;
+        assert_eq!(parse_length_votes(html), vec![("v47172".to_string(), 554), ("v4".to_string(), 45)]);
+    }
 
     fn vn(id: &str, title: &str, rating: f64) -> VnResult {
         VnResult { id: id.into(), title: title.into(), rating, ..Default::default() }

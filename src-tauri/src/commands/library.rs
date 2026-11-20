@@ -337,9 +337,20 @@ pub async fn recommendations(
 }
 
 #[tauri::command]
-pub async fn import_vndb_finished(shared: SharedState<'_>) -> Result<usize, String> {
+pub async fn vndb_pull_preview(shared: SharedState<'_>) -> Result<Value, String> {
     let shared = Arc::clone(&shared);
-    blocking(move || vndb_list::import_finished(&shared)).await
+    blocking(move || vndb_list::pull_preview(&shared)).await
+}
+
+#[tauri::command]
+pub async fn vndb_pull_apply(shared: SharedState<'_>, picks: Value) -> Result<usize, String> {
+    let shared = Arc::clone(&shared);
+    blocking(move || vndb_list::pull_apply(&shared, &picks)).await
+}
+
+#[tauri::command]
+pub fn remove_before_time(shared: SharedState<'_>, key: String) -> Result<(), String> {
+    vndb_list::remove_before_time(&shared, &key)
 }
 
 #[tauri::command(async)]

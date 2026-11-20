@@ -778,7 +778,7 @@ impl Config {
                 target.insert("path".into(), path.clone());
             }
         }
-        for field in ["playtime_seconds", "sessions"] {
+        for field in ["playtime_seconds", "sessions", "before_seconds"] {
             target.insert(field.into(), json!(num(&target, field) + num(&source, field)));
         }
         target.insert(
@@ -840,6 +840,10 @@ impl Config {
     pub fn set_playtime(&mut self, key: &str, seconds: i64) {
         let entry = self.games.entry(key.to_string()).or_default();
         entry.insert("playtime_seconds".into(), json!(seconds.max(0)));
+        let before = entry.get("before_seconds").and_then(Value::as_i64).unwrap_or(0);
+        if before > seconds.max(0) {
+            entry.insert("before_seconds".into(), json!(seconds.max(0)));
+        }
         self.frac.remove(key);
         self.save_game(key);
     }

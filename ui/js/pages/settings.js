@@ -12,6 +12,7 @@ import { plural, t } from "../i18n.js";
 import { presenceBuilder } from "./presence.js";
 import { communityTab, warmCommunity } from "../components/community-tab.js";
 import { defaultReleaseMedium } from "../release-filters.js";
+import { pullFromVndb } from "../components/vndb-pull.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -455,27 +456,17 @@ function vndbSection() {
         "Mark VNs as Playing on VNDB when I start them",
         "Only when the VN has no status on your list yet.",
       ),
-    store.settings.vndb_token && importFinishedToggle(),
+    ...(store.settings.vndb_token ? pullSection() : []),
   ].filter(Boolean);
 }
 
-function importFinishedToggle() {
-  return toggle(
-    "Add my finished VNs from VNDB to the Library",
-    store.settings.vndb_import_finished,
-    async (on) => {
-      await save({ vndb_import_finished: on });
-      if (on) {
-        const count = await call("import_vndb_finished");
-        toast(
-          count
-            ? t("Added {vns} from your VNDB list", { vns: plural(count, "VN") })
-            : t("Nothing new on your VNDB list"),
-        );
-      }
-    },
-    "Even the ones that aren't on this PC. New ones are added each time the app starts, and a VN you remove from the Library stays out.",
-  );
+function pullSection() {
+  const button = el("button", { class: "btn secondary" }, "Load from VNDB…");
+  button.onclick = () => pullFromVndb(button);
+  return [
+    el("div", { class: "row" }, button),
+    hint("Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that."),
+  ];
 }
 
 function screenshotsSection() {

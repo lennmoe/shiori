@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "每次点击都会显示下一句及其气泡、图片和语音，方便逐一检查。",
     "Show this mascot first.": "请先显示这个吉祥物。",
     "The mascots are tucked away right now.": "吉祥物现在已收起。",
-    "No line for this moment.": "这个时刻没有台词。"
+    "No line for this moment.": "这个时刻没有台词。",
+    "Load from VNDB…": "从 VNDB 载入…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "将你的 VNDB 列表与 Shiori 对比：状态、评分、完成日期、阅读时间和缺少的 VN。由你选择要采用什么，在此之前不会有任何改动。",
+    "Reading your VNDB list…": "正在读取你的 VNDB 列表…",
+    "Your VNDB list and Shiori already match.": "你的 VNDB 列表和 Shiori 已经一致。",
+    "Apply {changes}": "应用 {changes}",
+    "Apply": "应用",
+    "change": "项更改",
+    "changes": "项更改",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "应用之前不会有任何改动。除非你勾选 VNDB 的值，否则 Shiori 保留自己的值。",
+    "Load from VNDB": "从 VNDB 载入",
+    "Updated {vns} from VNDB": "已从 VNDB 更新 {vns}",
+    "Nothing to update": "没有需要更新的内容",
+    "All": "全部",
+    "Ratings": "评分",
+    "New": "新增",
+    "Finished on": "完成于",
+    "Add to Library": "添加到库",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "Shiori 中 {shiori}，VNDB 上 {vndb} → Shiori 之前 +{before}",
+    "incl. {time} before Shiori": "含 Shiori 之前 {time}",
+    "Remove time before Shiori?": "移除 Shiori 之前的时间？",
+    "Only the time Shiori tracked stays in Total read.": "总阅读时间只保留 Shiori 记录的时间。"
   }
 }

@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Cada clic muestra la siguiente frase con su burbuja, imagen y voz, para revisarlas una a una.",
     "Show this mascot first.": "Muestra primero esta mascota.",
     "The mascots are tucked away right now.": "Las mascotas están escondidas ahora.",
-    "No line for this moment.": "No hay frase para este momento."
+    "No line for this moment.": "No hay frase para este momento.",
+    "Load from VNDB…": "Cargar desde VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "Compara tu lista de VNDB con Shiori: estados, notas, fechas de fin, tiempo de lectura y VNs que faltan. Tú eliges qué tomar; nada cambia antes.",
+    "Reading your VNDB list…": "Leyendo tu lista de VNDB…",
+    "Your VNDB list and Shiori already match.": "Tu lista de VNDB y Shiori ya coinciden.",
+    "Apply {changes}": "Aplicar {changes}",
+    "Apply": "Aplicar",
+    "change": "cambio",
+    "changes": "cambios",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Nada cambia hasta que apliques. Shiori conserva su valor salvo que marques el de VNDB.",
+    "Load from VNDB": "Cargar desde VNDB",
+    "Updated {vns} from VNDB": "{vns} actualizadas desde VNDB",
+    "Nothing to update": "Nada que actualizar",
+    "All": "Todo",
+    "Ratings": "Notas",
+    "New": "Nuevas",
+    "Finished on": "Terminada el",
+    "Add to Library": "Añadir a la biblioteca",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} en Shiori, {vndb} en VNDB → +{before} antes de Shiori",
+    "incl. {time} before Shiori": "incl. {time} antes de Shiori",
+    "Remove time before Shiori?": "¿Quitar el tiempo de antes de Shiori?",
+    "Only the time Shiori tracked stays in Total read.": "Solo el tiempo registrado por Shiori queda en el total leído."
   }
 }

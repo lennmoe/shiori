@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Chaque clic montre la réplique suivante avec sa bulle, son image et sa voix, pour tout vérifier une par une.",
     "Show this mascot first.": "Affiche d'abord cette mascotte.",
     "The mascots are tucked away right now.": "Les mascottes sont rangées pour le moment.",
-    "No line for this moment.": "Aucune réplique pour ce moment."
+    "No line for this moment.": "Aucune réplique pour ce moment.",
+    "Load from VNDB…": "Charger depuis VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "Compare ta liste VNDB avec Shiori : statuts, notes, dates de fin, temps de lecture et VNs manquants. Tu choisis ce que tu prends, rien ne change avant.",
+    "Reading your VNDB list…": "Lecture de ta liste VNDB…",
+    "Your VNDB list and Shiori already match.": "Ta liste VNDB et Shiori sont déjà pareilles.",
+    "Apply {changes}": "Appliquer {changes}",
+    "Apply": "Appliquer",
+    "change": "changement",
+    "changes": "changements",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Rien ne change avant d'appliquer. Shiori garde sa valeur sauf si tu coches celle de VNDB.",
+    "Load from VNDB": "Charger depuis VNDB",
+    "Updated {vns} from VNDB": "{vns} mis à jour depuis VNDB",
+    "Nothing to update": "Rien à mettre à jour",
+    "All": "Tout",
+    "Ratings": "Notes",
+    "New": "Nouveaux",
+    "Finished on": "Fini le",
+    "Add to Library": "Ajouter à la bibliothèque",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} dans Shiori, {vndb} sur VNDB → +{before} avant Shiori",
+    "incl. {time} before Shiori": "dont {time} avant Shiori",
+    "Remove time before Shiori?": "Retirer le temps d'avant Shiori ?",
+    "Only the time Shiori tracked stays in Total read.": "Seul le temps suivi par Shiori reste dans le temps total."
   }
 }

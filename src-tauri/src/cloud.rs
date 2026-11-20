@@ -452,7 +452,7 @@ fn payload(shared: &Shared, fetch: Option<bool>) -> Value {
         if average > seconds {
             card.insert("e".into(), json!(1));
         }
-        for (field, short) in [("vndb_vote", "u"), ("last_played", "lp"), ("finished_at", "fa")] {
+        for (field, short) in [("vndb_vote", "u"), ("last_played", "lp"), ("finished_at", "fa"), ("vndb_pulled_at", "q")] {
             if let Some(value) = entry.get(field).and_then(Value::as_i64).filter(|v| *v > 0) {
                 card.insert(short.into(), json!(value));
             }

@@ -9,6 +9,7 @@ import {
   parseDay,
   readingProgress,
   shortDate,
+  shortDuration,
   weekday,
 } from "../format.js";
 import { invoke, fileUrl, listen } from "../tauri.js";
@@ -66,6 +67,7 @@ const TEMPLATE = `
       <div class="stats">
         <div class="stat">
           <span>Total read</span><b data-id="total"></b>
+          <small class="stat-before" data-id="before" hidden></small>
           <button class="stat-edit" data-id="edit-total" title="Edit total read">✎</button>
         </div>
         <div class="stat"><span>This week</span><b data-id="week"></b></div>
@@ -508,9 +510,33 @@ function renderStats(entry) {
   }
 
   part("total").textContent = formatPlaytime(entry.playtime_seconds || 0);
+  const before = entry.before_seconds || 0;
+  part("before").hidden = !before;
+  part("before").replaceChildren(
+    ...(before
+      ? [
+          t("incl. {time} before Shiori", { time: shortDuration(before) }),
+          " · ",
+          el("button", { class: "link", onclick: removeBeforeTime }, t("Remove")),
+        ]
+      : []),
+  );
   part("week").textContent = formatPlaytime(week);
   part("sessions").textContent = entry.sessions || "—";
   part("last").textContent = lastPlayed(entry.last_played) || "—";
+}
+
+async function removeBeforeTime() {
+  const sure = await ask(
+    t("Remove time before Shiori?"),
+    t("Only the time Shiori tracked stays in Total read."),
+    { yes: t("Remove") },
+  );
+  if (!sure) {
+    return;
+  }
+  await call("remove_before_time", { key });
+  setTimeout(load, 300);
 }
 
 function renderDuplicates() {

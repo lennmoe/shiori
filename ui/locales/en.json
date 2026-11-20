@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.",
     "Show this mascot first.": "Show this mascot first.",
     "The mascots are tucked away right now.": "The mascots are tucked away right now.",
-    "No line for this moment.": "No line for this moment."
+    "No line for this moment.": "No line for this moment.",
+    "Load from VNDB…": "Load from VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.",
+    "Reading your VNDB list…": "Reading your VNDB list…",
+    "Your VNDB list and Shiori already match.": "Your VNDB list and Shiori already match.",
+    "Apply {changes}": "Apply {changes}",
+    "Apply": "Apply",
+    "change": "change",
+    "changes": "changes",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.",
+    "Load from VNDB": "Load from VNDB",
+    "Updated {vns} from VNDB": "Updated {vns} from VNDB",
+    "Nothing to update": "Nothing to update",
+    "All": "All",
+    "Ratings": "Ratings",
+    "New": "New",
+    "Finished on": "Finished on",
+    "Add to Library": "Add to Library",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori",
+    "incl. {time} before Shiori": "incl. {time} before Shiori",
+    "Remove time before Shiori?": "Remove time before Shiori?",
+    "Only the time Shiori tracked stays in Total read.": "Only the time Shiori tracked stays in Total read."
   }
 }

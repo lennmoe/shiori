@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Каждый клик показывает следующую реплику с облачком, картинкой и голосом, чтобы проверить их по одной.",
     "Show this mascot first.": "Сначала покажите этого маскота.",
     "The mascots are tucked away right now.": "Маскоты сейчас спрятаны.",
-    "No line for this moment.": "Для этого момента нет реплик."
+    "No line for this moment.": "Для этого момента нет реплик.",
+    "Load from VNDB…": "Загрузить из VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "Сравните свой список VNDB с Shiori: статусы, оценки, даты завершения, время чтения и недостающие VN. Вы выбираете, что взять, до этого ничего не меняется.",
+    "Reading your VNDB list…": "Читаем ваш список VNDB…",
+    "Your VNDB list and Shiori already match.": "Ваш список VNDB и Shiori уже совпадают.",
+    "Apply {changes}": "Применить: {changes}",
+    "Apply": "Применить",
+    "change": "изменение",
+    "changes": "изменений",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Ничего не меняется, пока вы не примените. Shiori оставляет своё значение, если вы не отметите значение VNDB.",
+    "Load from VNDB": "Загрузить из VNDB",
+    "Updated {vns} from VNDB": "Обновлено из VNDB: {vns}",
+    "Nothing to update": "Нечего обновлять",
+    "All": "Все",
+    "Ratings": "Оценки",
+    "New": "Новые",
+    "Finished on": "Пройдено",
+    "Add to Library": "Добавить в библиотеку",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} в Shiori, {vndb} на VNDB → +{before} до Shiori",
+    "incl. {time} before Shiori": "в т. ч. {time} до Shiori",
+    "Remove time before Shiori?": "Убрать время до Shiori?",
+    "Only the time Shiori tracked stays in Total read.": "В общем времени останется только время, записанное Shiori."
   }
 }

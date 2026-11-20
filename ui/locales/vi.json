@@ -1154,6 +1154,27 @@
     "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.": "Mỗi lần bấm sẽ hiện câu tiếp theo cùng bong bóng, hình ảnh và giọng nói để bạn kiểm tra từng câu.",
     "Show this mascot first.": "Hãy hiện linh vật này trước.",
     "The mascots are tucked away right now.": "Các linh vật đang được ẩn.",
-    "No line for this moment.": "Không có câu nào cho lúc này."
+    "No line for this moment.": "Không có câu nào cho lúc này.",
+    "Load from VNDB…": "Tải từ VNDB…",
+    "Compare your VNDB list with Shiori: statuses, ratings, finish dates, time read and VNs that are missing. You pick what to take, nothing changes before that.": "So sánh danh sách VNDB với Shiori: trạng thái, điểm, ngày hoàn thành, thời gian đọc và các VN còn thiếu. Bạn chọn lấy gì, trước đó không có gì thay đổi.",
+    "Reading your VNDB list…": "Đang đọc danh sách VNDB…",
+    "Your VNDB list and Shiori already match.": "Danh sách VNDB và Shiori đã khớp nhau.",
+    "Apply {changes}": "Áp dụng {changes}",
+    "Apply": "Áp dụng",
+    "change": "thay đổi",
+    "changes": "thay đổi",
+    "Nothing changes until you apply. Shiori keeps its own value unless you tick VNDB's.": "Không có gì thay đổi cho đến khi bạn áp dụng. Shiori giữ giá trị của mình trừ khi bạn chọn giá trị của VNDB.",
+    "Load from VNDB": "Tải từ VNDB",
+    "Updated {vns} from VNDB": "Đã cập nhật {vns} từ VNDB",
+    "Nothing to update": "Không có gì để cập nhật",
+    "All": "Tất cả",
+    "Ratings": "Điểm",
+    "New": "Mới",
+    "Finished on": "Hoàn thành ngày",
+    "Add to Library": "Thêm vào thư viện",
+    "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} trong Shiori, {vndb} trên VNDB → +{before} trước Shiori",
+    "incl. {time} before Shiori": "gồm {time} trước Shiori",
+    "Remove time before Shiori?": "Xóa thời gian trước Shiori?",
+    "Only the time Shiori tracked stays in Total read.": "Tổng thời gian chỉ còn lại thời gian Shiori ghi được."
   }
 }

@@ -75,6 +75,17 @@
   cursor: pointer;
 }
 
+.stat-before {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--subtle);
+}
+
+.stat-before .link {
+  font-size: 12px;
+}
+
 .stat-edit:hover {
   background: var(--surface-hover);
   color: var(--text);
