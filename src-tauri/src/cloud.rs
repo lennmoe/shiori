@@ -271,7 +271,13 @@ pub fn upload(shared: &Shared, timeout: u64) -> Result<Value, String> {
     check(reply, shared)?.json().map_err(|e| e.to_string())
 }
 
-pub fn download(shared: &Shared) -> Result<usize, String> {
+const PREVIEW_FRESH: Duration = Duration::from_secs(600);
+
+fn restore_file(shared: &Shared) -> std::path::PathBuf {
+    shared.data_dir.join("cache").join("cloud-restore.zip")
+}
+
+pub fn fetch_backup(shared: &Shared) -> Result<std::path::PathBuf, String> {
     let token = token(shared).ok_or("Sign in with Discord first.")?;
     let reply = client(60)?
         .get(format!("{}/backup", api()))
@@ -279,11 +285,22 @@ pub fn download(shared: &Shared) -> Result<usize, String> {
         .send()
         .map_err(|e| e.to_string())?;
     let bytes = check(reply, shared)?.bytes().map_err(|e| e.to_string())?;
-    let file = shared.data_dir.join("cache").join("cloud-restore.zip");
+    let file = restore_file(shared);
     if let Some(dir) = file.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
     std::fs::write(&file, &bytes).map_err(|e| e.to_string())?;
+    Ok(file)
+}
+
+pub fn download(shared: &Shared) -> Result<usize, String> {
+    let cached = restore_file(shared);
+    let fresh = std::fs::metadata(&cached)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|at| at.elapsed().ok())
+        .is_some_and(|age| age < PREVIEW_FRESH);
+    let file = if fresh { cached } else { fetch_backup(shared)? };
     let result = backup::import_from_cloud(&mut shared.config.lock().unwrap(), &file);
     let _ = std::fs::remove_file(&file);
     result

@@ -1175,6 +1175,21 @@
     "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} в Shiori, {vndb} на VNDB → +{before} до Shiori",
     "incl. {time} before Shiori": "в т. ч. {time} до Shiori",
     "Remove time before Shiori?": "Убрать время до Shiori?",
-    "Only the time Shiori tracked stays in Total read.": "В общем времени останется только время, записанное Shiori."
+    "Only the time Shiori tracked stays in Total read.": "В общем времени останется только время, записанное Shiori.",
+    "Different": "Отличаются",
+    "Only in the cloud": "Только в облаке",
+    "Only on this PC": "Только на этом ПК",
+    "Now: {value}": "Сейчас: {value}",
+    "Removed": "Будет удалено",
+    "Changed": "Изменится",
+    "Nothing here.": "Здесь пусто.",
+    "{vns} on this PC aren't in the cloud save and will be removed.": "{vns} с этого ПК нет в облачной копии, они будут удалены.",
+    "Your settings change too ({settings}).": "Настройки тоже изменятся ({settings}).",
+    "setting": "настройка",
+    "settings": "настроек",
+    "Reading your cloud save…": "Читаем облачную копию…",
+    "Cloud save from {date}": "Облачная копия от {date}",
+    "What you have now is saved first in {folder}.": "Текущие данные сначала сохраняются в {folder}.",
+    "Replace with this save": "Заменить этой копией"
   }
 }

@@ -1175,6 +1175,21 @@
     "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} trong Shiori, {vndb} trên VNDB → +{before} trước Shiori",
     "incl. {time} before Shiori": "gồm {time} trước Shiori",
     "Remove time before Shiori?": "Xóa thời gian trước Shiori?",
-    "Only the time Shiori tracked stays in Total read.": "Tổng thời gian chỉ còn lại thời gian Shiori ghi được."
+    "Only the time Shiori tracked stays in Total read.": "Tổng thời gian chỉ còn lại thời gian Shiori ghi được.",
+    "Different": "Khác nhau",
+    "Only in the cloud": "Chỉ có trên cloud",
+    "Only on this PC": "Chỉ có trên PC này",
+    "Now: {value}": "Hiện tại: {value}",
+    "Removed": "Bị xóa",
+    "Changed": "Thay đổi",
+    "Nothing here.": "Không có gì.",
+    "{vns} on this PC aren't in the cloud save and will be removed.": "{vns} trên PC này không có trong bản lưu cloud và sẽ bị xóa.",
+    "Your settings change too ({settings}).": "Cài đặt của bạn cũng thay đổi ({settings}).",
+    "setting": "cài đặt",
+    "settings": "cài đặt",
+    "Reading your cloud save…": "Đang đọc bản lưu cloud…",
+    "Cloud save from {date}": "Bản lưu cloud ngày {date}",
+    "What you have now is saved first in {folder}.": "Dữ liệu hiện tại sẽ được lưu trước vào {folder}.",
+    "Replace with this save": "Thay bằng bản lưu này"
   }
 }

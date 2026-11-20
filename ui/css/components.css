@@ -1148,3 +1148,150 @@ button.chip:hover,
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.cprev-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cprev-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+
+.cprev-tile-label,
+.cprev-tile-now {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.cprev-tile-value {
+  font-size: 20px;
+}
+
+.cprev-tile-now.diff {
+  color: var(--text);
+}
+
+.cprev-warn {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--danger-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  font-size: 13px;
+}
+
+.cprev-note {
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.cprev-count {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.cprev-list {
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.cprev-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cprev-row:last-child {
+  border-bottom: 0;
+}
+
+.cprev-row.here {
+  opacity: 0.7;
+}
+
+.cover.cprev-cover {
+  width: 34px;
+  height: 48px;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.cprev-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cprev-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cprev-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cprev-detail {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.cprev-detail s {
+  opacity: 0.7;
+}
+
+.cprev-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.cprev-badge.add {
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 15%, transparent);
+}
+
+.cprev-badge.remove {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 15%, transparent);
+}
+
+.cprev-badge.change {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.cprev-empty {
+  padding: 16px;
+  text-align: center;
+}
+
+.cprev-foot {
+  margin-top: 12px;
+  font-size: 12.5px;
+}
+
+@media (max-width: 560px) {
+  .cprev-tiles {
+    grid-template-columns: 1fr;
+  }
+}

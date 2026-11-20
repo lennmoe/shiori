@@ -21,7 +21,7 @@ fn text(entry: &Entry, field: &str) -> String {
         .to_string()
 }
 
-pub fn visible_games(cfg: &Config) -> Vec<(String, Entry)> {
+pub fn in_library(cfg: &Config) -> impl Fn(&str, &Entry) -> bool {
     let user: Vec<String> = cfg
         .get("blacklist_exe")
         .and_then(Value::as_array)
@@ -33,18 +33,22 @@ pub fn visible_games(cfg: &Config) -> Vec<(String, Entry)> {
         })
         .unwrap_or_default();
     let blacklist = blacklist_set(user.iter().map(String::as_str));
+    move |key: &str, entry: &Entry| {
+        let path = text(entry, "path");
+        let exe = if path.is_empty() {
+            key.split('@').next().unwrap_or("").to_string()
+        } else {
+            path
+        };
+        !blacklist.contains(&normalize_exe(&exe)) && !is_windows_app(&exe)
+    }
+}
 
+pub fn visible_games(cfg: &Config) -> Vec<(String, Entry)> {
+    let shown = in_library(cfg);
     cfg.all_games()
         .iter()
-        .filter(|(key, entry)| {
-            let path = text(entry, "path");
-            let exe = if path.is_empty() {
-                key.split('@').next().unwrap_or("").to_string()
-            } else {
-                path
-            };
-            !blacklist.contains(&normalize_exe(&exe)) && !is_windows_app(&exe)
-        })
+        .filter(|(key, entry)| shown(key, entry))
         .map(|(key, entry)| (key.clone(), entry.clone()))
         .collect()
 }

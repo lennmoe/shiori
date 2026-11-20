@@ -149,7 +149,7 @@ pub fn import_from_cloud(cfg: &mut Config, src: &Path) -> Result<usize, String> 
     import_keeping(cfg, src, &CLOUD_SECRETS)
 }
 
-fn import_keeping(cfg: &mut Config, src: &Path, secrets: &[&str]) -> Result<usize, String> {
+fn open_backup(src: &Path) -> Result<(ZipArchive<File>, Value), String> {
     let file = File::open(src).map_err(|e| e.to_string())?;
     let mut zip = ZipArchive::new(file).map_err(|_| "not a Shiori RPC backup".to_string())?;
 
@@ -160,6 +160,112 @@ fn import_keeping(cfg: &mut Config, src: &Path, secrets: &[&str]) -> Result<usiz
     if manifest["format"].as_i64().unwrap_or(0) > FORMAT {
         return Err("this backup was made by a newer version of the app: update it first".into());
     }
+    Ok((zip, manifest))
+}
+
+fn backup_games(zip: &mut ZipArchive<File>) -> Result<Vec<(String, Entry)>, String> {
+    let mut games: Vec<(String, Entry)> = Vec::new();
+    let names: Vec<String> = zip.file_names().map(str::to_string).collect();
+    for name in names
+        .iter()
+        .filter(|n| n.starts_with("games/") && n.ends_with(".yaml"))
+    {
+        let mut entry = read_yaml(zip, name)?;
+        if let Some(Value::String(key)) = entry.remove("_key") {
+            if !key.is_empty() {
+                games.push((key, entry));
+            }
+        }
+    }
+    Ok(games)
+}
+
+fn seconds(entry: &Entry) -> i64 {
+    entry.get("playtime_seconds").and_then(Value::as_i64).unwrap_or(0)
+}
+
+fn status(entry: &Entry) -> &str {
+    entry.get("status").and_then(Value::as_str).unwrap_or("")
+}
+
+fn totals<'a>(games: impl Iterator<Item = &'a Entry>) -> Value {
+    let (mut vns, mut time, mut finished) = (0, 0, 0);
+    for entry in games {
+        vns += 1;
+        time += seconds(entry);
+        finished += i64::from(status(entry) == "finished");
+    }
+    json!({ "vns": vns, "seconds": time, "finished": finished })
+}
+
+pub fn preview(cfg: &Config, src: &Path, shown: impl Fn(&str, &Entry) -> bool) -> Result<Value, String> {
+    let (mut zip, manifest) = open_backup(src)?;
+    let settings = read_yaml(&mut zip, "config.yaml").map_err(|_| "the backup is missing its settings")?;
+    let cloud: Vec<(String, Entry)> = backup_games(&mut zip)?
+        .into_iter()
+        .filter(|(key, entry)| shown(key, entry))
+        .collect();
+    let here: Vec<(&String, &Entry)> = cfg.all_games().iter().filter(|(key, entry)| shown(key, entry)).collect();
+
+    let skip: Vec<&str> = THIS_PC_ONLY.iter().chain(CLOUD_SECRETS.iter()).copied().collect();
+    let settings_changed = settings
+        .keys()
+        .chain(cfg.data().keys())
+        .filter(|key| !skip.contains(&key.as_str()))
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .filter(|key| settings.get(*key) != cfg.data().get(*key))
+        .count();
+
+    let side = |entry: &Entry| json!({ "seconds": seconds(entry), "status": status(entry) });
+    let cover = |entry: &Entry| cfg.cached_cover(entry).map(|p| p.to_string_lossy().to_string());
+    let nsfw = |entry: &Entry| entry.get("cover_nsfw").and_then(Value::as_bool).unwrap_or(false);
+
+    let mut items = Vec::new();
+    for (key, entry) in &cloud {
+        let mine = cfg.all_games().get(key).filter(|mine| shown(key, mine));
+        let state = match mine {
+            None => "cloud",
+            Some(mine) if (seconds(mine) - seconds(entry)).abs() >= 60 || status(mine) != status(entry) => "changed",
+            Some(_) => "same",
+        };
+        items.push(json!({
+            "key": key,
+            "name": crate::screenshots::display_name(key, entry),
+            "cover": cover(entry).or_else(|| mine.and_then(cover)),
+            "nsfw": nsfw(entry),
+            "cloud": side(entry),
+            "here": mine.map(side),
+            "state": state,
+        }));
+    }
+    for (key, entry) in &here {
+        if cloud.iter().any(|(k, _)| k == *key) {
+            continue;
+        }
+        items.push(json!({
+            "key": key,
+            "name": crate::screenshots::display_name(key, entry),
+            "cover": cover(entry),
+            "nsfw": nsfw(entry),
+            "cloud": null,
+            "here": side(entry),
+            "state": "here",
+        }));
+    }
+
+    Ok(json!({
+        "exported_at": manifest["exported_at"],
+        "app_version": manifest["app_version"],
+        "cloud": totals(cloud.iter().map(|(_, e)| e)),
+        "here": totals(here.iter().map(|(_, e)| *e)),
+        "settings_changed": settings_changed,
+        "items": items,
+    }))
+}
+
+fn import_keeping(cfg: &mut Config, src: &Path, secrets: &[&str]) -> Result<usize, String> {
+    let (mut zip, manifest) = open_backup(src)?;
 
     let mut data =
         read_yaml(&mut zip, "config.yaml").map_err(|_| "the backup is missing its settings")?;
@@ -174,19 +280,7 @@ fn import_keeping(cfg: &mut Config, src: &Path, secrets: &[&str]) -> Result<usiz
         };
     }
 
-    let mut games: Vec<(String, Entry)> = Vec::new();
-    let names: Vec<String> = zip.file_names().map(str::to_string).collect();
-    for name in names
-        .iter()
-        .filter(|n| n.starts_with("games/") && n.ends_with(".yaml"))
-    {
-        let mut entry = read_yaml(&mut zip, name)?;
-        if let Some(Value::String(key)) = entry.remove("_key") {
-            if !key.is_empty() {
-                games.push((key, entry));
-            }
-        }
-    }
+    let mut games = backup_games(&mut zip)?;
 
     let stamp = chrono::Local::now().format("before-import-%Y-%m-%d_%H-%M-%S.zip");
     export(cfg, &backup_dir(cfg).join(stamp.to_string()))?;
@@ -268,5 +362,33 @@ mod tests {
         import_from_cloud(&mut cfg, &with_token).unwrap();
         assert_eq!(cfg.str("vndb_token"), "from-cloud");
         assert_eq!(cfg.str("sync_token"), "sess");
+    }
+
+    #[test]
+    fn the_cloud_preview_shows_what_loading_changes() {
+        let mut cfg = fresh("preview");
+        let game = |seconds: i64, status: &str| {
+            Map::from_iter([("playtime_seconds".to_string(), json!(seconds)), ("status".to_string(), json!(status))])
+        };
+        cfg.set_game("same.exe", game(3600, "playing"));
+        cfg.set_game("more.exe", game(600, "playing"));
+        cfg.set_game("gone.exe", game(1200, "finished"));
+        let zip = cfg.dir.join("preview.zip");
+        export_for_cloud(&cfg, &zip).unwrap();
+
+        cfg.set_game("more.exe", game(7200, "finished"));
+        cfg.set_game("new.exe", game(300, ""));
+        cfg.remove_game("gone.exe");
+
+        let preview = preview(&cfg, &zip, |_, _| true).unwrap();
+        let state = |key: &str| {
+            preview["items"].as_array().unwrap().iter().find(|i| i["key"] == key).unwrap()["state"].clone()
+        };
+        assert_eq!(state("same.exe"), "same");
+        assert_eq!(state("more.exe"), "changed");
+        assert_eq!(state("gone.exe"), "cloud");
+        assert_eq!(state("new.exe"), "here");
+        assert_eq!(preview["cloud"]["vns"], 3);
+        assert_eq!(preview["here"]["seconds"], 3600 + 7200 + 300);
     }
 }

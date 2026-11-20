@@ -1175,6 +1175,21 @@
     "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "{shiori} en Shiori, {vndb} en VNDB → +{before} antes de Shiori",
     "incl. {time} before Shiori": "incl. {time} antes de Shiori",
     "Remove time before Shiori?": "¿Quitar el tiempo de antes de Shiori?",
-    "Only the time Shiori tracked stays in Total read.": "Solo el tiempo registrado por Shiori queda en el total leído."
+    "Only the time Shiori tracked stays in Total read.": "Solo el tiempo registrado por Shiori queda en el total leído.",
+    "Different": "Diferentes",
+    "Only in the cloud": "Solo en la nube",
+    "Only on this PC": "Solo en este PC",
+    "Now: {value}": "Ahora: {value}",
+    "Removed": "Se quita",
+    "Changed": "Cambia",
+    "Nothing here.": "Nada aquí.",
+    "{vns} on this PC aren't in the cloud save and will be removed.": "{vns} de este PC no están en la copia de la nube y se quitarán.",
+    "Your settings change too ({settings}).": "Tus ajustes también cambian ({settings}).",
+    "setting": "ajuste",
+    "settings": "ajustes",
+    "Reading your cloud save…": "Leyendo tu copia de la nube…",
+    "Cloud save from {date}": "Copia de la nube del {date}",
+    "What you have now is saved first in {folder}.": "Lo que tienes ahora se guarda antes en {folder}.",
+    "Replace with this save": "Reemplazar con esta copia"
   }
 }

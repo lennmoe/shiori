@@ -39,6 +39,17 @@ fn reloaded(shared: &Shared, app: &AppHandle) {
 }
 
 #[tauri::command]
+pub async fn cloud_preview(shared: SharedState<'_>) -> Result<Value, String> {
+    let shared = Arc::clone(&shared);
+    blocking(move || {
+        let file = cloud::fetch_backup(&shared)?;
+        let cfg = shared.config.lock().unwrap();
+        crate::backup::preview(&cfg, &file, super::library::in_library(&cfg))
+    })
+    .await
+}
+
+#[tauri::command]
 pub async fn cloud_load(shared: SharedState<'_>, app: AppHandle) -> Result<usize, String> {
     let shared = Arc::clone(&shared);
     let count = {

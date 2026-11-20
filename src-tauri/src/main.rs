@@ -294,6 +294,7 @@ fn main() {
             commands::cloud::cloud_status,
             commands::cloud::cloud_login,
             commands::cloud::cloud_save,
+            commands::cloud::cloud_preview,
             commands::cloud::cloud_load,
             commands::cloud::cloud_delete,
             commands::cloud::cloud_logout,

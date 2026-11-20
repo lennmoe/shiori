@@ -13,6 +13,7 @@ import { presenceBuilder } from "./presence.js";
 import { communityTab, warmCommunity } from "../components/community-tab.js";
 import { defaultReleaseMedium } from "../release-filters.js";
 import { pullFromVndb } from "../components/vndb-pull.js";
+import { previewCloud } from "../components/cloud-preview.js";
 
 const TEMPLATE = `
   <div class="page-head">
@@ -850,7 +851,7 @@ function cloudBox(file) {
       }
     };
     const loadButton = el("button", { class: "btn secondary", disabled: !backup }, "Load from cloud");
-    loadButton.onclick = () => loadCloud(status);
+    loadButton.onclick = () => loadCloud(status, loadButton);
     const avatar = status.avatar_url
       ? el("img", { class: "cloud-avatar", src: status.avatar_url, alt: "" })
       : el("span", { class: "cloud-avatar cloud-avatar-empty" }, discordLogo());
@@ -967,16 +968,9 @@ function cloudBox(file) {
     }
   }
 
-  async function loadCloud(status) {
+  async function loadCloud(status, button) {
     const folder = await invoke("backup_folder");
-    const sure = await ask(
-      "Load from cloud",
-      t(
-        "Replace your settings and Library with the cloud save from {date}? What you have now is saved first in {folder}.",
-        { date: cloudDate(status.backup.updated), folder },
-      ),
-      { yes: "Replace", danger: true },
-    );
+    const sure = await previewCloud(button, { date: cloudDate(status.backup.updated), folder });
     if (!sure) {
       return;
     }

@@ -1175,6 +1175,21 @@
     "{shiori} in Shiori, {vndb} on VNDB → +{before} before Shiori": "Shiori 中 {shiori}，VNDB 上 {vndb} → Shiori 之前 +{before}",
     "incl. {time} before Shiori": "含 Shiori 之前 {time}",
     "Remove time before Shiori?": "移除 Shiori 之前的時間？",
-    "Only the time Shiori tracked stays in Total read.": "總閱讀時間只保留 Shiori 記錄的時間。"
+    "Only the time Shiori tracked stays in Total read.": "總閱讀時間只保留 Shiori 記錄的時間。",
+    "Different": "有差異",
+    "Only in the cloud": "僅在雲端",
+    "Only on this PC": "僅在此電腦",
+    "Now: {value}": "目前：{value}",
+    "Removed": "將移除",
+    "Changed": "將變更",
+    "Nothing here.": "這裡什麼都沒有。",
+    "{vns} on this PC aren't in the cloud save and will be removed.": "此電腦上的 {vns} 不在雲端備份中，將被移除。",
+    "Your settings change too ({settings}).": "你的設定也會改變（{settings}）。",
+    "setting": "項設定",
+    "settings": "項設定",
+    "Reading your cloud save…": "正在讀取雲端備份…",
+    "Cloud save from {date}": "{date} 的雲端備份",
+    "What you have now is saved first in {folder}.": "你現在的資料會先儲存到 {folder}。",
+    "Replace with this save": "用此備份取代"
   }
 }
