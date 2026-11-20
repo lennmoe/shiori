@@ -851,7 +851,16 @@ html.has-bg .now-chip {
 }
 
 .shots-card .clip-group {
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
+}
+
+.shots-card .clip-group-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 @media (max-width: 900px) {
