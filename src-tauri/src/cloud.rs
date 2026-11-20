@@ -314,6 +314,7 @@ pub fn logout(shared: &Shared) {
 
 const PROFILE: &str = "profile_public";
 const PROFILE_EVERY: Duration = Duration::from_secs(180);
+const PROFILE_READING_EVERY: Duration = Duration::from_secs(60);
 const PROFILE_TICK: Duration = Duration::from_secs(10);
 const PROFILE_GAP: Duration = Duration::from_secs(20);
 const PROFILE_HEARTBEAT: Duration = Duration::from_secs(300);
@@ -465,7 +466,24 @@ fn payload(shared: &Shared, fetch: Option<bool>) -> Value {
         .filter(|_| snap.detected && !snap.paused)
         .map(|entry| Value::Object(vn_card(shared, &snap.key, entry, fetch.map(|_| false))))
         .unwrap_or(Value::Null);
-    json!({ "public": true, "now": now, "vns": vns, "hidden": hidden_keys })
+    let days = reading_days(keys.values().copied());
+    json!({ "public": true, "now": now, "vns": vns, "hidden": hidden_keys, "days": days })
+}
+
+const HISTORY_DAYS: i64 = 400;
+
+fn reading_days<'a>(entries: impl Iterator<Item = &'a Map<String, Value>>) -> Map<String, Value> {
+    let oldest = (chrono::Local::now().date_naive() - chrono::Duration::days(HISTORY_DAYS)).format("%Y-%m-%d").to_string();
+    let mut totals: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    for entry in entries {
+        for (day, seconds) in entry.get("daily").and_then(Value::as_object).into_iter().flatten() {
+            let seconds = seconds.as_i64().unwrap_or(0);
+            if seconds > 0 && day.as_str() >= oldest.as_str() {
+                *totals.entry(day.clone()).or_default() += seconds;
+            }
+        }
+    }
+    totals.into_iter().map(|(day, seconds)| (day, json!(seconds.min(86_400)))).collect()
 }
 
 fn put_profile(shared: &Shared, body: &Value) -> Result<Value, String> {
@@ -537,7 +555,8 @@ pub fn start_profile_sync(shared: std::sync::Arc<Shared>) {
                 continue;
             }
             let urgent = probe["now"]["k"] != last_now["k"] || shape != last_shape;
-            let due = text != last_body && since >= PROFILE_EVERY;
+            let every = if probe["now"].is_null() { PROFILE_EVERY } else { PROFILE_READING_EVERY };
+            let due = text != last_body && since >= every;
             let heartbeat = !probe["now"].is_null() && since >= PROFILE_HEARTBEAT;
             if !(urgent || due || heartbeat) {
                 continue;
