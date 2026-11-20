@@ -138,7 +138,7 @@ fn fit(img: DynamicImage, height: u32) -> RgbaImage {
     image::imageops::resize(&cropped, width, height, FilterType::CatmullRom)
 }
 
-fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
+fn visible_box(img: &RgbaImage) -> Option<(u32, u32, u32, u32)> {
     let (mut left, mut top, mut right, mut bottom) = (img.width(), img.height(), 0, 0);
     for (x, y, px) in img.enumerate_pixels() {
         if px.0[3] > 0 {
@@ -148,10 +148,47 @@ fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
             bottom = bottom.max(y);
         }
     }
-    if right < left {
-        return img.clone();
+    (right >= left).then(|| (left, top, right - left + 1, bottom - top + 1))
+}
+
+fn crop_to(img: &RgbaImage, area: Option<(u32, u32, u32, u32)>) -> RgbaImage {
+    match area {
+        Some((x, y, w, h)) => image::imageops::crop_imm(img, x, y, w, h).to_image(),
+        None => img.clone(),
     }
-    image::imageops::crop_imm(img, left, top, right - left + 1, bottom - top + 1).to_image()
+}
+
+fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
+    crop_to(img, visible_box(img))
+}
+
+fn sprite_like_character(shared: &Shared, id: &str, label: &str, source: &str) -> Option<PathBuf> {
+    let height = with_characters(|characters| characters.get(label).map(|c| c.alpha.height()))?;
+    let path = Path::new(source);
+    let stamp = std::fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs());
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    std::hash::Hash::hash(&(source, stamp, height, file_for(shared, id)), &mut hasher);
+    let cache = shared.data_dir.join("cache");
+    let file = cache.join(format!("sprite_{:016x}.png", std::hash::Hasher::finish(&hasher)));
+    if file.exists() {
+        return Some(file);
+    }
+    let sprite = image::open(path).ok()?.to_rgba8();
+    let original = image_for(shared, id).map(|img| img.to_rgba8());
+    let area = match original {
+        Some(original) if original.dimensions() == sprite.dimensions() => visible_box(&original),
+        _ => visible_box(&sprite),
+    };
+    let cropped = crop_to(&sprite, area);
+    let width = ((cropped.width() as f64 * height as f64 / cropped.height() as f64).round() as u32).max(1);
+    let fitted = image::imageops::resize(&cropped, width, height, FilterType::CatmullRom);
+    let _ = std::fs::create_dir_all(&cache);
+    fitted.save(&file).ok()?;
+    Some(file)
 }
 
 fn shown_ids(shared: &Shared) -> Vec<String> {
@@ -810,7 +847,8 @@ fn remove_old_pictures(cache: &Path) {
     let in_use: Vec<PathBuf> = with_characters(|characters| characters.values().map(|c| c.file.clone()).collect());
     for entry in std::fs::read_dir(cache).into_iter().flatten().flatten() {
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with("mascot_") && name.ends_with(".png") && !in_use.contains(&entry.path()) {
+        let old_mascot = name.starts_with("mascot_") && !in_use.contains(&entry.path());
+        if (old_mascot || name.starts_with("sprite_")) && name.ends_with(".png") {
             let _ = std::fs::remove_file(entry.path());
         }
     }
@@ -1152,7 +1190,12 @@ fn speak(app: &AppHandle, shared: &Shared, label: &str, event: &str, said: Said,
     }
     if let Some(file) = media_for(shared, id_of(label), Media::Sprites, event, draw) {
         let effect = sprite_effect(shared, id_of(label));
-        let _ = app.emit_to(label, "sprite", json!({ "file": file, "seconds": seconds, "effect": effect }));
+        let (app, shared, label) = (app.clone(), Arc::clone(&app.state::<Arc<Shared>>()), label.to_string());
+        std::thread::spawn(move || {
+            let shown = sprite_like_character(&shared, id_of(&label), &label, &file)
+                .map_or(file, |f| f.to_string_lossy().to_string());
+            let _ = app.emit_to(label.as_str(), "sprite", json!({ "file": shown, "seconds": seconds, "effect": effect }));
+        });
     }
     if !talks {
         return;
