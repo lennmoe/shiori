@@ -524,6 +524,17 @@
   font-size: 13px;
 }
 
+.cp-vndb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.cp-vndb span {
+  flex: 1;
+}
+
 .cp-wait {
   padding: 14px 16px 16px;
   margin: 0;

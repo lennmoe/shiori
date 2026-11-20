@@ -145,6 +145,20 @@ async function copy(url) {
   }
 }
 
+function linkVndb() {
+  document.querySelector('[data-tab="library"]')?.click();
+  requestAnimationFrame(() => document.querySelector('[data-section="vndb"]')?.scrollIntoView({ block: "start", behavior: "smooth" }));
+}
+
+function vndbNote() {
+  return el(
+    "div",
+    { class: "cp-note cp-vndb" },
+    el("span", {}, "Log in to VNDB so your ratings and reading statuses show up on your page."),
+    el("button", { class: "btn small", onclick: linkVndb }, "Link VNDB"),
+  );
+}
+
 export function communityTab() {
   const card = el("div", { class: "cp" });
   const tiles = (value) =>
@@ -171,7 +185,7 @@ export function communityTab() {
   const place = (image, children) => {
     const appearing = card.classList.contains("loading");
     card.classList.remove("loading");
-    card.replaceChildren(banner(image), ...children);
+    card.replaceChildren(banner(image), ...children.filter(Boolean));
     if (appearing) {
       card.classList.remove("cp-in");
       void card.offsetWidth;
@@ -286,6 +300,7 @@ export function communityTab() {
         ),
       ),
       actions,
+      shared && !store.settings.vndb_token && vndbNote(),
     );
   };
 
