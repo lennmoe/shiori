@@ -63,8 +63,14 @@ function build(container) {
       tab = button.dataset.tab;
       query = "";
       part("search").value = "";
+      const body = part("body");
+      body.classList.remove("tab-in");
+      clearTimeout(body.tabIn);
       render();
-      part("body").scrollTop = 0;
+      body.scrollTop = 0;
+      void body.offsetWidth;
+      body.classList.add("tab-in");
+      body.tabIn = setTimeout(() => body.classList.remove("tab-in"), 500);
     };
   }
 
@@ -1165,4 +1171,4 @@ function blacklistTab() {
   ];
 }
 
-register({ id: "settings", build, show: showPage });
+register({ id: "settings", fill: true, build, show: showPage });

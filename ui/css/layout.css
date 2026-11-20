@@ -616,8 +616,11 @@ html.has-bg .now-chip {
 }
 
 .settings-layout {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }
@@ -664,7 +667,36 @@ html.has-bg .now-chip {
 
 .card.settings-body {
   min-width: 0;
-  overflow: visible;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.settings-body.tab-in > * {
+  animation: tab-in 0.26s var(--ease) both;
+}
+
+.settings-body.tab-in > :nth-child(2) {
+  animation-delay: 0.03s;
+}
+
+.settings-body.tab-in > :nth-child(3) {
+  animation-delay: 0.06s;
+}
+
+.settings-body.tab-in > :nth-child(4) {
+  animation-delay: 0.09s;
+}
+
+.settings-body.tab-in > :nth-child(n + 5) {
+  animation-delay: 0.12s;
+}
+
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
 .settings-group + .settings-group {
@@ -682,6 +714,7 @@ html.has-bg .now-chip {
 @media (max-width: 760px) {
   .settings-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .settings-nav {
