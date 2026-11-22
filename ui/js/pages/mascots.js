@@ -71,6 +71,27 @@ const VOICE_MOMENTS = [
 
 const CHATTER_MINUTES = [0, 1, 3, 5, 10, 15, 30];
 
+const TURN_MODES = [
+  ["random", "At random"],
+  ["no_repeat", "At random, never twice in a row"],
+  ["order", "In turn, in the list's order"],
+];
+
+const LINE_ORDERS = [
+  ["shuffle", "Shuffled"],
+  ["order", "In order"],
+];
+
+function choice(list, current, onPick) {
+  const select = el(
+    "select",
+    {},
+    ...list.map(([value, label]) => el("option", { value, selected: value === current }, t(label))),
+  );
+  select.onchange = () => onPick(select.value);
+  return select;
+}
+
 const PACK_EXTENSION = "shiorimascot";
 const MASCOT_FILTERS = [
   { name: "Images or shared mascots", extensions: ["png", "webp", "gif", PACK_EXTENSION] },
@@ -192,38 +213,63 @@ function options() {
     save({ mascot_click_hotkey: value }),
   );
 
+  const group = (title, ...children) =>
+    el("section", { class: "option-group" }, el("div", { class: "option-group-title" }, title), ...children);
+
   return [
-    toggle("Speech balloons", settings.mascot_talk, (on) => save({ mascot_talk: on })),
-    el("div", { class: "field" }, el("span", {}, "Talk on their own"), chatter),
-    el("div", { class: "hint-text" }, "After this long without saying anything."),
-    el(
-      "div",
-      { class: "field" },
-      el("span", {}, "Voice volume"),
-      el("div", { class: "row" }, volume, volumeLabel),
+    group(
+      "Talking",
+      toggle("Speech balloons", settings.mascot_talk, (on) => save({ mascot_talk: on })),
+      el("div", { class: "field" }, el("span", {}, "Talk on their own"), chatter),
+      el("div", { class: "hint-text" }, "After this long without saying anything."),
+      el(
+        "div",
+        { class: "field" },
+        el("span", {}, "Who talks"),
+        choice(TURN_MODES, settings.mascot_turns || "random", (value) => save({ mascot_turns: value })),
+      ),
+      el("div", { class: "hint-text" }, "When several mascots are out. Clicking one always makes that one talk."),
+      el(
+        "div",
+        { class: "field" },
+        el("span", {}, "Order of the lines"),
+        choice(LINE_ORDERS, settings.mascot_line_order || "shuffle", (value) => save({ mascot_line_order: value })),
+      ),
+      el(
+        "div",
+        { class: "hint-text" },
+        "Shuffled never says the same line twice in a row. Sounds and pictures follow their line.",
+      ),
+      el("div", { class: "field" }, el("span", {}, "Voice volume"), el("div", { class: "row" }, volume, volumeLabel)),
+      el("div", { class: "hint-text" }, "For the sounds you give a mascot with “Voices…”."),
     ),
-    el("div", { class: "hint-text" }, "For the sounds you give a mascot with “Voices…”."),
-    el("div", { class: "field" }, el("span", {}, "Key to switch clicks on or off"), clickKey),
-    el(
-      "div",
-      { class: "hint-text" },
-      "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable " +
-        "again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.",
+    group(
+      "On the desktop",
+      toggle(
+        "Keep them above other windows",
+        settings.mascot_topmost,
+        (on) => save({ mascot_topmost: on }),
+        "Off: they stay on the desktop, behind your windows.",
+      ),
+      el("div", { class: "field" }, el("span", {}, "Key to switch clicks on or off"), clickKey),
+      el(
+        "div",
+        { class: "hint-text" },
+        "Works everywhere, even in a game: every mascot lets clicks go through, or becomes clickable " +
+          "again. Handy if you play with the mascots on screen. Each mascot also has its own “View only”.",
+      ),
+      el("div", { class: "row" }, backToCorner),
     ),
-    ...hideApps(),
-    toggle(
-      "Hide them over fullscreen apps",
-      settings.mascot_hide_fullscreen,
-      (on) => save({ mascot_hide_fullscreen: on }),
-      "Movies, videos, games… except the VN you're reading.",
+    group(
+      "When to hide them",
+      toggle(
+        "Hide them over fullscreen apps",
+        settings.mascot_hide_fullscreen,
+        (on) => save({ mascot_hide_fullscreen: on }),
+        "Movies, videos, games… except the VN you're reading.",
+      ),
+      ...hideApps(),
     ),
-    toggle(
-      "Keep them above other windows",
-      settings.mascot_topmost,
-      (on) => save({ mascot_topmost: on }),
-      "Off: they stay on the desktop, behind your windows.",
-    ),
-    el("div", { class: "row" }, backToCorner),
   ];
 }
 
@@ -248,7 +294,11 @@ function cutoutRow() {
     await call("remove_cutout");
     load({ fresh: true });
   });
-  return el("div", { class: "field" }, el("span", {}, "AI model for cutouts (185 MB)"), remove);
+  return el(
+    "section",
+    { class: "option-group" },
+    el("div", { class: "field" }, el("span", {}, "AI model for cutouts (185 MB)"), remove),
+  );
 }
 
 const GEAR =

@@ -84,6 +84,8 @@ fn defaults() -> Map<String, Value> {
         "language": "auto",
         "mascot_height": 420,
         "mascot_talk": true,
+        "mascot_turns": "random",
+        "mascot_line_order": "shuffle",
         "mascot_topmost": false,
         "mascot_pos": null,
         "vndb_token": "",

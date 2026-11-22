@@ -162,6 +162,31 @@
   margin-top: 18px;
 }
 
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-group + .option-group {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.option-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.option-group .row:last-child {
+  margin-top: 4px;
+}
+
 .line-fields {
   display: grid;
   gap: 12px;

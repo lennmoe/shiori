@@ -39,6 +39,11 @@ struct Character {
 
 static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
 static SPEAKER: Mutex<Option<String>> = Mutex::new(None);
+static LAST_LINES: Mutex<Option<HashMap<String, usize>>> = Mutex::new(None);
+
+thread_local! {
+    static LINE_KEY: std::cell::RefCell<Option<(String, bool)>> = const { std::cell::RefCell::new(None) };
+}
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 static REQUESTS: AtomicU64 = AtomicU64::new(0);
@@ -1156,12 +1161,17 @@ fn say_at(
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),
         _ if labels.is_empty() => return,
-        _ => labels[random(labels.len())].clone(),
+        _ => next_speaker(&everyone, labels),
     };
 
     let shared = shared(app);
-    let language = lang::resolve(&shared.config.lock().unwrap().str("language"));
+    let (language, in_order) = {
+        let cfg = shared.config.lock().unwrap();
+        (lang::resolve(&cfg.str("language")), cfg.str("mascot_line_order") == "order")
+    };
+    LINE_KEY.with(|key| *key.borrow_mut() = Some((format!("{label}:{event}"), in_order)));
     let said = line(&lines_for(&shared, id_of(&label), language));
+    LINE_KEY.with(|key| *key.borrow_mut() = None);
     speak(app, &shared, &label, event, said, seconds, false);
 }
 
@@ -1256,8 +1266,58 @@ fn just(text: String) -> Said {
     Said { text, index: None }
 }
 
+fn next_speaker(shared: &Shared, mut labels: Vec<String>) -> String {
+    let mode = shared.config.lock().unwrap().str("mascot_turns");
+    let last = SPEAKER.lock().unwrap().clone();
+    match mode.as_str() {
+        "order" => {
+            let order: Vec<String> = std::iter::once(BUILT_IN_ID.to_string())
+                .chain(
+                    gallery_files(shared)
+                        .iter()
+                        .map(|path| path.file_stem().unwrap_or_default().to_string_lossy().to_string()),
+                )
+                .collect();
+            let rank = |label: &str| order.iter().position(|id| id == id_of(label)).unwrap_or(usize::MAX);
+            labels.sort_by_key(|label| rank(label));
+            let after = last.as_deref().map(rank);
+            labels.iter().find(|label| Some(rank(label)) > after).unwrap_or(&labels[0]).clone()
+        }
+        "no_repeat" if labels.len() > 1 => {
+            labels.retain(|label| Some(label) != last.as_ref());
+            labels[random(labels.len())].clone()
+        }
+        _ => labels[random(labels.len())].clone(),
+    }
+}
+
+fn next_line(key: &str, len: usize, in_order: bool) -> usize {
+    if len <= 1 {
+        return 0;
+    }
+    let mut state = LAST_LINES.lock().unwrap();
+    let last = state.get_or_insert_with(HashMap::new);
+    let index = match last.get(key).map(|prev| prev % len) {
+        Some(prev) if in_order => (prev + 1) % len,
+        Some(prev) => {
+            let draw = random(len - 1);
+            if draw >= prev {
+                draw + 1
+            } else {
+                draw
+            }
+        }
+        None if in_order => 0,
+        None => random(len),
+    };
+    last.insert(key.to_string(), index);
+    index
+}
+
 fn pick(lines: &[String]) -> Said {
-    let index = random(lines.len());
+    let index = LINE_KEY
+        .with(|key| key.borrow().clone())
+        .map_or_else(|| random(lines.len()), |(key, in_order)| next_line(&key, lines.len(), in_order));
     Said {
         text: lines.get(index).cloned().unwrap_or_default(),
         index: (lines.len() > 1).then_some(index),
@@ -1884,5 +1944,18 @@ mod tests {
         }
         assert!(seen.iter().all(|s| *s));
         assert!((0..200).any(|_| random(2) == 1));
+    }
+    #[test]
+    fn lines_go_in_order_or_shuffle_without_repeats() {
+        let order: Vec<usize> = (0..5).map(|_| next_line("test:order", 3, true)).collect();
+        assert_eq!(order, [0, 1, 2, 0, 1]);
+        let mut previous = next_line("test:shuffle", 4, false);
+        for _ in 0..100 {
+            let next = next_line("test:shuffle", 4, false);
+            assert_ne!(next, previous);
+            assert!(next < 4);
+            previous = next;
+        }
+        assert_eq!(next_line("test:one", 1, false), 0);
     }
 }
