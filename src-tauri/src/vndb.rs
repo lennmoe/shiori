@@ -223,12 +223,22 @@ fn collect_releases(
     }
 }
 
-fn collect_selected_release_dates(
+fn valid_vndb_id(id: &str, prefix: char) -> bool {
+    let Some(digits) = id.strip_prefix(prefix) else {
+        return false;
+    };
+    (1..=7).contains(&digits.len()) && !digits.starts_with('0') && digits.bytes().all(|b| b.is_ascii_digit())
+}
+
+fn collect_dates(
     ids: &[String],
+    prefix: char,
     mut fetch: impl FnMut(&Value) -> Result<Value, String>,
+    read: impl Fn(&Value) -> Result<(String, String), String>,
 ) -> Result<HashMap<String, String>, String> {
+    let ids: Vec<&String> = ids.iter().filter(|id| valid_vndb_id(id, prefix)).collect();
     let mut dates = HashMap::new();
-    for chunk in ids.chunks(100) {
+    let mut ask = |chunk: &[&String], dates: &mut HashMap<String, String>| -> Result<(), String> {
         let mut filters = vec![json!("or")];
         filters.extend(chunk.iter().map(|id| json!(["id", "=", id])));
         let filters = if chunk.len() == 1 {
@@ -241,17 +251,51 @@ fn collect_selected_release_dates(
         let results = data["results"]
             .as_array()
             .ok_or_else(|| "Couldn't read release dates from VNDB.".to_string())?;
-        for release in results {
-            let id = release["id"]
-                .as_str()
-                .ok_or_else(|| "VNDB returned a release without an ID.".to_string())?;
-            let date = release["released"]
-                .as_str()
-                .ok_or_else(|| format!("VNDB returned an invalid release date for {id}."))?;
-            dates.insert(id.to_string(), date.to_string());
+        for item in results {
+            let (id, date) = read(item)?;
+            dates.insert(id, date);
+        }
+        Ok(())
+    };
+    for chunk in ids.chunks(100) {
+        let Err(error) = ask(chunk, &mut dates) else {
+            continue;
+        };
+        if chunk.len() == 1 {
+            return Err(error);
+        }
+        let mut any = false;
+        for id in chunk {
+            any |= ask(std::slice::from_ref(id), &mut dates).is_ok();
+        }
+        if !any {
+            return Err(error);
         }
     }
     Ok(dates)
+}
+
+fn collect_selected_release_dates(
+    ids: &[String],
+    fetch: impl FnMut(&Value) -> Result<Value, String>,
+) -> Result<HashMap<String, String>, String> {
+    collect_dates(ids, 'r', fetch, |release| {
+        let id = release["id"]
+            .as_str()
+            .ok_or_else(|| "VNDB returned a release without an ID.".to_string())?;
+        let date = release["released"]
+            .as_str()
+            .ok_or_else(|| format!("VNDB returned an invalid release date for {id}."))?;
+        Ok((id.to_string(), date.to_string()))
+    })
+}
+
+fn collect_vn_dates(
+    ids: &[String],
+    fetch: impl FnMut(&Value) -> Result<Value, String>,
+) -> Result<HashMap<String, String>, String> {
+    let ids: Vec<String> = ids.iter().map(|id| vn_id(id)).collect();
+    collect_dates(&ids, 'v', fetch, |vn| Ok((text(&vn["id"]), text(&vn["released"]))))
 }
 
 pub struct Vndb {
@@ -431,23 +475,8 @@ impl Vndb {
         Ok(Some(VnResult::from_api(&first)))
     }
 
-    pub fn release_dates(&self, ids: &[String]) -> Result<Vec<(String, String)>, String> {
-        let mut out = Vec::new();
-        for chunk in ids.chunks(100) {
-            let mut filters = vec![json!("or")];
-            filters.extend(chunk.iter().map(|id| json!(["id", "=", vn_id(id)])));
-            let filters = if chunk.len() == 1 {
-                filters[1].clone()
-            } else {
-                Value::Array(filters)
-            };
-            let body = json!({"filters": filters, "fields": "released", "results": 100});
-            let data = self.post("/vn", &body)?;
-            for vn in data["results"].as_array().into_iter().flatten() {
-                out.push((text(&vn["id"]), text(&vn["released"])));
-            }
-        }
-        Ok(out)
+    pub fn release_dates(&self, ids: &[String]) -> Result<HashMap<String, String>, String> {
+        collect_vn_dates(ids, |body| self.post("/vn", body))
     }
 
     pub fn selected_release_dates(&self, ids: &[String]) -> Result<HashMap<String, String>, String> {
@@ -991,6 +1020,28 @@ mod tests {
         assert_eq!(dates.get("r1").map(String::as_str), Some("2022-10-28"));
         assert_eq!(dates.get("r101").map(String::as_str), Some("TBA"));
         assert!(!dates.contains_key("r2"));
+    }
+
+    #[test]
+    fn one_bad_id_does_not_block_the_other_dates() {
+        let ids: Vec<String> = ["v666", "x12", "v0", "v123456789", "v42"].map(String::from).to_vec();
+        let mut asked = Vec::new();
+        let dates = collect_vn_dates(&ids, |body| {
+            asked.push(body["filters"].to_string());
+            if body["filters"][0] == "or" {
+                return Err("HTTP 400: Invalid 'id' filter".into());
+            }
+            let id = body["filters"][2].as_str().unwrap().to_string();
+            if id == "v42" {
+                return Err("HTTP 400: nope".into());
+            }
+            Ok(json!({"results": [{"id": id, "released": "2008-09-26"}]}))
+        })
+        .unwrap();
+        assert_eq!(dates.get("v666").map(String::as_str), Some("2008-09-26"));
+        assert!(!dates.contains_key("v42"));
+        assert!(asked.iter().all(|filter| !filter.contains("x12") && !filter.contains("v123456789") && !filter.contains("\"v0\"")));
+        assert!(collect_vn_dates(&["v1".into(), "v2".into()], |_| Err("network error".into())).is_err());
     }
 
     #[test]

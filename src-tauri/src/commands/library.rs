@@ -153,16 +153,20 @@ pub async fn fill_release_dates(shared: SharedState<'_>) -> Result<usize, String
         let mut ids: Vec<String> = missing_vns.iter().map(|(_, id)| id.clone()).collect();
         ids.sort();
         ids.dedup();
-        let dates: std::collections::HashMap<String, String> =
-            shared.vndb.release_dates(&ids)?.into_iter().collect();
         let mut release_ids: Vec<String> = missing_releases.iter().map(|(_, id)| id.clone()).collect();
         release_ids.sort();
         release_ids.dedup();
-        let release_dates = shared.vndb.selected_release_dates(&release_ids)?;
+        let dates = if ids.is_empty() { Ok(Default::default()) } else { shared.vndb.release_dates(&ids) };
+        let release_dates =
+            if release_ids.is_empty() { Ok(Default::default()) } else { shared.vndb.selected_release_dates(&release_ids) };
+        let failed = dates.as_ref().err().or(release_dates.as_ref().err()).cloned();
+        let dates = dates.ok();
+        let release_dates = release_dates.ok();
         let mut updated = 0;
         {
             let mut cfg = shared.config.lock().unwrap();
-            for (key, vn_id) in &missing_vns {
+            for (key, vn_id) in missing_vns.iter().filter(|_| dates.is_some()) {
+                let dates = dates.as_ref().unwrap();
                 let Some(entry) = cfg.all_games().get(key) else { continue };
                 let current_vn = [text(entry, "vndb_id"), text(entry, "matched_vndb_id")]
                     .into_iter()
@@ -181,7 +185,8 @@ pub async fn fill_release_dates(shared: SharedState<'_>) -> Result<usize, String
                 );
                 updated += 1;
             }
-            for (key, release_id) in &missing_releases {
+            for (key, release_id) in missing_releases.iter().filter(|_| release_dates.is_some()) {
+                let release_dates = release_dates.as_ref().unwrap();
                 let Some(entry) = cfg.all_games().get(key) else { continue };
                 let date = release_dates.get(release_id).map(String::as_str);
                 if let Some(fields) = selected_release_date_update(entry, release_id, date) {
@@ -192,7 +197,10 @@ pub async fn fill_release_dates(shared: SharedState<'_>) -> Result<usize, String
         }
         shared.send(Cmd::Reload);
         shared.emit("library-changed", json!({}));
-        Ok(updated)
+        match failed {
+            Some(error) => Err(error),
+            None => Ok(updated),
+        }
     })
     .await
 }
