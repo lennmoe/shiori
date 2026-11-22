@@ -62,9 +62,12 @@ pub async fn thumbnail(
 }
 
 fn inside_root(shared: &SharedState, path: &Path) -> bool {
-    let root = screenshots::root(&shared.config.lock().unwrap());
+    let cfg = shared.config.lock().unwrap();
     let canonical = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
-    canonical(path).starts_with(canonical(&root))
+    let file = canonical(path);
+    std::iter::once(screenshots::root(&cfg))
+        .chain(screenshots::other_roots(&cfg))
+        .any(|root| file.starts_with(canonical(&root)))
 }
 
 #[tauri::command(async)]

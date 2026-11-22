@@ -1,5 +1,6 @@
 pub mod app;
 pub mod cloud;
+pub mod collections;
 pub mod covers;
 pub mod data;
 pub mod labs;

@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "Mover a la izquierda",
+    "Move right": "Mover a la derecha",
     "Finished: {names}": "Terminado: {names}",
     "Started: {names}": "Empezado: {names}",
     "started a VN": "VN empezada",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "Leyendo tu copia de la nube…",
     "Cloud save from {date}": "Copia de la nube del {date}",
     "What you have now is saved first in {folder}.": "Lo que tienes ahora se guarda antes en {folder}.",
-    "Replace with this save": "Reemplazar con esta copia"
+    "Replace with this save": "Reemplazar con esta copia",
+    "New collection": "Nueva colección",
+    "{n} selected": "{n} seleccionados",
+    "Games in {name}": "Juegos en {name}",
+    "+ New collection": "+ Nueva colección",
+    "{name} was deleted. The games are still in your library.": "{name} se eliminó. Los juegos siguen en tu biblioteca.",
+    "Use the default folder": "Usar la carpeta predeterminada",
+    "Default folder": "Carpeta predeterminada",
+    "Screenshots:": "Capturas:",
+    "Add or remove games": "Añadir o quitar juegos",
+    "Rename collection": "Renombrar colección",
+    "Screenshot folder…": "Carpeta de capturas…",
+    "Screenshots of {name} now go to {path}": "Las capturas de {name} ahora van a {path}",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "Aún no hay nada en {name}. Usa «Añadir o quitar juegos» o añade un juego desde su página.",
+    "Collections": "Colecciones",
+    "Remove from this collection": "Quitar de esta colección",
+    "Add to this collection": "Añadir a esta colección",
+    "chosen for this game": "elegida para este juego",
+    "from the {name} collection": "de la colección {name}",
+    "default folder": "carpeta predeterminada",
+    "Change…": "Cambiar…",
+    "Folder:": "Carpeta:",
+    "made at the first screenshot": "se crea con la primera captura",
+    "Give the collection a name.": "Ponle un nombre a la colección.",
+    "You already have a collection with that name.": "Ya tienes una colección con ese nombre.",
+    "Keep the name under 40 characters.": "El nombre debe tener menos de 40 caracteres.",
+    "Pick a full folder path.": "Elige una ruta de carpeta completa.",
+    "That collection doesn't exist anymore.": "Esa colección ya no existe."
   }
 }

@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "Move left",
+    "Move right": "Move right",
     "“Total read: …”": "“Total read: …”",
     "“Today: …”": "“Today: …”",
     "Share your mascots": "Share your mascots",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "Reading your cloud save…",
     "Cloud save from {date}": "Cloud save from {date}",
     "What you have now is saved first in {folder}.": "What you have now is saved first in {folder}.",
-    "Replace with this save": "Replace with this save"
+    "Replace with this save": "Replace with this save",
+    "New collection": "New collection",
+    "{n} selected": "{n} selected",
+    "Games in {name}": "Games in {name}",
+    "+ New collection": "+ New collection",
+    "{name} was deleted. The games are still in your library.": "{name} was deleted. The games are still in your library.",
+    "Use the default folder": "Use the default folder",
+    "Default folder": "Default folder",
+    "Screenshots:": "Screenshots:",
+    "Add or remove games": "Add or remove games",
+    "Rename collection": "Rename collection",
+    "Screenshot folder…": "Screenshot folder…",
+    "Screenshots of {name} now go to {path}": "Screenshots of {name} now go to {path}",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.",
+    "Collections": "Collections",
+    "Remove from this collection": "Remove from this collection",
+    "Add to this collection": "Add to this collection",
+    "chosen for this game": "chosen for this game",
+    "from the {name} collection": "from the {name} collection",
+    "default folder": "default folder",
+    "Change…": "Change…",
+    "Folder:": "Folder:",
+    "made at the first screenshot": "made at the first screenshot",
+    "Give the collection a name.": "Give the collection a name.",
+    "You already have a collection with that name.": "You already have a collection with that name.",
+    "Keep the name under 40 characters.": "Keep the name under 40 characters.",
+    "Pick a full folder path.": "Pick a full folder path.",
+    "That collection doesn't exist anymore.": "That collection doesn't exist anymore."
   }
 }

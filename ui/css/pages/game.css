@@ -274,3 +274,17 @@
 .stat:has(.stat-edit) > span {
   padding-right: 22px;
 }
+
+.shots-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.shots-where .link {
+  overflow-wrap: anywhere;
+  text-align: left;
+}

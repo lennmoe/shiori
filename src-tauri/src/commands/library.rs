@@ -119,6 +119,7 @@ pub fn get_library(shared: SharedState) -> Vec<Value> {
                 "release_date_pending": release_date_pending(&entry) || vn_date_pending(&entry, &vn_id),
                 "vndb_id": vn_id,
                 "cover": cover_of(&cfg, &entry),
+                "collections": screenshots::collections_of(&entry),
             })
         })
         .collect()
@@ -227,6 +228,7 @@ pub fn get_game(shared: SharedState, key: String) -> Value {
         "cover": cover_of(&cfg, &entry),
         "shots": shots.iter().take(5).map(|p| p.to_string_lossy().to_string()).collect::<Vec<_>>(),
         "shot_count": shots.len(),
+        "shots_folder": folder.as_ref().map(|p| p.to_string_lossy().to_string()),
         "tool": tool.map(|p| p.to_string_lossy().to_string()),
         "has_token": !cfg.str("vndb_token").trim().is_empty(),
         "vndb_sync": cfg.bool("vndb_sync"),

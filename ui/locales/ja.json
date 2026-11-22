@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "左へ移動",
+    "Move right": "右へ移動",
     "Finished: {names}": "読了：{names}",
     "Started: {names}": "読み始め：{names}",
     "started a VN": "読み始めたVN",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "クラウドのバックアップを読み込み中…",
     "Cloud save from {date}": "{date}のクラウドバックアップ",
     "What you have now is saved first in {folder}.": "今のデータは先に{folder}に保存されます。",
-    "Replace with this save": "このバックアップで置き換える"
+    "Replace with this save": "このバックアップで置き換える",
+    "New collection": "新しいコレクション",
+    "{n} selected": "{n}件選択中",
+    "Games in {name}": "{name} のゲーム",
+    "+ New collection": "+ 新しいコレクション",
+    "{name} was deleted. The games are still in your library.": "{name} を削除しました。ゲームはライブラリに残っています。",
+    "Use the default folder": "既定のフォルダーを使う",
+    "Default folder": "既定のフォルダー",
+    "Screenshots:": "スクリーンショット：",
+    "Add or remove games": "ゲームを追加・削除",
+    "Rename collection": "コレクション名を変更",
+    "Screenshot folder…": "スクリーンショットの保存先…",
+    "Screenshots of {name} now go to {path}": "{name} のスクリーンショットは今後 {path} に保存されます",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "{name} にはまだ何もありません。「ゲームを追加・削除」を使うか、ゲームのページから追加してください。",
+    "Collections": "コレクション",
+    "Remove from this collection": "このコレクションから外す",
+    "Add to this collection": "このコレクションに追加",
+    "chosen for this game": "このゲーム用に指定",
+    "from the {name} collection": "コレクション「{name}」から",
+    "default folder": "既定のフォルダー",
+    "Change…": "変更…",
+    "Folder:": "フォルダー：",
+    "made at the first screenshot": "最初のスクリーンショットで作成",
+    "Give the collection a name.": "コレクションに名前を付けてください。",
+    "You already have a collection with that name.": "同じ名前のコレクションがすでにあります。",
+    "Keep the name under 40 characters.": "名前は40文字未満にしてください。",
+    "Pick a full folder path.": "フォルダーのフルパスを選んでください。",
+    "That collection doesn't exist anymore.": "このコレクションはもう存在しません。"
   }
 }

@@ -9,12 +9,16 @@ use crate::state::{Cmd, Shared};
 use crate::{autostart, discord, hotkey, mascot, presence, screenshots, shell, ui_windows, updater, winapi};
 
 pub fn allow_screenshot_folder(shared: &Shared) {
-    let root = screenshots::root(&shared.config.lock().unwrap());
+    let (root, others) = {
+        let cfg = shared.config.lock().unwrap();
+        (screenshots::root(&cfg), screenshots::other_roots(&cfg))
+    };
     let _ = std::fs::create_dir_all(&root);
-    let _ = shared
-        .app
-        .asset_protocol_scope()
-        .allow_directory(&root, true);
+    let scope = shared.app.asset_protocol_scope();
+    let _ = scope.allow_directory(&root, true);
+    for folder in others.iter().filter(|f| f.is_dir()) {
+        let _ = scope.allow_directory(folder, true);
+    }
 }
 
 #[tauri::command(async)]

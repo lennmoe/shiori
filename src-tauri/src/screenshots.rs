@@ -69,8 +69,62 @@ pub fn folder_name(title: &str, taken: &[String]) -> String {
     candidate
 }
 
+pub fn own_folder(entry: &Map<String, Value>) -> Option<PathBuf> {
+    absolute(&text(entry, "screenshot_path"))
+}
+
+pub fn collection_list(cfg: &Config) -> Vec<Map<String, Value>> {
+    cfg.get("collections")
+        .and_then(Value::as_array)
+        .map(|list| {
+            list.iter()
+                .filter_map(Value::as_object)
+                .filter(|c| !text(c, "id").is_empty())
+                .cloned()
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+pub fn collections_of(entry: &Map<String, Value>) -> Vec<String> {
+    entry
+        .get("collections")
+        .and_then(Value::as_array)
+        .map(|ids| ids.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .unwrap_or_default()
+}
+
+fn absolute(path: &str) -> Option<PathBuf> {
+    let path = path.trim();
+    (!path.is_empty() && Path::new(path).is_absolute()).then(|| PathBuf::from(path))
+}
+
+fn collection_folder(cfg: &Config, entry: &Map<String, Value>) -> Option<PathBuf> {
+    let mine = collections_of(entry);
+    collection_list(cfg)
+        .iter()
+        .filter(|c| mine.contains(&text(c, "id")))
+        .find_map(|c| absolute(&text(c, "folder")))
+}
+
+pub fn other_roots(cfg: &Config) -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = collection_list(cfg)
+        .iter()
+        .filter_map(|c| absolute(&text(c, "folder")))
+        .chain(cfg.all_games().values().filter_map(own_folder))
+        .collect();
+    roots.sort();
+    roots.dedup();
+    roots
+}
+
 pub fn folder_for(cfg: &mut Config, key: &str, create: bool) -> Option<PathBuf> {
     let entry = cfg.game(key);
+    if let Some(own) = own_folder(&entry) {
+        if !create || fs::create_dir_all(&own).is_ok() {
+            return Some(own);
+        }
+    }
     let mut name = text(&entry, "screenshot_folder");
 
     if name.is_empty() {
@@ -95,8 +149,10 @@ pub fn folder_for(cfg: &mut Config, key: &str, create: bool) -> Option<PathBuf> 
         );
     }
 
-    let path = root(cfg).join(name);
-    if create {
+    let base = collection_folder(cfg, &entry).unwrap_or_else(|| root(cfg));
+    let mut path = base.join(&name);
+    if create && fs::create_dir_all(&path).is_err() {
+        path = root(cfg).join(&name);
         let _ = fs::create_dir_all(&path);
     }
     Some(path)
@@ -158,7 +214,10 @@ pub fn move_shots(from: &Path, to: &Path) -> Result<(), String> {
             dest = to.join(format!("{stem} ({n}).{ext}"));
             n += 1;
         }
-        fs::rename(&shot, &dest).map_err(|e| e.to_string())?;
+        if fs::rename(&shot, &dest).is_err() {
+            fs::copy(&shot, &dest).map_err(|e| e.to_string())?;
+            fs::remove_file(&shot).map_err(|e| e.to_string())?;
+        }
     }
     let _ = fs::remove_dir(from);
     Ok(())
@@ -408,5 +467,62 @@ mod tests {
             "Amatsutsumi (2)"
         );
         assert_eq!(folder_name("Dots...", &[]), "Dots");
+    }
+
+    #[test]
+    fn the_game_folder_beats_collections_and_collections_beat_the_root() {
+        let base = std::env::temp_dir().join(format!("shiori-shots-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let mut cfg = Config::load(&base.join("data"));
+        let root = base.join("root");
+        let yuzu = base.join("yuzu");
+        let mine = base.join("mine");
+        cfg.update(Map::from_iter([
+            ("screenshot_dir".into(), json!(root.to_string_lossy())),
+            (
+                "collections".into(),
+                json!([
+                    {"id": "a", "name": "Long story", "folder": ""},
+                    {"id": "b", "name": "Yuzusoft", "folder": yuzu.to_string_lossy()},
+                    {"id": "c", "name": "Elsewhere", "folder": "relative/path"},
+                ]),
+            ),
+        ]))
+        .unwrap();
+        cfg.set_game("senren", Map::from_iter([("title".into(), json!("Senren Banka"))]));
+
+        assert_eq!(folder_for(&mut cfg, "senren", true), Some(root.join("Senren Banka")));
+
+        cfg.set_game("senren", Map::from_iter([("collections".into(), json!(["a", "c", "b"]))]));
+        assert_eq!(folder_for(&mut cfg, "senren", false), Some(yuzu.join("Senren Banka")));
+
+        cfg.set_game("senren", Map::from_iter([("screenshot_path".into(), json!(mine.to_string_lossy()))]));
+        assert_eq!(folder_for(&mut cfg, "senren", true), Some(mine.clone()));
+        assert!(mine.is_dir());
+        assert_eq!(other_roots(&cfg), {
+            let mut both = vec![mine.clone(), yuzu.clone()];
+            both.sort();
+            both
+        });
+
+        cfg.set_game("senren", Map::from_iter([("screenshot_path".into(), json!(""))]));
+        assert_eq!(folder_for(&mut cfg, "senren", false), Some(yuzu.join("Senren Banka")));
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn moving_shots_keeps_every_file() {
+        let base = std::env::temp_dir().join(format!("shiori-move-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&base);
+        let (from, to) = (base.join("from"), base.join("to"));
+        fs::create_dir_all(&from).unwrap();
+        fs::create_dir_all(&to).unwrap();
+        fs::write(from.join("a.png"), b"new").unwrap();
+        fs::write(to.join("a.png"), b"old").unwrap();
+        move_shots(&from, &to).unwrap();
+        assert!(!from.exists());
+        assert_eq!(fs::read(to.join("a.png")).unwrap(), b"old");
+        assert_eq!(fs::read(to.join("a (2).png")).unwrap(), b"new");
+        let _ = fs::remove_dir_all(&base);
     }
 }

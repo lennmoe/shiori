@@ -29,6 +29,7 @@ import {
   stepRow,
 } from "../components/walkthrough.js";
 import { LAUNCHERS, createShortcut, locateGame, locateTool, playGame } from "../components/play.js";
+import { chooseFolder, collectionList, newCollection } from "../components/collections.js";
 import { t } from "../i18n.js";
 
 const PRIVACY_HELP = {
@@ -141,6 +142,11 @@ const TEMPLATE = `
         </div>
         <div class="hint-text" data-id="site-help"></div>
       </div>
+
+      <div class="card">
+        <div class="card-title"><b>Collections</b></div>
+        <div class="chips" data-id="collections"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -163,6 +169,7 @@ const TEMPLATE = `
     </div>
     <div class="shot-strip" data-id="shots"></div>
     <div class="hint-text" data-id="shots-hint"></div>
+    <div class="shots-where" data-id="shots-where"></div>
   </div>
 
   <div class="card" data-id="guide-card">
@@ -281,6 +288,8 @@ async function load() {
   renderVote(entry);
   renderLauncher(entry);
   renderDuplicates();
+  renderCollections(entry);
+  renderShotsFolder(entry);
   renderStats(entry);
   renderProgress(entry);
   renderChart();
@@ -698,6 +707,64 @@ async function editTotal() {
   }
   await call("set_playtime", { key, seconds: h * 3600 + m * 60 });
   setTimeout(load, 400);
+}
+
+function renderCollections(entry) {
+  const mine = entry.collections || [];
+  const chips = collectionList().map((collection) => {
+    const on = mine.includes(collection.id);
+    const chip = el("button", { class: `chip${on ? " accent" : ""}`, title: on ? "Remove from this collection" : "Add to this collection" }, on ? `✓ ${collection.name}` : collection.name);
+    chip.onclick = () =>
+      call("set_game_collections", {
+        key,
+        ids: on ? mine.filter((id) => id !== collection.id) : [...mine, collection.id],
+      });
+    return chip;
+  });
+  const add = el("button", { class: "chip quiet" }, "+ New collection");
+  add.onclick = async () => {
+    const id = await newCollection();
+    if (id) {
+      await call("set_game_collections", { key, ids: [...mine, id] });
+    }
+  };
+  part("collections").replaceChildren(...chips, add);
+}
+
+function renderShotsFolder(entry) {
+  const own = (entry.screenshot_path || "").trim();
+  const mine = entry.collections || [];
+  const from = own ? null : collectionList().find((c) => mine.includes(c.id) && (c.folder || "").trim());
+  const where = game.shots_folder;
+  const source = own
+    ? t("chosen for this game")
+    : from
+      ? t("from the {name} collection", { name: from.name })
+      : t("default folder");
+
+  const change = el("button", { class: "btn secondary small" }, "Change…");
+  change.onclick = async () => {
+    const path = await chooseFolder("Screenshot folder", own || where);
+    if (path) {
+      await call("set_game_folder", { key, folder: path });
+      toast(t("Screenshots of {name} now go to {path}", { name: game.name, path }));
+    }
+  };
+  const reset = own && el("button", { class: "btn secondary small" }, "Reset");
+  if (reset) {
+    reset.onclick = () => call("set_game_folder", { key, folder: "" });
+  }
+
+  part("shots-where").replaceChildren(
+    el("span", { class: "muted small-text" }, t("Folder:")),
+    where
+      ? el("button", { class: "link small-text", title: "Open folder", onclick: () => call("open_screenshot_folder", { key }) }, where)
+      : el("span", { class: "muted small-text" }, t("made at the first screenshot")),
+    el("span", { class: "muted small-text" }, `(${source})`),
+    el("span", { class: "grow" }),
+    change,
+    reset,
+  );
 }
 
 async function renderShots() {

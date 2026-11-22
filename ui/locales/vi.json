@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "Chuyển sang trái",
+    "Move right": "Chuyển sang phải",
     "Finished: {names}": "Đã xong: {names}",
     "Started: {names}": "Bắt đầu: {names}",
     "started a VN": "bắt đầu một VN",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "Đang đọc bản lưu cloud…",
     "Cloud save from {date}": "Bản lưu cloud ngày {date}",
     "What you have now is saved first in {folder}.": "Dữ liệu hiện tại sẽ được lưu trước vào {folder}.",
-    "Replace with this save": "Thay bằng bản lưu này"
+    "Replace with this save": "Thay bằng bản lưu này",
+    "New collection": "Bộ sưu tập mới",
+    "{n} selected": "Đã chọn {n}",
+    "Games in {name}": "Game trong {name}",
+    "+ New collection": "+ Bộ sưu tập mới",
+    "{name} was deleted. The games are still in your library.": "Đã xóa {name}. Các game vẫn còn trong thư viện.",
+    "Use the default folder": "Dùng thư mục mặc định",
+    "Default folder": "Thư mục mặc định",
+    "Screenshots:": "Ảnh chụp:",
+    "Add or remove games": "Thêm hoặc bỏ game",
+    "Rename collection": "Đổi tên bộ sưu tập",
+    "Screenshot folder…": "Thư mục ảnh chụp…",
+    "Screenshots of {name} now go to {path}": "Ảnh chụp của {name} giờ được lưu vào {path}",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "Chưa có gì trong {name}. Dùng “Thêm hoặc bỏ game”, hoặc thêm game từ trang của nó.",
+    "Collections": "Bộ sưu tập",
+    "Remove from this collection": "Bỏ khỏi bộ sưu tập này",
+    "Add to this collection": "Thêm vào bộ sưu tập này",
+    "chosen for this game": "chọn riêng cho game này",
+    "from the {name} collection": "từ bộ sưu tập {name}",
+    "default folder": "thư mục mặc định",
+    "Change…": "Đổi…",
+    "Folder:": "Thư mục:",
+    "made at the first screenshot": "tạo khi chụp ảnh đầu tiên",
+    "Give the collection a name.": "Hãy đặt tên cho bộ sưu tập.",
+    "You already have a collection with that name.": "Bạn đã có bộ sưu tập với tên này.",
+    "Keep the name under 40 characters.": "Tên phải ngắn hơn 40 ký tự.",
+    "Pick a full folder path.": "Hãy chọn đường dẫn thư mục đầy đủ.",
+    "That collection doesn't exist anymore.": "Bộ sưu tập này không còn tồn tại."
   }
 }

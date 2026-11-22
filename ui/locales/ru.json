@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "Сдвинуть влево",
+    "Move right": "Сдвинуть вправо",
     "Finished: {names}": "Пройдено: {names}",
     "Started: {names}": "Начато: {names}",
     "started a VN": "начата VN",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "Читаем облачную копию…",
     "Cloud save from {date}": "Облачная копия от {date}",
     "What you have now is saved first in {folder}.": "Текущие данные сначала сохраняются в {folder}.",
-    "Replace with this save": "Заменить этой копией"
+    "Replace with this save": "Заменить этой копией",
+    "New collection": "Новая коллекция",
+    "{n} selected": "Выбрано: {n}",
+    "Games in {name}": "Игры в «{name}»",
+    "+ New collection": "+ Новая коллекция",
+    "{name} was deleted. The games are still in your library.": "Коллекция «{name}» удалена. Игры остались в библиотеке.",
+    "Use the default folder": "Использовать папку по умолчанию",
+    "Default folder": "Папка по умолчанию",
+    "Screenshots:": "Скриншоты:",
+    "Add or remove games": "Добавить или убрать игры",
+    "Rename collection": "Переименовать коллекцию",
+    "Screenshot folder…": "Папка скриншотов…",
+    "Screenshots of {name} now go to {path}": "Скриншоты {name} теперь сохраняются в {path}",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "В «{name}» пока пусто. Нажмите «Добавить или убрать игры» или добавьте игру на её странице.",
+    "Collections": "Коллекции",
+    "Remove from this collection": "Убрать из этой коллекции",
+    "Add to this collection": "Добавить в эту коллекцию",
+    "chosen for this game": "выбрана для этой игры",
+    "from the {name} collection": "из коллекции «{name}»",
+    "default folder": "папка по умолчанию",
+    "Change…": "Изменить…",
+    "Folder:": "Папка:",
+    "made at the first screenshot": "создаётся при первом скриншоте",
+    "Give the collection a name.": "Дайте коллекции название.",
+    "You already have a collection with that name.": "Коллекция с таким названием уже есть.",
+    "Keep the name under 40 characters.": "Название должно быть короче 40 символов.",
+    "Pick a full folder path.": "Выберите полный путь к папке.",
+    "That collection doesn't exist anymore.": "Этой коллекции больше нет."
   }
 }

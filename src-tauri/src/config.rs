@@ -30,6 +30,8 @@ fn defaults() -> Map<String, Value> {
         "library_view": "list",
         "library_sort": "most",
         "library_sort_reverse": false,
+        "library_collection": "",
+        "collections": [],
         "screenshots_view": "right",
         "screenshots_order": "game",
         "background_image": "",

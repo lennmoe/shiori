@@ -147,6 +147,8 @@
     }
   },
   "ui": {
+    "Move left": "左移",
+    "Move right": "右移",
     "Finished: {names}": "读完：{names}",
     "Started: {names}": "开始：{names}",
     "started a VN": "开始读的 VN",
@@ -1190,6 +1192,33 @@
     "Reading your cloud save…": "正在读取云端备份…",
     "Cloud save from {date}": "{date} 的云端备份",
     "What you have now is saved first in {folder}.": "你现在的数据会先保存到 {folder}。",
-    "Replace with this save": "用此备份替换"
+    "Replace with this save": "用此备份替换",
+    "New collection": "新建合集",
+    "{n} selected": "已选择 {n} 个",
+    "Games in {name}": "{name} 中的游戏",
+    "+ New collection": "+ 新建合集",
+    "{name} was deleted. The games are still in your library.": "已删除 {name}。游戏仍在你的库中。",
+    "Use the default folder": "使用默认文件夹",
+    "Default folder": "默认文件夹",
+    "Screenshots:": "截图：",
+    "Add or remove games": "添加或移除游戏",
+    "Rename collection": "重命名合集",
+    "Screenshot folder…": "截图文件夹…",
+    "Screenshots of {name} now go to {path}": "{name} 的截图现在保存到 {path}",
+    "Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.": "{name} 里还没有内容。使用“添加或移除游戏”，或在游戏页面中添加。",
+    "Collections": "合集",
+    "Remove from this collection": "从此合集中移除",
+    "Add to this collection": "添加到此合集",
+    "chosen for this game": "为此游戏指定",
+    "from the {name} collection": "来自合集 {name}",
+    "default folder": "默认文件夹",
+    "Change…": "更改…",
+    "Folder:": "文件夹：",
+    "made at the first screenshot": "首次截图时创建",
+    "Give the collection a name.": "请给合集起个名字。",
+    "You already have a collection with that name.": "已有同名合集。",
+    "Keep the name under 40 characters.": "名称需少于 40 个字符。",
+    "Pick a full folder path.": "请选择完整的文件夹路径。",
+    "That collection doesn't exist anymore.": "该合集已不存在。"
   }
 }

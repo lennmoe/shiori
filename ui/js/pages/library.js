@@ -14,6 +14,7 @@ import { store, subscribe } from "../store.js";
 import { call, confirmButton, segmented, setCover, toast } from "../ui.js";
 import { playGame } from "../components/play.js";
 import { drawHeatmap } from "../components/heatmap.js";
+import { chooseFolder, collectionById, collectionList, newCollection, askName, pickGames } from "../components/collections.js";
 import { t } from "../i18n.js";
 
 const TEMPLATE = `
@@ -58,6 +59,9 @@ const TEMPLATE = `
       </select>
     </div>
   </div>
+
+  <div class="coll-bar" data-id="collections"></div>
+  <div class="coll-info" data-id="coll-info" hidden></div>
 
   <div class="muted" data-id="summary"></div>
 
@@ -238,6 +242,115 @@ function weekSeconds(daily) {
   return total;
 }
 
+function activeCollection() {
+  const id = store.settings.library_collection || "";
+  return collectionById(id) || null;
+}
+
+function pickCollection(id) {
+  store.settings.library_collection = id;
+  render();
+  call("update_settings", { changes: { library_collection: id } });
+}
+
+const inCollection = (collection) => (game) => !collection || (game.collections || []).includes(collection.id);
+
+function renderCollections(active) {
+  const list = collectionList();
+  const chip = (id, label, count) => {
+    const button = el(
+      "button",
+      { class: `chip coll-chip${(active?.id || "") === id ? " accent" : ""}` },
+      label,
+      el("span", { class: "coll-count" }, String(count)),
+    );
+    button.onclick = () => pickCollection(id);
+    return button;
+  };
+  const add = el("button", { class: "chip quiet coll-add" }, "+ New collection");
+  add.onclick = async () => {
+    const id = await newCollection();
+    if (id) {
+      pickCollection(id);
+    }
+  };
+  part("collections").replaceChildren(
+    chip("", t("All games"), games.length),
+    ...list.map((c) => chip(c.id, c.name, games.filter(inCollection(c)).length)),
+    add,
+  );
+  renderCollectionInfo(active, list);
+}
+
+function renderCollectionInfo(active, list) {
+  const box = part("coll-info");
+  box.hidden = !active;
+  if (!active) {
+    box.replaceChildren();
+    return;
+  }
+  const button = (label, action, kind = "") => {
+    const node = el("button", { class: `coll-act ${kind}` }, label);
+    node.onclick = action;
+    return node;
+  };
+  const dot = () => el("span", { class: "coll-dot", "aria-hidden": "true" }, "·");
+  const position = list.findIndex((c) => c.id === active.id);
+  const move = (by) => () => call("move_collection", { id: active.id, to: position + by });
+  const remove = el("button", { class: "coll-act danger" });
+  confirmButton(remove, "Delete", async () => {
+    await call("delete_collection", { id: active.id });
+    pickCollection("");
+    toast(t("{name} was deleted. The games are still in your library.", { name: active.name }));
+  });
+
+  const folderButton = button(
+    `${t("Screenshots:")} ${active.folder ? active.folder.split(/[\/]/).filter(Boolean).pop() : t("Default folder")}`,
+    async () => {
+      const path = await chooseFolder("Screenshot folder", active.folder);
+      if (path) {
+        await call("set_collection_folder", { id: active.id, folder: path });
+        toast(t("Screenshots of {name} now go to {path}", { name: active.name, path }));
+      }
+    },
+  );
+  folderButton.title = active.folder || t("Screenshot folder…");
+  const folderExtras = active.folder
+    ? [
+        button("Open folder", () => call("open_path", { path: active.folder })),
+        button("Use the default folder", () => call("set_collection_folder", { id: active.id, folder: "" })),
+      ]
+    : [];
+
+  const arrow = (label, title, by) => {
+    const node = button(label, move(by), "arrow");
+    node.title = t(title);
+    return node;
+  };
+  const arrows = [
+    position > 0 && arrow("‹", "Move left", -1),
+    position < list.length - 1 && arrow("›", "Move right", 1),
+  ].filter(Boolean);
+  box.replaceChildren(
+    button("Add or remove games", async () => {
+      await pickGames(active, games);
+    }, "main"),
+    dot(),
+    button("Rename", async () => {
+      const name = await askName(t("Rename collection"), active.name);
+      if (name && name !== active.name) {
+        await call("save_collection", { id: active.id, name });
+      }
+    }),
+    dot(),
+    folderButton,
+    ...folderExtras,
+    ...(arrows.length ? [dot(), ...arrows] : []),
+    dot(),
+    remove,
+  );
+}
+
 function render() {
   const sort = SORTERS[store.settings.library_sort] ? store.settings.library_sort : "most";
   segmented(part("sort"), sort, (value) => {
@@ -266,9 +379,13 @@ function render() {
     });
   }
 
+  const active = activeCollection();
+  renderCollections(active);
+  const pool = games.filter(inCollection(active));
+
   const filter = part("filter").value.trim().toLowerCase();
   const status = part("status").value;
-  const shown = games
+  const shown = pool
     .filter((game) => !filter || game.name.toLowerCase().includes(filter))
     .filter((game) => !status || game.status === status)
     .sort(SORTERS[sort]);
@@ -279,16 +396,20 @@ function render() {
     shown.sort((a, b) => !yearOf(a) - !yearOf(b));
   }
 
-  const total = games.reduce((sum, game) => sum + game.playtime, 0);
-  const week = games.reduce((sum, game) => sum + weekSeconds(game.daily), 0);
+  const total = pool.reduce((sum, game) => sum + game.playtime, 0);
+  const week = pool.reduce((sum, game) => sum + weekSeconds(game.daily), 0);
   part("summary").textContent = [
-    plural(games.length, "game"),
+    plural(pool.length, "game"),
     t("{time} read in total", { time: formatPlaytime(total) }),
     t("{time} this week", { time: formatPlaytime(week) }),
   ].join("  ·  ");
 
   if (!shown.length) {
-    const message = games.length ? "Nothing matches." : "The VNs you read will show up here.";
+    const message = active && !pool.length
+      ? t("Nothing in {name} yet. Use “Add or remove games”, or add a game from its page.", { name: active.name })
+      : games.length
+        ? t("Nothing matches.")
+        : t("The VNs you read will show up here.");
     part("list").className = "lib-list";
     part("list").replaceChildren(el("div", { class: "card lib-empty" }, message));
     return;
