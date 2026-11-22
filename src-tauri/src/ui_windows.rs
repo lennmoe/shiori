@@ -280,19 +280,21 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32, anchor: Option<(f
     let (bw, bh) = (width as i32, height as i32);
     let (cw, ch) = (size.width as i32, size.height as i32);
     let (left, top, right, bottom) = winapi::work_area_at(pos.x + cw / 2, pos.y + ch / 2);
+    let (pad, share) = crate::mascot::content_share(&speaker).unwrap_or((0.0, 1.0));
+    let (px, cw) = (pos.x + (pad * f64::from(cw)) as i32, (share * f64::from(cw)) as i32);
 
     let (x, y, before) = match anchor {
         Some((ax, ay)) if ax.is_finite() && ay.is_finite() => {
             let (ax, ay) = (ax.clamp(-3.0, 4.0), ay.clamp(-3.0, 4.0));
-            let x = pos.x + (ax * cw as f64) as i32 - bw / 2;
+            let x = px + (ax * cw as f64) as i32 - bw / 2;
             let y = pos.y + (ay * ch as f64) as i32 - bh / 2;
             (x, y, ax < 0.5)
         }
         _ => {
-            let mut x = pos.x - bw + cw / 6;
+            let mut x = px - bw + cw / 6;
             let before = x >= left;
             if !before {
-                x = pos.x + cw - cw / 6;
+                x = px + cw - cw / 6;
             }
             (x, top.max(pos.y + ch / 10), before)
         }

@@ -33,9 +33,12 @@ pub const HIDE_MENU_PREFIX: &str = "mascot-hide:";
 struct Character {
     file: PathBuf,
     alpha: RgbaImage,
+    pad: u32,
     view_only: bool,
     token: u64,
 }
+
+static SPRITE_NEEDS: Mutex<Option<HashMap<(PathBuf, u64, (u32, u32)), f64>>> = Mutex::new(None);
 
 static CHARACTERS: Mutex<Option<HashMap<String, Character>>> = Mutex::new(None);
 static SPEAKER: Mutex<Option<String>> = Mutex::new(None);
@@ -143,10 +146,12 @@ fn fit(img: DynamicImage, height: u32) -> RgbaImage {
     image::imageops::resize(&cropped, width, height, FilterType::CatmullRom)
 }
 
+const VISIBLE_ALPHA: u8 = 8;
+
 fn visible_box(img: &RgbaImage) -> Option<(u32, u32, u32, u32)> {
     let (mut left, mut top, mut right, mut bottom) = (img.width(), img.height(), 0, 0);
     for (x, y, px) in img.enumerate_pixels() {
-        if px.0[3] > 0 {
+        if px.0[3] > VISIBLE_ALPHA {
             left = left.min(x);
             top = top.min(y);
             right = right.max(x);
@@ -168,7 +173,8 @@ fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
 }
 
 fn sprite_like_character(shared: &Shared, id: &str, label: &str, source: &str) -> Option<PathBuf> {
-    let height = with_characters(|characters| characters.get(label).map(|c| c.alpha.height()))?;
+    let (width, height, pad) =
+        with_characters(|characters| characters.get(label).map(|c| (c.alpha.width(), c.alpha.height(), c.pad)))?;
     let path = Path::new(source);
     let stamp = std::fs::metadata(path)
         .and_then(|m| m.modified())
@@ -176,7 +182,7 @@ fn sprite_like_character(shared: &Shared, id: &str, label: &str, source: &str) -
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
         .map_or(0, |d| d.as_secs());
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    std::hash::Hash::hash(&(source, stamp, height, file_for(shared, id)), &mut hasher);
+    std::hash::Hash::hash(&(source, stamp, width, height, pad, file_for(shared, id), 3), &mut hasher);
     let cache = shared.data_dir.join("cache");
     let file = cache.join(format!("sprite_{:016x}.png", std::hash::Hasher::finish(&hasher)));
     if file.exists() {
@@ -184,16 +190,122 @@ fn sprite_like_character(shared: &Shared, id: &str, label: &str, source: &str) -
     }
     let sprite = image::open(path).ok()?.to_rgba8();
     let original = image_for(shared, id).map(|img| img.to_rgba8());
-    let area = match original {
-        Some(original) if original.dimensions() == sprite.dimensions() => visible_box(&original),
-        _ => visible_box(&sprite),
-    };
-    let cropped = crop_to(&sprite, area);
-    let width = ((cropped.width() as f64 * height as f64 / cropped.height() as f64).round() as u32).max(1);
-    let fitted = image::imageops::resize(&cropped, width, height, FilterType::CatmullRom);
+    let fitted = sprite_frame(&sprite, original.as_ref(), width, height, pad);
     let _ = std::fs::create_dir_all(&cache);
     fitted.save(&file).ok()?;
     Some(file)
+}
+
+fn character_box_in(sprite: &RgbaImage, original: Option<&RgbaImage>) -> Option<(f64, f64, f64, f64)> {
+    let original = original?;
+    let (sw, sh) = sprite.dimensions();
+    let (ow, oh) = original.dimensions();
+    let scale = f64::from(sw) / f64::from(ow);
+    if (scale - f64::from(sh) / f64::from(oh)).abs() >= 0.01 {
+        return None;
+    }
+    let (x, y, w, h) = visible_box(original)?;
+    Some((f64::from(x) * scale, f64::from(y) * scale, f64::from(w) * scale, f64::from(h) * scale))
+}
+
+fn sprite_need(sprite: &RgbaImage, original: Option<&RgbaImage>) -> f64 {
+    let Some((sx, _, sw, sh)) = visible_box(sprite) else {
+        return 0.0;
+    };
+    match character_box_in(sprite, original) {
+        Some((x, _, w, h)) => {
+            let left = x - f64::from(sx);
+            let right = f64::from(sx + sw) - (x + w);
+            left.max(right).max(0.0) / h
+        }
+        None => {
+            let ratio = f64::from(sw) / f64::from(sh);
+            let character = original
+                .and_then(visible_box)
+                .map_or(ratio, |(_, _, w, h)| f64::from(w) / f64::from(h));
+            ((ratio - character) / 2.0).max(0.0)
+        }
+    }
+}
+
+fn sprite_frame(sprite: &RgbaImage, original: Option<&RgbaImage>, width: u32, height: u32, pad: u32) -> RgbaImage {
+    let mut canvas = RgbaImage::new(width, height);
+    if let Some((x, y, _, h)) = character_box_in(sprite, original) {
+        let scale = f64::from(height) / h;
+        let w = ((f64::from(sprite.width()) * scale).round() as u32).max(1);
+        let h = ((f64::from(sprite.height()) * scale).round() as u32).max(1);
+        let scaled = image::imageops::resize(sprite, w, h, FilterType::CatmullRom);
+        let left = i64::from(pad) - (x * scale).round() as i64;
+        let top = -((y * scale).round() as i64);
+        image::imageops::overlay(&mut canvas, &scaled, left, top);
+        return canvas;
+    }
+    let cropped = crop_to(sprite, visible_box(sprite));
+    let scaled = ((cropped.width() as f64 * height as f64 / cropped.height() as f64).round() as u32).max(1);
+    let fitted = image::imageops::resize(&cropped, scaled, height, FilterType::CatmullRom);
+    image::imageops::overlay(&mut canvas, &fitted, (i64::from(width) - i64::from(scaled)) / 2, 0);
+    canvas
+}
+
+fn cached_sprite_need(file: &Path, original: &RgbaImage) -> Option<f64> {
+    let stamp = std::fs::metadata(file)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_secs());
+    let key = (file.to_path_buf(), stamp, original.dimensions());
+    if let Some(need) = SPRITE_NEEDS.lock().unwrap().as_ref().and_then(|all| all.get(&key)) {
+        return Some(*need);
+    }
+    let sprite = image::open(file).ok()?.to_rgba8();
+    let need = sprite_need(&sprite, Some(original));
+    SPRITE_NEEDS.lock().unwrap().get_or_insert_with(HashMap::new).insert(key, need);
+    Some(need)
+}
+
+fn widest_need(shared: &Shared, id: &str, original: &RgbaImage) -> f64 {
+    let Some(dir) = media_dir(shared, id, Media::Sprites) else {
+        return 0.0;
+    };
+    std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .flat_map(|moment| media_files(&moment.path(), Media::Sprites))
+        .filter_map(|file| cached_sprite_need(&file, original))
+        .fold(0.0, f64::max)
+}
+
+fn framed(shared: &Shared, id: &str, img: DynamicImage, height: u32) -> (RgbaImage, u32) {
+    let original = img.to_rgba8();
+    let character = fit(img, height);
+    let need = widest_need(shared, id, &original);
+    let pad = ((need * f64::from(character.height())).ceil() as u32).min(character.width());
+    if pad == 0 {
+        return (character, 0);
+    }
+    let mut canvas = RgbaImage::new(character.width() + pad * 2, character.height());
+    image::imageops::overlay(&mut canvas, &character, i64::from(pad), 0);
+    (canvas, pad)
+}
+
+pub fn content_share(label: &str) -> Option<(f64, f64)> {
+    with_characters(|characters| {
+        let character = characters.get(label)?;
+        let width = f64::from(character.alpha.width().max(1));
+        let pad = f64::from(character.pad);
+        Some((pad / width, (width - pad * 2.0) / width))
+    })
+}
+
+pub fn sprite_owner(shared: &Shared, file: &Path) -> Option<String> {
+    let rest = file.strip_prefix(gallery_dir(shared).join(Media::Sprites.folder())).ok()?;
+    rest.components().next().map(|part| part.as_os_str().to_string_lossy().to_string())
+}
+
+pub fn refit(app: &AppHandle, id: &str) {
+    let height = height_for(&shared(app), id);
+    let _ = resize(app, id, height);
 }
 
 fn shown_ids(shared: &Shared) -> Vec<String> {
@@ -795,7 +907,7 @@ fn apply_now(app: &AppHandle) {
         let Some(img) = image_for(&shared, id) else {
             continue;
         };
-        let character = fit(img, height_for(&shared, id));
+        let (character, pad) = framed(&shared, id, img, height_for(&shared, id));
         let (width, height) = (character.width(), character.height());
         let token = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
         let file = cache.join(format!("mascot_{token}_{id}.png"));
@@ -809,7 +921,7 @@ fn apply_now(app: &AppHandle) {
             });
         let view_only = view_only_of(&shared, id);
         with_characters(|characters| {
-            characters.insert(label.clone(), Character { file, alpha: character, view_only, token })
+            characters.insert(label.clone(), Character { file, alpha: character, pad, view_only, token })
         });
         build_window(app, label, x, y, width, height, topmost, token);
     }
@@ -827,7 +939,7 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
         return Ok(());
     };
     let img = image_for(&shared, id).ok_or("That mascot's image is gone.")?;
-    let character = fit(img, height);
+    let (character, pad) = framed(&shared, id, img, height);
     let (width, new_height) = (character.width(), character.height());
 
     let n = RESIZES.fetch_add(1, Ordering::SeqCst);
@@ -836,13 +948,14 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
     let view_only = view_only_of(&shared, id);
     let token = token_of(&label).unwrap_or_else(|| GENERATION.fetch_add(1, Ordering::SeqCst) + 1);
     with_characters(|characters| {
-        characters.insert(label.clone(), Character { file, alpha: character, view_only, token })
+        characters.insert(label.clone(), Character { file, alpha: character, pad, view_only, token })
     });
 
     if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
         let bottom = pos.y + size.height as i32;
+        let center = pos.x + size.width as i32 / 2;
         let _ = window.set_size(PhysicalSize::new(width, new_height));
-        let _ = window.set_position(PhysicalPosition::new(pos.x, bottom - new_height as i32));
+        let _ = window.set_position(PhysicalPosition::new(center - width as i32 / 2, bottom - new_height as i32));
     }
     let _ = app.emit_to(label.as_str(), "mascot-refresh", ());
     Ok(())
@@ -1945,6 +2058,56 @@ mod tests {
         assert!(seen.iter().all(|s| *s));
         assert!((0..200).any(|_| random(2) == 1));
     }
+
+    fn painted(w: u32, h: u32, solid: impl Fn(u32, u32) -> bool) -> RgbaImage {
+        RgbaImage::from_fn(w, h, |x, y| image::Rgba([90, 90, 90, if solid(x, y) { 255 } else { 0 }]))
+    }
+
+    fn body(x: u32, y: u32) -> bool {
+        (30..70).contains(&x) && (20..180).contains(&y)
+    }
+
+    #[test]
+    fn a_line_picture_on_the_same_canvas_keeps_its_arm() {
+        let original = painted(100, 200, body);
+        let sprite = painted(100, 200, |x, y| body(x, y) || ((70..90).contains(&x) && (60..80).contains(&y)));
+        let need = sprite_need(&sprite, Some(&original));
+        assert!((need - 20.0 / 160.0).abs() < 1e-9);
+        let frame = sprite_frame(&sprite, Some(&original), 80, 160, 20);
+        assert_eq!(frame.dimensions(), (80, 160));
+        assert_eq!(frame.get_pixel(20 + 5, 10).0[3], 255);
+        assert_eq!(frame.get_pixel(20 + 55, 50).0[3], 255);
+        assert_eq!(frame.get_pixel(19, 10).0[3], 0);
+    }
+
+    #[test]
+    fn a_bigger_copy_of_the_canvas_lines_up_with_the_character() {
+        let original = painted(100, 200, body);
+        let sprite = painted(200, 400, |x, y| body(x / 2, y / 2));
+        assert_eq!(sprite_need(&sprite, Some(&original)), 0.0);
+        let frame = sprite_frame(&sprite, Some(&original), 40, 160, 0);
+        assert_eq!(frame.get_pixel(1, 2).0[3], 255);
+        assert_eq!(frame.get_pixel(38, 158).0[3], 255);
+    }
+
+    #[test]
+    fn a_faint_glow_does_not_shrink_a_line_picture() {
+        let sprite = RgbaImage::from_fn(100, 200, |x, y| image::Rgba([90, 90, 90, if body(x, y) { 255 } else { 3 }]));
+        let frame = sprite_frame(&sprite, None, 40, 160, 0);
+        assert_eq!(frame.get_pixel(20, 2).0[3], 255);
+        assert_eq!(frame.get_pixel(1, 80).0[3], 255);
+    }
+
+    #[test]
+    fn a_wider_picture_asks_for_room_on_both_sides() {
+        let original = painted(100, 200, body);
+        let wide = painted(300, 220, |_, y| (20..180).contains(&y));
+        let need = sprite_need(&wide, Some(&original));
+        assert!((need - (300.0 / 160.0 - 40.0 / 160.0) / 2.0).abs() < 1e-9);
+        let frame = sprite_frame(&wide, Some(&original), 120, 160, 40);
+        assert_eq!(frame.dimensions(), (120, 160));
+    }
+
     #[test]
     fn lines_go_in_order_or_shuffle_without_repeats() {
         let order: Vec<usize> = (0..5).map(|_| next_line("test:order", 3, true)).collect();

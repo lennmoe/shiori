@@ -175,8 +175,13 @@ pub fn add_mascot_voice(shared: SharedState, id: String, event: String, path: St
 }
 
 #[tauri::command(async)]
-pub fn remove_mascot_voice(shared: SharedState, path: String) -> Result<(), String> {
-    mascot::remove_media(&shared, Path::new(&path))
+pub fn remove_mascot_voice(app: AppHandle, shared: SharedState, path: String) -> Result<(), String> {
+    let owner = mascot::sprite_owner(&shared, Path::new(&path));
+    mascot::remove_media(&shared, Path::new(&path))?;
+    if let Some(id) = owner {
+        mascot::refit(&app, &id);
+    }
+    Ok(())
 }
 
 #[tauri::command(async)]
@@ -185,8 +190,10 @@ pub fn mascot_sprites(shared: SharedState, id: String) -> serde_json::Map<String
 }
 
 #[tauri::command(async)]
-pub fn add_mascot_sprite(shared: SharedState, id: String, event: String, path: String) -> Result<(), String> {
-    mascot::add_media(&shared, &id, mascot::Media::Sprites, &event, Path::new(&path))
+pub fn add_mascot_sprite(app: AppHandle, shared: SharedState, id: String, event: String, path: String) -> Result<(), String> {
+    mascot::add_media(&shared, &id, mascot::Media::Sprites, &event, Path::new(&path))?;
+    mascot::refit(&app, &id);
+    Ok(())
 }
 
 #[tauri::command(async)]
