@@ -432,3 +432,349 @@
   min-width: 36px;
   text-align: right;
 }
+
+dialog.mascot-studio {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+dialog.mascot-studio[open] {
+  display: flex;
+  flex-direction: column;
+  animation: studio-in 0.2s var(--ease);
+}
+
+@keyframes studio-in {
+  from {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+.studio-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex: none;
+}
+
+.studio-back {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.studio-back:hover {
+  background: var(--surface-hover);
+}
+
+.studio-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.studio-name {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-actions {
+  flex-wrap: nowrap;
+}
+
+.studio-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 360px;
+}
+
+.mascot-studio[data-tool="voices"] .studio-body {
+  grid-template-columns: 88px minmax(0, 1fr) 480px;
+}
+
+.studio-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 8px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.studio-rail-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.studio-rail-btn span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.studio-rail-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.studio-rail-btn.on {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.studio-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.studio-rail-btn.on .studio-icon {
+  stroke: var(--accent);
+}
+
+.studio-work {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background:
+    repeating-conic-gradient(rgba(255, 255, 255, 0.05) 0% 25%, transparent 0% 50%) 0 0 / 24px 24px,
+    var(--bg);
+}
+
+.studio-canvas:focus {
+  outline: none;
+}
+
+.studio-canvas[data-bg="dark"] {
+  background: #050506;
+}
+
+.studio-canvas[data-bg="light"] {
+  background: #e9e9ee;
+}
+
+.studio-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: max-content;
+  height: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  padding: 70px;
+  box-sizing: border-box;
+  cursor: grab;
+  touch-action: none;
+}
+
+.studio-stage.panning {
+  cursor: grabbing;
+}
+
+.studio-picture {
+  display: block;
+  width: auto;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.35));
+}
+
+.studio-stage .balloon {
+  position: absolute;
+  margin: 0;
+  max-width: 260px;
+  cursor: grab;
+  user-select: none;
+}
+
+.studio-stage .balloon.dragging {
+  cursor: grabbing;
+  outline: 2px dashed var(--muted);
+  outline-offset: 4px;
+}
+
+.mascot-studio:not([data-tool="bubble"]):not(.talking) .studio-stage .balloon {
+  visibility: hidden;
+}
+
+.studio-picture.hop {
+  animation: studio-hop 0.5s var(--ease);
+}
+
+@keyframes studio-hop {
+  30% {
+    transform: translateY(-14px) scale(1.01);
+  }
+  60% {
+    transform: translateY(0) scale(0.995, 1.005);
+  }
+}
+
+.studio-zoombar {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.studio-tool-btn,
+.studio-zoom-label {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.studio-tool-btn {
+  font-size: 17px;
+}
+
+.studio-tool-btn.wide {
+  font-size: 13px;
+}
+
+.studio-zoom-label {
+  min-width: 54px;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio-tool-btn:hover,
+.studio-zoom-label:hover {
+  background: var(--surface-hover);
+}
+
+.studio-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--border);
+}
+
+.studio-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+}
+
+.studio-swatch.checker {
+  background: repeating-conic-gradient(#888 0% 25%, #444 0% 50%) 0 0 / 10px 10px;
+}
+
+.studio-swatch.dark {
+  background: #050506;
+}
+
+.studio-swatch.light {
+  background: #e9e9ee;
+}
+
+.studio-swatch.on {
+  border-color: var(--accent);
+}
+
+.studio-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.studio-panel-title {
+  margin: 0;
+  padding: 16px 18px 12px;
+  font-size: 15px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.studio-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 18px 24px;
+}
+
+.studio-panel-body .mascot-controls > input[type="text"] {
+  width: 100%;
+}
+
+.studio-panel-body .balloon-controls .field input[type="range"] {
+  width: 130px;
+}
+
+@media (max-width: 1000px) {
+  .studio-body,
+  .mascot-studio[data-tool="voices"] .studio-body {
+    grid-template-columns: 80px minmax(0, 1fr) 320px;
+  }
+
+  .studio-zoombar .muted {
+    display: none;
+  }
+}

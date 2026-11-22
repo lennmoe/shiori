@@ -305,38 +305,360 @@ function card(item, personalities) {
   );
 }
 
-async function mascotSettings(item, personalities) {
-  let close = () => {};
-  let shown = item.shown;
+const STUDIO_TOOLS = [
+  ["general", "General", "M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"],
+  ["bubble", "Bubble", "M21 11.5a8.4 8.4 0 0 1-9 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8z"],
+  ["voices", "Voices & pictures", "M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM21 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"],
+  ["preview", "Preview", "M6 4l14 8-14 8z"],
+];
 
-  const picture = el("img", { src: pictureOf(item), alt: "", draggable: "false" });
-  const stage = el("div", { class: "balloon-stage mascot-stage" }, picture);
+const STUDIO_BACKGROUNDS = [
+  ["checker", "Checkered"],
+  ["dark", "Dark"],
+  ["light", "Light"],
+];
 
-  const showButton = el("button", { class: "btn" });
-  const paintShow = () => {
-    showButton.textContent = t(shown ? "Take it off the desktop" : "Put it on the desktop");
-    showButton.classList.toggle("secondary", shown);
-  };
-  showButton.onclick = () => {
-    shown = !shown;
-    paintShow();
-    call("show_mascot", { id: item.id, shown });
-  };
-  paintShow();
+function strokeIcon(d) {
+  const box = svg("svg", { viewBox: "0 0 24 24", class: "studio-icon", "aria-hidden": "true" });
+  box.append(svg("path", { d }));
+  return box;
+}
 
-  let changePicture = null;
-  if (!item.built_in) {
-    changePicture = el("button", { class: "btn secondary small" }, "Change picture…");
-    changePicture.onclick = async () => {
-      const path = await pickFile({ title: "Choose a mascot image", filters: MASCOT_IMAGE_FILTERS });
-      if (path) {
-        await call("change_mascot_image", { id: item.id, path });
-        pictureChanged[item.id] = Date.now();
-        picture.src = pictureOf(item);
+function mascotSettings(item, personalities) {
+  return new Promise((resolve) => {
+    const studio = el("dialog", { class: "mascot-studio" });
+    let tool = "general";
+    let zoom = 1;
+    let shown = item.shown;
+    let fitted = false;
+
+    const picture = el("img", { class: "studio-picture", src: pictureOf(item), alt: "", draggable: "false" });
+    const sampleText = t("Hi! This is how I'll talk to you while you read.");
+    const words = el("span", { class: "balloon-text" }, sampleText);
+    const bubble = el("div", { class: "balloon to-right" }, words);
+    const stage = el("div", { class: "studio-stage" }, picture, bubble);
+    const canvas = el("div", { class: "studio-canvas", tabindex: "-1" }, stage);
+
+    let draft = balloonStyle(store.settings, item.id);
+    let bubbleTimer = null;
+    const writeBubble = async () => {
+      bubbleTimer = null;
+      const balloons = { ...(store.settings.mascot_balloons || {}) };
+      if (sameStyle(draft, BALLOON_DEFAULT)) {
+        delete balloons[item.id];
+      } else {
+        balloons[item.id] = draft;
+      }
+      store.settings.mascot_balloons = balloons;
+      await call("update_settings", { changes: { mascot_balloons: balloons } });
+    };
+    const saveBubble = () => {
+      clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(writeBubble, 400);
+    };
+
+    let onBubbleMoved = () => {};
+    const placeBubble = draggableBubble(
+      bubble,
+      picture,
+      stage,
+      () => draft.pos,
+      (pos) => {
+        draft.pos = pos;
+        onBubbleMoved();
+        saveBubble();
+      },
+    );
+    applyBalloon(bubble, draft);
+
+    const zoomLabel = el("button", { class: "studio-zoom-label", title: "Actual size" });
+    const sizeStatus = el("span", { class: "muted small-text" });
+    const paintZoom = () => {
+      picture.style.height = `${Math.round(item.height * zoom)}px`;
+      zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+      sizeStatus.textContent = t("{size}px on the desktop", { size: item.height });
+      requestAnimationFrame(placeBubble);
+    };
+    const setZoom = (value) => {
+      zoom = Math.min(4, Math.max(0.1, value));
+      paintZoom();
+    };
+    const fit = () => {
+      const ratio = picture.naturalWidth && picture.naturalHeight ? picture.naturalWidth / picture.naturalHeight : 0.5;
+      const room = Math.min((canvas.clientHeight - 140) / item.height, (canvas.clientWidth - 140) / (item.height * ratio));
+      setZoom(Math.min(1, room));
+      canvas.scrollTo(0, 0);
+    };
+    const firstFit = () => {
+      if (!fitted && studio.open && picture.naturalWidth) {
+        fitted = true;
+        fit();
       }
     };
-  }
+    picture.addEventListener("load", firstFit);
 
+    const zoomOut = el("button", { class: "studio-tool-btn", title: "Zoom out" }, "−");
+    zoomOut.onclick = () => setZoom(zoom / 1.2);
+    const zoomIn = el("button", { class: "studio-tool-btn", title: "Zoom in" }, "+");
+    zoomIn.onclick = () => setZoom(zoom * 1.2);
+    zoomLabel.onclick = () => setZoom(1);
+    const fitButton = el("button", { class: "studio-tool-btn wide" }, "Fit");
+    fitButton.onclick = fit;
+
+    let background = "checker";
+    try {
+      background = localStorage.getItem("mascot-studio-bg") || "checker";
+    } catch {}
+    const paintBackground = () => {
+      canvas.dataset.bg = background;
+      backgrounds.forEach((button) => button.classList.toggle("on", button.dataset.bg === background));
+    };
+    const backgrounds = STUDIO_BACKGROUNDS.map(([key, label]) => {
+      const button = el("button", { class: `studio-swatch ${key}`, title: label, "data-bg": key });
+      button.onclick = () => {
+        background = key;
+        paintBackground();
+        try {
+          localStorage.setItem("mascot-studio-bg", key);
+        } catch {}
+      };
+      return button;
+    });
+    paintBackground();
+
+    const zoomBar = el(
+      "div",
+      { class: "studio-zoombar" },
+      zoomOut,
+      zoomLabel,
+      zoomIn,
+      fitButton,
+      el("span", { class: "studio-sep" }),
+      ...backgrounds,
+      el("span", { class: "studio-sep" }),
+      sizeStatus,
+    );
+
+    canvas.addEventListener(
+      "wheel",
+      (event) => {
+        if (!event.ctrlKey) {
+          return;
+        }
+        event.preventDefault();
+        setZoom(zoom * (event.deltaY < 0 ? 1.1 : 1 / 1.1));
+      },
+      { passive: false },
+    );
+
+    stage.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 && event.button !== 1) {
+        return;
+      }
+      if (event.target.closest(".balloon")) {
+        return;
+      }
+      event.preventDefault();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const left = canvas.scrollLeft;
+      const top = canvas.scrollTop;
+      stage.setPointerCapture(event.pointerId);
+      stage.classList.add("panning");
+      const move = (e) => {
+        canvas.scrollLeft = left - (e.clientX - startX);
+        canvas.scrollTop = top - (e.clientY - startY);
+      };
+      const up = () => {
+        stage.classList.remove("panning");
+        stage.removeEventListener("pointermove", move);
+        stage.removeEventListener("pointerup", up);
+        stage.removeEventListener("pointercancel", up);
+      };
+      stage.addEventListener("pointermove", move);
+      stage.addEventListener("pointerup", up);
+      stage.addEventListener("pointercancel", up);
+    });
+
+    let talkTimer = null;
+    const stopTalking = () => {
+      clearTimeout(talkTimer);
+      clearInterval(bubble._typing);
+      talkTimer = null;
+      studio.classList.remove("talking");
+      bubble.style.removeProperty("width");
+      bubble.style.removeProperty("height");
+      words.textContent = sampleText;
+      if (picture.dataset.sprite) {
+        delete picture.dataset.sprite;
+        picture.src = pictureOf(item);
+      }
+      requestAnimationFrame(placeBubble);
+    };
+    const playLine = (line) => {
+      clearTimeout(talkTimer);
+      studio.classList.add("talking");
+      picture.classList.remove("hop");
+      void picture.offsetWidth;
+      picture.classList.add("hop");
+      if (line.sprite) {
+        picture.dataset.sprite = "1";
+        picture.src = fileUrl(line.sprite);
+      } else if (picture.dataset.sprite) {
+        delete picture.dataset.sprite;
+        picture.src = pictureOf(item);
+      }
+      playBalloon(bubble, words, line.text, draft);
+      requestAnimationFrame(placeBubble);
+      if (line.voice && !line.desktop) {
+        playPreview(line.voice, item.id);
+      }
+      talkTimer = setTimeout(stopTalking, 6000);
+    };
+
+    const nameTitle = el("b", { class: "studio-name" }, t(item.name));
+
+    const showButton = el("button", { class: "btn small" });
+    const paintShow = () => {
+      showButton.textContent = t(shown ? "Take it off the desktop" : "Put it on the desktop");
+      showButton.classList.toggle("secondary", shown);
+    };
+    showButton.onclick = () => {
+      shown = !shown;
+      item.shown = shown;
+      paintShow();
+      call("show_mascot", { id: item.id, shown });
+    };
+    paintShow();
+
+    const share = el("button", { class: "btn secondary small" }, "Share…");
+    share.onclick = () => shareMascot(item);
+
+    const close = () => {
+      if (!studio.open) {
+        return;
+      }
+      if (bubbleTimer) {
+        clearTimeout(bubbleTimer);
+        writeBubble();
+      }
+      preview?.pause();
+      clearTimeout(talkTimer);
+      studio.close();
+    };
+
+    const done = el("button", { class: "btn small" }, "Done");
+    done.onclick = close;
+    const back = el("button", { class: "studio-back", title: "Back", "aria-label": "Back" }, "←");
+    back.onclick = close;
+
+    const topbar = el(
+      "header",
+      { class: "studio-top" },
+      back,
+      el("div", { class: "studio-heading" }, nameTitle, el("span", { class: "muted small-text" }, "Mascot editor")),
+      el("div", { class: "row studio-actions" }, share, showButton, done),
+    );
+
+    const panelTitle = el("h3", { class: "studio-panel-title" });
+    const panelBody = el("div", { class: "studio-panel-body" });
+    const panel = el("aside", { class: "studio-panel" }, panelTitle, panelBody);
+
+    const railButtons = STUDIO_TOOLS.map(([key, label, icon]) => {
+      const button = el("button", { class: "studio-rail-btn", title: label, "data-tool": key }, strokeIcon(icon), el("span", {}, label));
+      button.onclick = () => pick(key);
+      return button;
+    });
+    const rail = el("nav", { class: "studio-rail" }, ...railButtons);
+
+    const panels = {
+      general: () =>
+        generalPanel(item, personalities, {
+          rename: (value) => (nameTitle.textContent = value),
+          resize: () => paintZoom(),
+          pictureChanged: () => {
+            picture.src = pictureOf(item);
+          },
+          removed: close,
+        }),
+      bubble: () =>
+        bubblePanel({
+          bubble,
+          words,
+          sampleText,
+          getDraft: () => draft,
+          setDraft: (value) => {
+            draft = value;
+            applyBalloon(bubble, draft);
+            placeBubble();
+            saveBubble();
+          },
+          reset: async () => {
+            clearTimeout(bubbleTimer);
+            const balloons = { ...(store.settings.mascot_balloons || {}) };
+            delete balloons[item.id];
+            store.settings.mascot_balloons = balloons;
+            await call("update_settings", { changes: { mascot_balloons: balloons } });
+            draft = balloonStyle(store.settings, item.id);
+            applyBalloon(bubble, draft);
+            placeBubble();
+            pick("bubble");
+          },
+          placeBubble,
+          onMoved: (fn) => (onBubbleMoved = fn),
+        }),
+      voices: () => voicesPanel(item),
+      preview: () => previewPanel(item, playLine),
+    };
+
+    function pick(key) {
+      tool = key;
+      studio.dataset.tool = key;
+      railButtons.forEach((button) => button.classList.toggle("on", button.dataset.tool === key));
+      panelTitle.textContent = t(STUDIO_TOOLS.find(([id]) => id === key)[1]);
+      onBubbleMoved = () => {};
+      preview?.pause();
+      stopTalking();
+      panelBody.replaceChildren(panels[key]());
+      panelBody.scrollTop = 0;
+      requestAnimationFrame(placeBubble);
+    }
+
+    studio.append(
+      topbar,
+      el("div", { class: "studio-body" }, rail, el("div", { class: "studio-work" }, canvas, zoomBar), panel),
+    );
+
+    studio.addEventListener("keydown", (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.target.closest("input, textarea, select")) {
+        return;
+      }
+      const actions = { "0": fit, "1": () => setZoom(1), "=": () => setZoom(zoom * 1.2), "+": () => setZoom(zoom * 1.2), "-": () => setZoom(zoom / 1.2) };
+      if (actions[event.key]) {
+        event.preventDefault();
+        actions[event.key]();
+      }
+    });
+    studio.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      close();
+    });
+    studio.addEventListener("close", () => {
+      studio.remove();
+      resolve();
+      load();
+    });
+
+    document.body.append(studio);
+    studio.showModal();
+    canvas.focus({ preventScroll: true });
+    pick(tool);
+    paintZoom();
+    firstFit();
+  });
+}
+
+function generalPanel(item, personalities, hooks) {
   const name = el("input", { type: "text", maxlength: 60 });
   name.value = t(item.name);
   name.onchange = async () => {
@@ -348,6 +670,7 @@ async function mascotSettings(item, personalities) {
     if (value !== t(item.name)) {
       await call("rename_mascot", { id: item.id, name: value });
       item.name = value;
+      hooks.rename(value);
     }
   };
   name.onkeydown = (event) => {
@@ -358,7 +681,11 @@ async function mascotSettings(item, personalities) {
 
   const sizeLabel = el("span", { class: "muted" }, `${item.height}px`);
   const size = el("input", { type: "range", min: 120, max: 1200, step: 10, value: item.height });
-  size.oninput = () => (sizeLabel.textContent = `${size.value}px`);
+  size.oninput = () => {
+    sizeLabel.textContent = `${size.value}px`;
+    item.height = Number(size.value);
+    hooks.resize();
+  };
   size.onchange = () => {
     item.height = Number(size.value);
     call("set_mascot_size", { id: item.id, height: item.height });
@@ -375,8 +702,8 @@ async function mascotSettings(item, personalities) {
       item.personality = "cheerful";
     }
     personality.replaceChildren(
-      ...personalityChoices(personalities).map(({ id, name }) =>
-        el("option", { value: id, selected: id === item.personality }, name),
+      ...personalityChoices(personalities).map(({ id, name: label }) =>
+        el("option", { value: id, selected: id === item.personality }, label),
       ),
     );
     paintLines();
@@ -428,25 +755,26 @@ async function mascotSettings(item, personalities) {
     "Clicks go through it.",
   );
 
-  const voices = el("button", { class: "btn secondary small" }, "Voices & pictures…");
-  voices.onclick = () => editVoices(item);
-  const tryIt = el("button", { class: "btn secondary small" }, "Preview…");
-  tryIt.onclick = () => previewMascot(item);
-  const bubble = el("button", { class: "btn secondary small" }, "Bubble…");
-  bubble.onclick = () => editBalloon(item);
-  const share = el("button", { class: "btn secondary small" }, "Share…");
-  share.onclick = () => shareMascot(item);
-
+  let changePicture = null;
   let remove = null;
   if (!item.built_in) {
+    changePicture = el("button", { class: "btn secondary small" }, "Change picture…");
+    changePicture.onclick = async () => {
+      const path = await pickFile({ title: "Choose a mascot image", filters: MASCOT_IMAGE_FILTERS });
+      if (path) {
+        await call("change_mascot_image", { id: item.id, path });
+        pictureChanged[item.id] = Date.now();
+        hooks.pictureChanged();
+      }
+    };
     remove = el("button", { class: "btn danger small" });
     confirmButton(remove, "Remove", async () => {
       await call("remove_mascot", { id: item.id });
-      close(null);
+      hooks.removed();
     });
   }
 
-  const controls = el(
+  return el(
     "div",
     { class: "balloon-controls mascot-controls" },
     el("div", { class: "field-label" }, "Name"),
@@ -456,25 +784,10 @@ async function mascotSettings(item, personalities) {
     el("div", { class: "row" }, editLines),
     el("div", { class: "field-label" }, "Talking"),
     silent,
-    el("div", { class: "row" }, voices, bubble, tryIt),
     el("div", { class: "field-label" }, "On the desktop"),
     viewOnly,
-    el("div", { class: "row mascot-extra" }, share, changePicture, remove),
+    el("div", { class: "row mascot-extra" }, changePicture, remove),
   );
-
-  await openDialog({
-    title: t("{name}'s settings", { name: t(item.name) }),
-    width: 860,
-    body: el(
-      "div",
-      { class: "balloon-editor mascot-editor" },
-      el("div", { class: "balloon-left" }, stage, showButton),
-      controls,
-    ),
-    actions: [{ label: "Done", value: true }],
-    onOpen: (finish) => (close = finish),
-  });
-  load();
 }
 
 const ALL_LINE_FIELDS = [...LINE_FIELDS, ...LIST_FIELDS];
@@ -752,7 +1065,7 @@ function spriteEffect(item) {
   return el("div", { class: "field" }, el("span", {}, "Picture change"), select);
 }
 
-async function previewMascot(item) {
+function previewPanel(item, playLine) {
   const next = {};
   const rows = VOICE_MOMENTS.map(([moment, label]) => {
     const count = el("span", { class: "muted small-text preview-count" });
@@ -760,9 +1073,10 @@ async function previewMascot(item) {
     play.onclick = async () => {
       play.disabled = true;
       try {
-        const shown = await call("preview_mascot_line", { id: item.id, event: moment, index: next[moment] || 0 });
-        next[moment] = shown.index + 1;
-        count.textContent = `${shown.index + 1}/${shown.count}`;
+        const line = await call("preview_mascot_line", { id: item.id, event: moment, index: next[moment] || 0 });
+        next[moment] = line.index + 1;
+        count.textContent = `${line.index + 1}/${line.count}`;
+        playLine(line);
       } catch {
       } finally {
         play.disabled = false;
@@ -770,24 +1084,19 @@ async function previewMascot(item) {
     };
     return el("div", { class: "preview-row" }, play, el("span", {}, label), count);
   });
-  await openDialog({
-    title: t("Preview {name}", { name: t(item.name) }),
-    body: el(
-      "div",
-      { class: "line-fields" },
-      el(
-        "p",
-        { class: "muted small-text" },
-        "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.",
-      ),
-      item.shown ? null : el("p", { class: "small-text error-text" }, "Show this mascot first."),
-      el("div", { class: "preview-rows" }, ...rows),
+  return el(
+    "div",
+    { class: "line-fields" },
+    el(
+      "p",
+      { class: "muted small-text" },
+      "Each click shows the next line with its bubble, picture and voice, so you can check them one by one.",
     ),
-    actions: [{ label: "Done", value: true }],
-  });
+    el("div", { class: "preview-rows" }, ...rows),
+  );
 }
 
-async function editVoices(item) {
+function voicesPanel(item) {
   const body = el("div", { class: "line-fields" });
   const volume = voiceVolume(item);
   const effect = spriteEffect(item);
@@ -890,14 +1199,8 @@ async function editVoices(item) {
     );
   };
 
-  await render();
-  await openDialog({
-    title: t("{name}'s voice & pictures", { name: t(item.name) }),
-    wide: true,
-    body,
-    actions: [{ label: "Done", value: true }],
-  });
-  preview?.pause();
+  render();
+  return body;
 }
 
 const BALLOON_ANIM_NAMES = [
@@ -1016,52 +1319,31 @@ function draggableBubble(bubble, picture, stage, getPos, setPos) {
   return place;
 }
 
-async function editBalloon(item) {
-  let draft = balloonStyle(store.settings, item.id);
-
-  const sampleText = t("Hi! This is how I'll talk to you while you read.");
-  const words = el("span", { class: "balloon-text" }, sampleText);
-  const bubble = el("div", { class: "balloon to-right" }, words);
-  const replay = () => playBalloon(bubble, words, sampleText, draft);
-  const picture = el("img", {
-    src: item.built_in ? "assets/mascot.png" : fileUrl(item.file),
-    alt: "",
-    draggable: "false",
-  });
-  const stage = el("div", { class: "balloon-stage" }, picture, bubble);
+function bubblePanel({ bubble, words, sampleText, getDraft, setDraft, reset, placeBubble, onMoved }) {
   const controls = el("div", { class: "balloon-controls" });
+  const replay = () => playBalloon(bubble, words, sampleText, getDraft());
+  const update = (changes) => setDraft({ ...getDraft(), ...changes });
+
   const autoPlace = el("button", { class: "btn secondary small" }, "Put it back automatically");
-  const placeBubble = draggableBubble(
-    bubble,
-    picture,
-    stage,
-    () => draft.pos,
-    (pos) => {
-      draft.pos = pos;
-      autoPlace.disabled = false;
-    },
-  );
-  autoPlace.disabled = !draft.pos;
+  autoPlace.disabled = !getDraft().pos;
+  onMoved(() => (autoPlace.disabled = false));
   autoPlace.onclick = () => {
-    draft.pos = null;
+    update({ pos: null });
     autoPlace.disabled = true;
     placeBubble();
   };
 
-  const update = (changes) => {
-    draft = { ...draft, ...changes };
-    applyBalloon(bubble, draft);
-    placeBubble();
-  };
+  const resetButton = el("button", { class: "btn secondary small" }, "Reset");
+  resetButton.onclick = reset;
 
   const colorInput = (key, label, fallback) => {
-    const input = el("input", { type: "color", value: draft[key] || themeColor(fallback) });
+    const input = el("input", { type: "color", value: getDraft()[key] || themeColor(fallback) });
     input.oninput = () => update({ [key]: input.value });
     return el("label", {}, input, label);
   };
 
   const range = (key, label, min, max, unit = "px") => {
-    const input = el("input", { type: "range", min, max, step: 1, value: draft[key] });
+    const input = el("input", { type: "range", min, max, step: 1, value: getDraft()[key] });
     const shown = el("span", { class: "muted" });
     const show = () => (shown.textContent = `${input.value}${unit}`);
     input.oninput = () => {
@@ -1073,9 +1355,8 @@ async function editBalloon(item) {
   };
 
   const render = () => {
-    applyBalloon(bubble, draft);
-    requestAnimationFrame(placeBubble);
-    const presets = el(
+    const draft = getDraft();
+    const presetList = el(
       "div",
       { class: "balloon-presets" },
       ...BALLOON_PRESETS.map(([name, preset]) => {
@@ -1089,7 +1370,8 @@ async function editBalloon(item) {
           el("span", { class: "small-text" }, name),
         );
         button.onclick = () => {
-          draft = { ...style, size: draft.size, pos: draft.pos, anim: draft.anim };
+          const current = getDraft();
+          setDraft({ ...style, size: current.size, pos: current.pos, anim: current.anim });
           render();
         };
         return button;
@@ -1099,18 +1381,14 @@ async function editBalloon(item) {
     const font = el(
       "select",
       {},
-      ...BALLOON_FONT_NAMES.map(([value, label]) =>
-        el("option", { value, selected: value === draft.font }, t(label)),
-      ),
+      ...BALLOON_FONT_NAMES.map(([value, label]) => el("option", { value, selected: value === draft.font }, t(label))),
     );
     font.onchange = () => update({ font: font.value });
 
     const anim = el(
       "select",
       {},
-      ...BALLOON_ANIM_NAMES.map(([value, label]) =>
-        el("option", { value, selected: value === draft.anim }, t(label)),
-      ),
+      ...BALLOON_ANIM_NAMES.map(([value, label]) => el("option", { value, selected: value === draft.anim }, t(label))),
     );
     anim.onchange = () => {
       update({ anim: anim.value });
@@ -1120,8 +1398,10 @@ async function editBalloon(item) {
     again.onclick = replay;
 
     controls.replaceChildren(
+      el("div", { class: "hint-text" }, "Drag the bubble to choose where it shows up next to the mascot."),
+      el("div", { class: "row" }, autoPlace, resetButton),
       el("div", { class: "field-label" }, "Style"),
-      presets,
+      presetList,
       el(
         "div",
         { class: "custom-colors" },
@@ -1140,39 +1420,7 @@ async function editBalloon(item) {
     );
   };
   render();
-
-  const answer = await openDialog({
-    title: t("{name}'s bubble", { name: t(item.name) }),
-    width: 1000,
-    body: el(
-      "div",
-      { class: "balloon-editor" },
-      el(
-        "div",
-        { class: "balloon-left" },
-        stage,
-        el("div", { class: "hint-text" }, "Drag the bubble to choose where it shows up next to the mascot."),
-        autoPlace,
-      ),
-      controls,
-    ),
-    actions: [
-      { label: "Reset", kind: "secondary", value: "reset" },
-      { label: "Cancel", kind: "secondary", value: null },
-      { label: "Save", value: "save" },
-    ],
-  });
-  if (!answer) {
-    return;
-  }
-  const balloons = { ...(store.settings.mascot_balloons || {}) };
-  if (answer === "reset" || sameStyle(draft, BALLOON_DEFAULT)) {
-    delete balloons[item.id];
-  } else {
-    balloons[item.id] = draft;
-  }
-  store.settings.mascot_balloons = balloons;
-  await call("update_settings", { changes: { mascot_balloons: balloons } });
+  return controls;
 }
 
 async function shareMascot(item) {

@@ -1220,12 +1220,6 @@ fn moment_lines<'a>(lines: &'a Lines, event: &str) -> Option<&'a Vec<String>> {
 
 pub fn preview(app: &AppHandle, id: &str, event: &str, index: usize) -> Result<Value, String> {
     let label = format!("{WINDOW_PREFIX}{id}");
-    if !with_characters(|characters| characters.contains_key(&label)) {
-        return Err("Show this mascot first.".into());
-    }
-    if tucked() {
-        return Err("The mascots are tucked away right now.".into());
-    }
     let shared = shared(app);
     let language = lang::resolve(&shared.config.lock().unwrap().str("language"));
     let lines = lines_for(&shared, id, language);
@@ -1236,9 +1230,21 @@ pub fn preview(app: &AppHandle, id: &str, event: &str, index: usize) -> Result<V
     let index = index % list.len();
     let name = reading_now(app).map_or_else(|| "Visual Novel".to_string(), |reading| reading.name);
     let text = list[index].replace("{name}", &name).replace("{section}", "1");
-    let said = Said { text, index: (list.len() > 1).then_some(index) };
-    speak(app, &shared, &label, event, said, 6, true);
-    Ok(json!({ "index": index, "count": list.len() }))
+    let draw = if list.len() > 1 { index } else { random(1 << 16) };
+    let voice = media_for(&shared, id, Media::Voices, event, draw);
+    let sprite = media_for(&shared, id, Media::Sprites, event, draw);
+    let desktop = with_characters(|characters| characters.contains_key(&label)) && !tucked();
+    if desktop {
+        speak(app, &shared, &label, event, Said { text: text.clone(), index: Some(draw) }, 6, true);
+    }
+    Ok(json!({
+        "index": index,
+        "count": list.len(),
+        "text": text,
+        "voice": voice,
+        "sprite": sprite,
+        "desktop": desktop,
+    }))
 }
 
 struct Said {
