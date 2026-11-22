@@ -1,6 +1,6 @@
 [package]
 name = "shiori"
-version = "2.8.0"
+version = "2.9.0"
 description = "Shiori RPC"
 edition = "2021"
 
