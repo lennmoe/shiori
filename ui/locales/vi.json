@@ -198,7 +198,7 @@
     "{name} is now a mascot, with the basic cutout": "{name} giờ là linh vật, với cách tách cơ bản",
     "The AI model needs the Microsoft Visual C++ Redistributable. Install it, then try again. For now, the basic cutout is used.": "Mô hình AI cần Microsoft Visual C++ Redistributable. Hãy cài đặt rồi thử lại. Hiện tại sẽ dùng cách tách cơ bản.",
     "Cleaner mascots with AI": "Linh vật sạch hơn với AI",
-    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 250 MB, then 185 MB on your disk.": "Mô hình AI tách nhân vật sạch hơn nhiều. Nó chạy trên máy của bạn và ảnh vẫn ở trên máy. Chỉ tải một lần: khoảng 250 MB, sau đó chiếm 185 MB trên ổ đĩa.",
+    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 340 MB, then 185 MB on your disk.": "Mô hình AI tách nhân vật sạch hơn nhiều. Nó chạy trên máy của bạn và ảnh vẫn ở trên máy. Chỉ tải một lần: khoảng 340 MB, sau đó chiếm 185 MB trên ổ đĩa.",
     "Not now": "Để sau",
     "Download": "Tải xuống",
     "Downloading the AI model…": "Đang tải mô hình AI…",

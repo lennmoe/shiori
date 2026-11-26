@@ -198,7 +198,7 @@
     "{name} is now a mascot, with the basic cutout": "{name} 現在是吉祥物了,使用基本背景移除",
     "The AI model needs the Microsoft Visual C++ Redistributable. Install it, then try again. For now, the basic cutout is used.": "AI 模型需要 Microsoft Visual C++ Redistributable。請安裝後再試一次。目前先使用基本背景移除。",
     "Cleaner mascots with AI": "用 AI 讓吉祥物更乾淨",
-    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 250 MB, then 185 MB on your disk.": "AI 模型能更乾淨地背景移除角色。它在你的電腦上執行,圖像也只留在電腦裡。只需下載一次:約 250 MB,之後佔用 185 MB 磁碟空間。",
+    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 340 MB, then 185 MB on your disk.": "AI 模型能更乾淨地背景移除角色。它在你的電腦上執行,圖像也只留在電腦裡。只需下載一次:約 340 MB,之後佔用 185 MB 磁碟空間。",
     "Not now": "現在不要",
     "Download": "下載",
     "Downloading the AI model…": "正在下載 AI 模型…",

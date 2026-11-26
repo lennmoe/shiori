@@ -1,9 +1,8 @@
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::time::Duration;
 
 use image::imageops::FilterType;
 use image::{GrayImage, Luma, RgbaImage};
@@ -11,18 +10,12 @@ use ort::environment::Environment;
 use ort::session::Session;
 use ort::value::Tensor;
 use serde_json::json;
-use sha2::{Digest, Sha256};
 use zip::ZipArchive;
 
+use crate::download::{self, Download, CANCELLED};
 use crate::mascot::neighbours;
 use crate::state::Shared;
 
-const USER_AGENT: &str = concat!("ShioriRPC/", env!("CARGO_PKG_VERSION"));
-const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(3600);
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
-const CHUNK: usize = 64 * 1024;
-const CANCELLED: &str = "cancelled";
-const DAMAGED: &str = "The downloaded file is incomplete or corrupted.";
 const COULD_NOT_DOWNLOAD: &str = "Couldn't download the AI model. Using the basic cutout.";
 const NEEDS_LIBRARIES: &str = "The AI model needs the Microsoft Visual C++ Redistributable. Install it, then try again. For now, the basic cutout is used.";
 const SYSTEM_LIBRARIES: [&str; 4] =
@@ -30,18 +23,12 @@ const SYSTEM_LIBRARIES: [&str; 4] =
 
 const MODEL_FILE: &str = "isnetis.onnx";
 const RUNTIME_FILE: &str = "onnxruntime.dll";
-const RUNTIME_ENTRY: &str = "onnxruntime-win-x64-1.31.1/lib/onnxruntime.dll";
-
-struct Download {
-    url: &'static str,
-    sha256: &'static str,
-    size: u64,
-}
+const RUNTIME_ENTRY: &str = "runtimes/win-x64/native/onnxruntime.dll";
 
 const RUNTIME: Download = Download {
-    url: "https://github.com/microsoft/onnxruntime/releases/download/v1.31.1/onnxruntime-win-x64-1.31.1.zip",
-    sha256: "5869e26bb25314375f2d5ef1877e3ea06b1543d6c710e6e4a1ec2f7177ab4b2c",
-    size: 82_929_944,
+    url: "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime/1.31.1/microsoft.ml.onnxruntime.1.31.1.nupkg",
+    sha256: "6871ccbc97f3d5bdb4095a1dcec33aa78d56f6ed8de5980ef5fa1d9f2e7c679a",
+    size: 159_626_394,
 };
 const MODEL: Download = Download {
     url: "https://huggingface.co/skytnt/anime-seg/resolve/main/isnetis.onnx",
@@ -116,12 +103,7 @@ pub fn download(shared: &Shared) -> Result<bool, String> {
 fn download_missing(shared: &Shared) -> Result<(), String> {
     let dir = folder(shared);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let client = reqwest::blocking::Client::builder()
-        .user_agent(USER_AGENT)
-        .connect_timeout(CONNECT_TIMEOUT)
-        .timeout(DOWNLOAD_TIMEOUT)
-        .build()
-        .map_err(|e| e.to_string())?;
+    let client = download::client()?;
 
     let dll = dir.join(RUNTIME_FILE);
     let model = dir.join(MODEL_FILE);
@@ -153,14 +135,8 @@ fn fetch(
     done: &mut u64,
     total: u64,
 ) -> Result<(), String> {
-    let response = client
-        .get(item.url)
-        .send()
-        .and_then(|r| r.error_for_status())
-        .map_err(|e| e.to_string())?;
-    let file = File::create(part).map_err(|e| e.to_string())?;
     let mut shown = u64::MAX;
-    let copied = copy_checked(response, file, item.sha256, |chunk| {
+    download::fetch(client, item, part, &STOP, |chunk| {
         *done += chunk;
         let percent = *done * 100 / total.max(1);
         if percent != shown {
@@ -170,38 +146,7 @@ fn fetch(
                 json!({ "percent": percent, "done": *done / 1_000_000, "total": total / 1_000_000 }),
             );
         }
-    });
-    if copied.is_err() {
-        let _ = fs::remove_file(part);
-    }
-    copied
-}
-
-fn copy_checked(
-    mut from: impl Read,
-    mut to: impl Write,
-    sha256: &str,
-    mut progress: impl FnMut(u64),
-) -> Result<(), String> {
-    let mut hash = Sha256::new();
-    let mut buffer = vec![0; CHUNK];
-    loop {
-        if STOP.load(Ordering::SeqCst) {
-            return Err(CANCELLED.into());
-        }
-        let read = from.read(&mut buffer).map_err(|e| e.to_string())?;
-        if read == 0 {
-            break;
-        }
-        hash.update(&buffer[..read]);
-        to.write_all(&buffer[..read]).map_err(|e| e.to_string())?;
-        progress(read as u64);
-    }
-    let found: String = hash.finalize().iter().map(|b| format!("{b:02x}")).collect();
-    if found != sha256 {
-        return Err(DAMAGED.into());
-    }
-    Ok(())
+    })
 }
 
 fn unpack_runtime(archive: &Path, dll: &Path) -> Result<(), String> {
@@ -396,22 +341,5 @@ mod tests {
     #[test]
     fn missing_system_libraries_are_noticed() {
         assert!(!has_libraries(Path::new("C:\\no\\such\\folder")));
-    }
-
-    #[test]
-    fn a_wrong_hash_is_refused() {
-        let mut out = Vec::new();
-        let result = copy_checked(&b"hello"[..], &mut out, "00", |_| {});
-        assert_eq!(result, Err(DAMAGED.to_string()));
-    }
-
-    #[test]
-    fn the_right_hash_is_accepted() {
-        let mut out = Vec::new();
-        let mut seen = 0;
-        let hello = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
-        assert_eq!(copy_checked(&b"hello"[..], &mut out, hello, |n| seen += n), Ok(()));
-        assert_eq!(out, b"hello");
-        assert_eq!(seen, 5);
     }
 }

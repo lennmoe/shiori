@@ -101,7 +101,7 @@ async function prepareCutout() {
       "p",
       { class: "muted" },
       "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures " +
-        "stay there. It downloads once: about 250 MB, then 185 MB on your disk.",
+        "stay there. It downloads once: about 340 MB, then 185 MB on your disk.",
     ),
     actions: [
       { label: "Not now", kind: "secondary", value: "basic" },

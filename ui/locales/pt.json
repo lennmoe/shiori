@@ -198,7 +198,7 @@
     "{name} is now a mascot, with the basic cutout": "{name} agora é um mascote, com o recorte básico",
     "The AI model needs the Microsoft Visual C++ Redistributable. Install it, then try again. For now, the basic cutout is used.": "O modelo de IA precisa do Microsoft Visual C++ Redistributable. Instale-o e tente de novo. Por enquanto, é usado o recorte básico.",
     "Cleaner mascots with AI": "Mascotes mais limpos com IA",
-    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 250 MB, then 185 MB on your disk.": "Um modelo de IA recorta o personagem com muito mais limpeza. Ele roda no seu PC e suas imagens ficam nele. O download é feito uma só vez: cerca de 250 MB, depois 185 MB no disco.",
+    "An AI model cuts the character out much more cleanly. It runs on your PC and your pictures stay there. It downloads once: about 340 MB, then 185 MB on your disk.": "Um modelo de IA recorta o personagem com muito mais limpeza. Ele roda no seu PC e suas imagens ficam nele. O download é feito uma só vez: cerca de 340 MB, depois 185 MB no disco.",
     "Not now": "Agora não",
     "Download": "Baixar",
     "Downloading the AI model…": "Baixando o modelo de IA…",
