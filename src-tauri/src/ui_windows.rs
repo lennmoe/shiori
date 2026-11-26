@@ -259,7 +259,7 @@ pub fn balloon_text() -> serde_json::Value {
     serde_json::json!({ "text": text, "mascot": mascot })
 }
 
-pub fn place_balloon(app: &AppHandle, width: u32, height: u32, anchor: Option<(f64, f64)>) -> &'static str {
+pub fn place_balloon(app: &AppHandle, width: u32, height: u32, anchor: Option<Vec<f64>>) -> &'static str {
     let Some(speaker) = crate::mascot::speaker() else {
         return "left";
     };
@@ -283,12 +283,18 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32, anchor: Option<(f
     let (pad, share) = crate::mascot::content_share(&speaker).unwrap_or((0.0, 1.0));
     let (px, cw) = (pos.x + (pad * f64::from(cw)) as i32, (share * f64::from(cw)) as i32);
 
-    let (x, y, before) = match anchor {
-        Some((ax, ay)) if ax.is_finite() && ay.is_finite() => {
+    let anchor = anchor.filter(|a| (2..=3).contains(&a.len()) && a.iter().all(|n| n.is_finite()));
+    let (x, y, before) = match anchor.as_deref() {
+        Some([ax, ay, rest @ ..]) => {
             let (ax, ay) = (ax.clamp(-3.0, 4.0), ay.clamp(-3.0, 4.0));
-            let x = px + (ax * cw as f64) as i32 - bw / 2;
+            let at = px + (ax * cw as f64) as i32;
+            let (x, before) = match rest.first() {
+                Some(side) if *side > 0.0 => (at - bw, true),
+                Some(_) => (at, false),
+                None => (at - bw / 2, ax < 0.5),
+            };
             let y = pos.y + (ay * ch as f64) as i32 - bh / 2;
-            (x, y, ax < 0.5)
+            (x, y, before)
         }
         _ => {
             let mut x = px - bw + cw / 6;

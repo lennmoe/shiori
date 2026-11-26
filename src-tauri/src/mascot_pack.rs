@@ -310,8 +310,14 @@ fn clean_balloon(balloon: &Value) -> Option<Value> {
         .get("pos")
         .and_then(Value::as_array)
         .map(|p| p.iter().filter_map(Value::as_f64).filter(|n| n.is_finite()).collect());
-    if let Some([x, y]) = pos.as_deref() {
-        clean.insert("pos".into(), json!([x.clamp(-3.0, 4.0), y.clamp(-3.0, 4.0)]));
+    match pos.as_deref() {
+        Some([x, y]) => {
+            clean.insert("pos".into(), json!([x.clamp(-3.0, 4.0), y.clamp(-3.0, 4.0)]));
+        }
+        Some([x, y, side]) if side.abs() == 1.0 => {
+            clean.insert("pos".into(), json!([x.clamp(-3.0, 4.0), y.clamp(-3.0, 4.0), side]));
+        }
+        _ => {}
     }
     (!clean.is_empty()).then_some(Value::Object(clean))
 }
@@ -361,6 +367,8 @@ mod tests {
         assert!(clean.get("evil").is_none());
         assert!(clean_balloon(&json!("nope")).is_none());
         assert!(clean_balloon(&json!({ "pos": [1] })).is_none());
+        assert_eq!(clean_balloon(&json!({ "pos": [0.1, 0.2, -1] })).unwrap()["pos"], json!([0.1, 0.2, -1.0]));
+        assert!(clean_balloon(&json!({ "pos": [0.1, 0.2, 5] })).is_none());
     }
 
     #[test]

@@ -316,6 +316,7 @@ fn main() {
             commands::walkthrough::walkthrough_translate,
             commands::walkthrough::toggle_walkthrough_overlay,
             commands::popups::rename_mascot,
+            commands::popups::mascot_area,
             commands::popups::show_mascot,
             commands::popups::set_mascot_size,
             commands::popups::mascot_personalities,

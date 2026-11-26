@@ -118,6 +118,11 @@ pub fn rename_mascot(app: AppHandle, shared: SharedState, id: String, name: Stri
 }
 
 #[tauri::command(async)]
+pub fn mascot_area(shared: SharedState, id: String, sprite: Option<String>) -> Option<[f64; 4]> {
+    mascot::visible_area(&shared, &id, sprite.as_deref().map(std::path::Path::new))
+}
+
+#[tauri::command(async)]
 pub fn ui_language(shared: SharedState) -> &'static str {
     crate::lang::resolve(&shared.config.lock().unwrap().str("language"))
 }
@@ -235,7 +240,7 @@ pub fn place_balloon(
     app: AppHandle,
     width: u32,
     height: u32,
-    anchor: Option<(f64, f64)>,
+    anchor: Option<Vec<f64>>,
 ) -> &'static str {
     ui_windows::place_balloon(&app, width, height, anchor)
 }

@@ -640,9 +640,14 @@ dialog.mascot-studio[open] {
   cursor: grabbing;
 }
 
+.studio-figure {
+  position: relative;
+  pointer-events: none;
+}
+
 .studio-picture {
+  position: absolute;
   display: block;
-  width: auto;
   max-width: none;
   pointer-events: none;
   user-select: none;

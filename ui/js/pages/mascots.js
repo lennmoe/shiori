@@ -386,7 +386,22 @@ function mascotSettings(item, personalities) {
     const sampleText = t("Hi! This is how I'll talk to you while you read.");
     const words = el("span", { class: "balloon-text" }, sampleText);
     const bubble = el("div", { class: "balloon to-right" }, words);
-    const stage = el("div", { class: "studio-stage" }, picture, bubble);
+    const figure = el("div", { class: "studio-figure" }, picture);
+    const stage = el("div", { class: "studio-stage" }, figure, bubble);
+    let areas = new Map();
+    let base = null;
+    let shape = null;
+    const areaOf = (sprite) => {
+      const key = sprite || "";
+      if (!areas.has(key)) {
+        const src = sprite ? fileUrl(sprite) : pictureOf(item);
+        areas.set(
+          key,
+          visibleArea(src).then((area) => area || call("mascot_area", { id: item.id, sprite: sprite || null }).catch(() => null)),
+        );
+      }
+      return areas.get(key);
+    };
     const canvas = el("div", { class: "studio-canvas", tabindex: "-1" }, stage);
 
     let draft = balloonStyle(store.settings, item.id);
@@ -410,7 +425,7 @@ function mascotSettings(item, personalities) {
     let onBubbleMoved = () => {};
     const placeBubble = draggableBubble(
       bubble,
-      picture,
+      figure,
       stage,
       () => draft.pos,
       (pos) => {
@@ -423,8 +438,27 @@ function mascotSettings(item, personalities) {
 
     const zoomLabel = el("button", { class: "studio-zoom-label", title: "Actual size" });
     const sizeStatus = el("span", { class: "muted small-text" });
+    const baseRatio = () => (base ? (base.area[2] * base.width) / (base.area[3] * base.height) : 0.5);
+    const layout = () => {
+      const height = item.height * zoom;
+      const width = height * baseRatio();
+      figure.style.width = `${width}px`;
+      figure.style.height = `${height}px`;
+      picture.style.visibility = shape ? "" : "hidden";
+      if (!shape) {
+        return;
+      }
+      const [x, y, w, h] = shape.area;
+      const pictureHeight = height / h;
+      const pictureWidth = (pictureHeight * shape.width) / shape.height;
+      const left = shape.centered ? (width - w * pictureWidth) / 2 - x * pictureWidth : -x * pictureWidth;
+      picture.style.width = `${pictureWidth}px`;
+      picture.style.height = `${pictureHeight}px`;
+      picture.style.left = `${left}px`;
+      picture.style.top = `${-y * pictureHeight}px`;
+    };
     const paintZoom = () => {
-      picture.style.height = `${Math.round(item.height * zoom)}px`;
+      layout();
       zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
       sizeStatus.textContent = t("{size}px on the desktop", { size: item.height });
       requestAnimationFrame(placeBubble);
@@ -434,18 +468,44 @@ function mascotSettings(item, personalities) {
       paintZoom();
     };
     const fit = () => {
-      const ratio = picture.naturalWidth && picture.naturalHeight ? picture.naturalWidth / picture.naturalHeight : 0.5;
-      const room = Math.min((canvas.clientHeight - 140) / item.height, (canvas.clientWidth - 140) / (item.height * ratio));
+      const room = Math.min((canvas.clientHeight - 140) / item.height, (canvas.clientWidth - 140) / (item.height * baseRatio()));
       setZoom(Math.min(1, room));
       canvas.scrollTo(0, 0);
     };
     const firstFit = () => {
-      if (!fitted && studio.open && picture.naturalWidth) {
+      if (!fitted && studio.open && base) {
         fitted = true;
         fit();
       }
     };
-    picture.addEventListener("load", firstFit);
+    const measure = async () => {
+      const sprite = picture.dataset.sprite || null;
+      const src = picture.src;
+      const size = { width: picture.naturalWidth || 1, height: picture.naturalHeight || 1 };
+      if (!sprite) {
+        base = { area: (await areaOf(null)) || [0, 0, 1, 1], ...size };
+      } else if (!base) {
+        return;
+      }
+      if (picture.src !== src) {
+        return;
+      }
+      if (!sprite) {
+        shape = { ...base, centered: false };
+      } else {
+        const same = Math.abs(size.width / size.height - base.width / base.height) < 0.01 * (base.width / base.height);
+        shape = same
+          ? { area: base.area, ...size, centered: false }
+          : { area: (await areaOf(sprite)) || [0, 0, 1, 1], ...size, centered: true };
+        if (picture.src !== src) {
+          return;
+        }
+      }
+      layout();
+      firstFit();
+      requestAnimationFrame(placeBubble);
+    };
+    picture.addEventListener("load", measure);
 
     const zoomOut = el("button", { class: "studio-tool-btn", title: "Zoom out" }, "−");
     zoomOut.onclick = () => setZoom(zoom / 1.2);
@@ -552,7 +612,7 @@ function mascotSettings(item, personalities) {
       void picture.offsetWidth;
       picture.classList.add("hop");
       if (line.sprite) {
-        picture.dataset.sprite = "1";
+        picture.dataset.sprite = line.sprite;
         picture.src = fileUrl(line.sprite);
       } else if (picture.dataset.sprite) {
         delete picture.dataset.sprite;
@@ -627,6 +687,9 @@ function mascotSettings(item, personalities) {
           rename: (value) => (nameTitle.textContent = value),
           resize: () => paintZoom(),
           pictureChanged: () => {
+            areas = new Map();
+            base = null;
+            delete picture.dataset.sprite;
             picture.src = pictureOf(item);
           },
           removed: close,
@@ -1310,6 +1373,47 @@ function pictureBox(img, stage) {
   };
 }
 
+function visibleArea(src) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onerror = () => resolve(null);
+    image.onload = () => {
+      try {
+        const scale = Math.min(1, 1024 / Math.max(image.naturalWidth, image.naturalHeight));
+        const width = Math.max(1, Math.round(image.naturalWidth * scale));
+        const height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        context.imageSmoothingEnabled = false;
+        context.drawImage(image, 0, 0, width, height);
+        const pixels = context.getImageData(0, 0, width, height).data;
+        let left = width;
+        let top = height;
+        let right = -1;
+        let bottom = -1;
+        for (let y = 0; y < height; y++) {
+          const row = y * width * 4;
+          for (let x = 0; x < width; x++) {
+            if (pixels[row + x * 4 + 3] > 8) {
+              if (x < left) left = x;
+              if (x > right) right = x;
+              if (y < top) top = y;
+              bottom = y;
+            }
+          }
+        }
+        resolve(right < 0 ? null : [left / width, top / height, (right - left + 1) / width, (bottom - top + 1) / height]);
+      } catch {
+        resolve(null);
+      }
+    };
+    image.src = src;
+  });
+}
+
 function draggableBubble(bubble, picture, stage, getPos, setPos) {
   const place = () => {
     const pic = pictureBox(picture, stage);
@@ -1320,9 +1424,10 @@ function draggableBubble(bubble, picture, stage, getPos, setPos) {
     let y;
     let toRight;
     if (pos) {
-      x = pic.left + pos[0] * pic.width - w / 2;
+      const at = pic.left + pos[0] * pic.width;
+      toRight = pos.length > 2 ? pos[2] > 0 : pos[0] < 0.5;
+      x = pos.length > 2 ? (toRight ? at - w : at) : at - w / 2;
       y = pic.top + pos[1] * pic.height - h / 2;
-      toRight = pos[0] < 0.5;
     } else {
       x = pic.left - w + pic.width / 6;
       toRight = x >= 0;
@@ -1348,9 +1453,10 @@ function draggableBubble(bubble, picture, stage, getPos, setPos) {
       const pic = pictureBox(picture, stage);
       const x = Math.max(0, Math.min(e.clientX - startX, stage.clientWidth - bubble.offsetWidth));
       const y = Math.max(0, Math.min(e.clientY - startY, stage.clientHeight - bubble.offsetHeight));
-      const cx = (x + bubble.offsetWidth / 2 - pic.left) / pic.width;
+      const before = (x + bubble.offsetWidth / 2 - pic.left) / pic.width < 0.5;
+      const edge = (x + (before ? bubble.offsetWidth : 0) - pic.left) / pic.width;
       const cy = (y + bubble.offsetHeight / 2 - pic.top) / pic.height;
-      setPos([Math.round(cx * 1000) / 1000, Math.round(cy * 1000) / 1000]);
+      setPos([Math.round(edge * 1000) / 1000, Math.round(cy * 1000) / 1000, before ? 1 : -1]);
       place();
     };
     const up = () => {

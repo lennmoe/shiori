@@ -168,6 +168,16 @@ fn crop_to(img: &RgbaImage, area: Option<(u32, u32, u32, u32)>) -> RgbaImage {
     }
 }
 
+pub fn visible_area(shared: &Shared, id: &str, sprite: Option<&Path>) -> Option<[f64; 4]> {
+    let img = match sprite {
+        Some(path) => image::open(path).ok()?.to_rgba8(),
+        None => image_for(shared, id)?.to_rgba8(),
+    };
+    let (x, y, w, h) = visible_box(&img)?;
+    let (width, height) = (f64::from(img.width()), f64::from(img.height()));
+    Some([f64::from(x) / width, f64::from(y) / height, f64::from(w) / width, f64::from(h) / height])
+}
+
 fn crop_transparent_margins(img: &RgbaImage) -> RgbaImage {
     crop_to(img, visible_box(img))
 }
