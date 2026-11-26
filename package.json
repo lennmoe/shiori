@@ -1,7 +1,7 @@
 {
   "name": "shiori",
   "private": true,
-  "version": "2.9.0",
+  "version": "3.0.0",
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
