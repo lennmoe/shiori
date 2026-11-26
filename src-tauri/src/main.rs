@@ -224,6 +224,7 @@ fn main() {
             commands::library::merge_games,
             commands::library::vn_length,
             commands::library::update_game,
+            commands::library::set_game_dates,
             commands::library::set_playtime,
             commands::library::remove_game,
             commands::library::confirm_match,

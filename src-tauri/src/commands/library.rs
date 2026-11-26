@@ -111,6 +111,7 @@ pub fn get_library(shared: SharedState) -> Vec<Value> {
                 "daily": entry.get("daily").cloned().unwrap_or(json!({})),
                 "last_played": entry.get("last_played").and_then(Value::as_i64).unwrap_or(0),
                 "finished_at": entry.get("finished_at").and_then(Value::as_i64).unwrap_or(0),
+                "started_at": entry.get("started_at").and_then(Value::as_i64).unwrap_or(0),
                 "nsfw": entry.get("cover_nsfw").and_then(Value::as_bool).unwrap_or(false),
                 "has_path": !launcher::launch_exe(&entry).is_empty(),
                 "from_vndb": entry.get("vndb_list_only").and_then(Value::as_bool).unwrap_or(false)
@@ -286,6 +287,56 @@ pub fn update_game(
         }
     }
 
+    changed(&shared, &key);
+    Ok(())
+}
+
+fn picked_day(date: &str, what: &str) -> Result<i64, String> {
+    let date = date.trim();
+    if date.is_empty() {
+        return Ok(0);
+    }
+    let at = vndb_list::finished_at(date);
+    if at <= 0 {
+        return Err(format!("the {what} date isn't valid"));
+    }
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    if date > today.as_str() {
+        return Err(format!("the {what} date is in the future"));
+    }
+    Ok(at)
+}
+
+#[tauri::command(async)]
+pub fn set_game_dates(
+    shared: SharedState,
+    key: String,
+    started: String,
+    finished: String,
+) -> Result<(), String> {
+    let started_at = picked_day(&started, "start")?;
+    let finished_at = picked_day(&finished, "finish")?;
+    if started_at > 0 && finished_at > 0 && started_at > finished_at {
+        return Err("the start date is after the finish date".into());
+    }
+    let (vn_id, status) = {
+        let mut cfg = shared.config.lock().unwrap();
+        if cfg.game(&key).is_empty() {
+            return Err("this VN isn't in your library".into());
+        }
+        cfg.set_game(
+            &key,
+            Map::from_iter([
+                ("started_at".into(), json!(started_at)),
+                ("finished_at".into(), json!(finished_at)),
+            ]),
+        );
+        let entry = cfg.game(&key);
+        (text(&entry, "vndb_id"), text(&entry, "status"))
+    };
+    if !vn_id.is_empty() && !status.is_empty() {
+        vndb_list::sync_dates(&shared, &key, &vn_id, &status);
+    }
     changed(&shared, &key);
     Ok(())
 }

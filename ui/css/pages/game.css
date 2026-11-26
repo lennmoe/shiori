@@ -301,3 +301,26 @@
 .shots-where > span {
   line-height: 1.4;
 }
+
+.game-dates {
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.game-dates label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.game-dates label[hidden] {
+  display: none;
+}
+
+.game-dates input[type="date"] {
+  padding: 5px 9px;
+  color: var(--text);
+}

@@ -107,6 +107,14 @@ const TEMPLATE = `
           </div>
         </div>
         <div class="hint-text" data-id="vndb-note"></div>
+        <div class="field">
+          <b>Dates</b>
+          <div class="row game-dates">
+            <label>Started <input type="date" data-id="started" /></label>
+            <label data-id="finished-wrap">Finished <input type="date" data-id="finished" /></label>
+          </div>
+        </div>
+        <div class="hint-text" data-id="dates-note"></div>
       </div>
 
       <div class="card">
@@ -285,6 +293,7 @@ async function load() {
 
   renderVndb(entry);
   renderStatus(entry);
+  renderDates(entry);
   renderPrivacy(entry.privacy || "full");
   renderSite(entry);
   renderVote(entry);
@@ -385,6 +394,41 @@ function renderStatus(entry) {
     const status = value === entry.status ? "" : value;
     await call("update_game", { key, fields: { status } });
   });
+}
+
+function dayOf(seconds) {
+  return seconds > 0 ? isoDay(new Date(seconds * 1000)) : "";
+}
+
+function firstReadDay(entry) {
+  const days = Object.entries(entry.daily || {}).filter(([, seconds]) => seconds > 0).map(([day]) => day);
+  return days.sort()[0] || "";
+}
+
+function renderDates(entry) {
+  const started = part("started");
+  const finished = part("finished");
+  const today = isoDay(new Date());
+  const auto = !(entry.started_at > 0);
+  started.value = auto ? firstReadDay(entry) : dayOf(entry.started_at);
+  finished.value = dayOf(entry.finished_at);
+  started.max = today;
+  finished.max = today;
+  part("finished-wrap").hidden = entry.status !== "finished";
+  part("dates-note").textContent =
+    auto && started.value ? t("The start date is your first reading day. Pick another one to change it.") : "";
+  const save = async () => {
+    const changedStart = started.value !== (auto ? firstReadDay(entry) : dayOf(entry.started_at));
+    const startValue = changedStart ? started.value : auto ? "" : dayOf(entry.started_at);
+    try {
+      await call("set_game_dates", { key, started: startValue, finished: finished.value });
+      toast("Dates saved");
+    } catch {
+      renderDates(entry);
+    }
+  };
+  started.onchange = save;
+  finished.onchange = save;
 }
 
 function renderPrivacy(value) {

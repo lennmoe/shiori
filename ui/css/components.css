@@ -137,6 +137,7 @@ input[type="search"],
 input[type="text"],
 input[type="password"],
 input[type="number"],
+input[type="date"],
 select,
 textarea {
   background: var(--surface-alt);

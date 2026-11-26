@@ -181,7 +181,9 @@ function milestones() {
   };
   for (const game of games) {
     const read = Object.entries(game.daily || {}).filter(([, seconds]) => seconds > 0).map(([day]) => day);
-    if (read.length) {
+    if (game.started_at > 0) {
+      add(isoDay(new Date(game.started_at * 1000)), "started", game.name);
+    } else if (read.length) {
       add(read.sort()[0], "started", game.name);
     }
     if (game.status === "finished" && game.finished_at > 0) {

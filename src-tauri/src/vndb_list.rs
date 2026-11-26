@@ -75,18 +75,51 @@ pub fn sync_status(
     });
 }
 
-fn list_dates(entry: &Map<String, Value>) -> ListDates {
-    let started = entry
-        .get("daily")
-        .and_then(Value::as_object)
-        .and_then(|days| days.iter().filter(|(_, s)| s.as_i64().unwrap_or(0) > 0).map(|(day, _)| day.clone()).min());
-    let finished = entry
-        .get("finished_at")
+fn day_of(entry: &Map<String, Value>, field: &str) -> Option<String> {
+    entry
+        .get(field)
         .and_then(Value::as_i64)
         .filter(|at| *at > 0)
         .and_then(|at| chrono::DateTime::from_timestamp(at, 0))
-        .map(|at| at.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string());
+        .map(|at| at.with_timezone(&chrono::Local).format("%Y-%m-%d").to_string())
+}
+
+fn list_dates(entry: &Map<String, Value>) -> ListDates {
+    let started = day_of(entry, "started_at").or_else(|| {
+        entry
+            .get("daily")
+            .and_then(Value::as_object)
+            .and_then(|days| days.iter().filter(|(_, s)| s.as_i64().unwrap_or(0) > 0).map(|(day, _)| day.clone()).min())
+    });
+    let finished = day_of(entry, "finished_at");
     ListDates { started, finished }
+}
+
+pub fn sync_dates(shared: &Arc<Shared>, key: &str, vn_id: &str, status: &str) {
+    let token = token(shared);
+    let enabled = shared.config.lock().unwrap().bool("vndb_sync");
+    if !enabled || token.is_empty() {
+        return;
+    }
+    let dates = list_dates(&shared.config.lock().unwrap().game(key));
+    let mut changes = Map::new();
+    if let Some(started) = dates.started {
+        changes.insert("started".into(), json!(started));
+    }
+    if status == "finished" {
+        changes.insert("finished".into(), json!(dates.finished));
+    }
+    if changes.is_empty() {
+        return;
+    }
+    let shared = Arc::clone(shared);
+    let vn_id = vn_id.to_string();
+    std::thread::spawn(move || {
+        match shared.vndb.update_list_entry(&token, &vn_id, &Value::Object(changes)) {
+            Ok(()) => shared.vndb_message(true, format!("VNDB list: {vn_id} dates updated")),
+            Err(e) => shared.vndb_message(false, format!("VNDB list sync failed: {e}")),
+        }
+    });
 }
 
 fn capitalize(text: &str) -> String {
