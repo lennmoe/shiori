@@ -15,6 +15,7 @@ mod vndb_list;
 
 mod capture;
 mod clip;
+mod clip_edit;
 mod clipboard;
 mod hotkey;
 mod shell;
@@ -258,6 +259,8 @@ fn main() {
             commands::screenshots::toggle_clip,
             commands::screenshots::clip_state,
             commands::screenshots::save_replay,
+            commands::screenshots::export_clip,
+            commands::screenshots::cancel_clip_export,
             commands::screenshots::screenshot_info,
             commands::screenshots::thumbnail,
             commands::screenshots::delete_screenshot,

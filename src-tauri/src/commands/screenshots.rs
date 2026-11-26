@@ -141,3 +141,28 @@ pub fn open_screenshot_folder(shared: SharedState, key: Option<String>) -> Resul
     std::fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
     shell::open(&folder.to_string_lossy())
 }
+
+#[tauri::command]
+pub async fn export_clip(
+    shared: SharedState<'_>,
+    key: String,
+    path: String,
+    edit: crate::clip_edit::Edit,
+) -> Result<String, String> {
+    let path = PathBuf::from(path);
+    if !inside_root(&shared, &path) {
+        return Err("that file isn't in the screenshots folder".into());
+    }
+    let shared = std::sync::Arc::clone(&shared);
+    blocking(move || {
+        let output = crate::clip_edit::export(&shared, &path, &edit)?;
+        shared.emit("screenshots-changed", json!({ "key": key }));
+        Ok(output.to_string_lossy().into_owned())
+    })
+    .await
+}
+
+#[tauri::command]
+pub fn cancel_clip_export() {
+    crate::clip_edit::cancel();
+}

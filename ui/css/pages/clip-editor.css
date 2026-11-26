@@ -1,0 +1,272 @@
+dialog.clip-editor {
+  width: min(1280px, 96vw);
+  max-width: min(1280px, 96vw);
+  height: min(820px, 92vh);
+  max-height: 92vh;
+  overflow: hidden;
+}
+
+.ce-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ce-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ce-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+.ce-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 14px;
+  gap: 12px;
+}
+
+.ce-stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #0b0b0d;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ce-frame {
+  position: relative;
+  user-select: none;
+}
+
+.ce-frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.ce-crop {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
+  outline: 2px solid #fff;
+  outline-offset: -1px;
+  cursor: move;
+  touch-action: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)),
+    linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22));
+  background-size: 100% 1px, 100% 1px, 1px 100%, 1px 100%;
+  background-position: 0 33.33%, 0 66.66%, 33.33% 0, 66.66% 0;
+  background-repeat: no-repeat;
+}
+
+.ce-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ce-handle.nw {
+  left: -7px;
+  top: -7px;
+  cursor: nwse-resize;
+}
+
+.ce-handle.ne {
+  right: -7px;
+  top: -7px;
+  cursor: nesw-resize;
+}
+
+.ce-handle.sw {
+  left: -7px;
+  bottom: -7px;
+  cursor: nesw-resize;
+}
+
+.ce-handle.se {
+  right: -7px;
+  bottom: -7px;
+  cursor: nwse-resize;
+}
+
+.ce-timeline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ce-play {
+  width: 40px;
+  padding: 7px 0;
+}
+
+.ce-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+  min-width: 150px;
+  text-align: right;
+}
+
+.ce-track {
+  position: relative;
+  flex: 1;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.ce-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+
+.ce-trim {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 10px;
+  margin-left: -5px;
+  border-radius: 4px;
+  background: var(--accent);
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.ce-trim::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 30%;
+  bottom: 30%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+}
+
+.ce-playhead {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  pointer-events: none;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+
+.ce-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px;
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.ce-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ce-field[hidden],
+.ce-check[hidden],
+.ce-progress[hidden] {
+  display: none;
+}
+
+.ce-field .seg {
+  flex-wrap: wrap;
+}
+
+.ce-field select {
+  width: 100%;
+}
+
+.ce-label {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.ce-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.ce-info {
+  font-variant-numeric: tabular-nums;
+}
+
+.ce-note:empty {
+  display: none;
+}
+
+.ce-grow {
+  flex: 1;
+}
+
+.ce-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ce-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 760px) {
+  .ce-main {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .ce-left {
+    min-height: 360px;
+  }
+
+  .ce-side {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}

@@ -5,6 +5,7 @@ import { register, show } from "../router.js";
 import { store, subscribe } from "../store.js";
 import { call, flashLabel } from "../ui.js";
 import { t } from "../i18n.js";
+import { openClipEditor } from "../components/clip-editor.js";
 
 const BATCH = 60;
 const ALL = "";
@@ -47,6 +48,7 @@ const TEMPLATE = `
         </div>
         <div class="row" data-id="actions">
           <button class="btn" data-id="copy">Copy</button>
+          <button class="btn" data-id="edit" hidden>Edit clip</button>
           <button class="btn secondary" data-id="open">Open</button>
           <button class="btn secondary" data-id="reveal">Show in folder</button>
           <button class="btn danger" data-id="delete">Delete</button>
@@ -92,6 +94,7 @@ function build(container) {
   };
   part("folder").onclick = () => call("open_screenshot_folder", { key: filterKey || null });
   part("copy").onclick = copy;
+  part("edit").onclick = editClip;
   part("open").onclick = openCurrent;
   part("reveal").onclick = () =>
     currentShot() && call("show_in_folder", { path: currentShot().path });
@@ -404,6 +407,7 @@ async function selectShot(i) {
     button.disabled = !shot;
   }
   part("copy").hidden = !!shot && isClip(shot.path);
+  part("edit").hidden = !shot || !isClip(shot.path);
 
   if (!shot) {
     emptyViewer();
@@ -444,6 +448,19 @@ async function copy() {
   }
   await call("copy_image_file", { path: shot.path });
   flashLabel(part("copy"), "Copied ✓", "Copy");
+}
+
+function editClip() {
+  const shot = currentShot();
+  if (!shot || !isClip(shot.path)) {
+    return;
+  }
+  openClipEditor({
+    path: shot.path,
+    key: shot.key,
+    name: names.get(shot.key) || shot.key,
+    onDone: (output) => reload(output),
+  });
 }
 
 function openCurrent() {
