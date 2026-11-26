@@ -142,23 +142,25 @@ const TEMPLATE = `
         </div>
         <div class="hint-text" data-id="site-help"></div>
       </div>
+    </div>
 
+    <div class="col">
       <div class="card">
+        <div class="card-title">
+          <b>Time read</b>
+          <div class="seg" data-id="range">
+            <button data-v="days">30 days</button>
+            <button data-v="weeks">12 weeks</button>
+          </div>
+        </div>
+        <div data-id="chart"></div>
+        <div class="hint-text" data-id="history-note"></div>
+      </div>
+
+      <div class="card snug">
         <div class="card-title"><b>Collections</b></div>
         <div class="chips" data-id="collections"></div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        <b>Time read</b>
-        <div class="seg" data-id="range">
-          <button data-v="days">30 days</button>
-          <button data-v="weeks">12 weeks</button>
-        </div>
-      </div>
-      <div data-id="chart"></div>
-      <div class="hint-text" data-id="history-note"></div>
     </div>
   </div>
 
