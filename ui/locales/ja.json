@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "HDレコーダー",
+    "Downloading the HD recorder… {done} / {total} MB": "HDレコーダーをダウンロード中… {done} / {total} MB",
+    "Remove the HD recorder? Clips go back to the basic one.": "HDレコーダーを削除しますか？クリップは基本の録画に戻ります。",
+    "Installed. Clips are filmed by your graphics card.": "インストール済み。クリップはグラフィックカードで録画されます。",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "グラフィックカードで録画する、より鮮明なクリップ。インスタントリプレイはメモリではなくディスクに保存されます。ダウンロードは一度だけ：約115 MB。",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "HDレコーダーをダウンロードできませんでした。クリップは基本の録画を使い続けます。",
+    "The HD recorder is missing.": "HDレコーダーが見つかりません。",
+    "Nothing was recorded yet.": "まだ何も録画されていません。",
     "Move left": "左へ移動",
     "Move right": "右へ移動",
     "When to hide them": "隠すとき",

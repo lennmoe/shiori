@@ -42,6 +42,27 @@ pub fn clip_state() -> Value {
 }
 
 #[tauri::command(async)]
+pub fn recorder_status(shared: SharedState) -> Value {
+    crate::recorder::status(&shared)
+}
+
+#[tauri::command]
+pub async fn download_recorder(shared: SharedState<'_>) -> Result<bool, String> {
+    let shared = std::sync::Arc::clone(&shared);
+    blocking(move || crate::recorder::download(&shared)).await
+}
+
+#[tauri::command]
+pub fn cancel_recorder_download() {
+    crate::recorder::cancel();
+}
+
+#[tauri::command(async)]
+pub fn remove_recorder(shared: SharedState) -> Result<(), String> {
+    crate::recorder::remove(&shared)
+}
+
+#[tauri::command(async)]
 pub fn screenshot_info(path: String) -> ShotInfo {
     screenshots::info(Path::new(&path))
 }

@@ -1,5 +1,5 @@
 import { $, el, html } from "../dom.js";
-import { invoke, pickFile, pickFolder, pickSaveFile } from "../tauri.js";
+import { invoke, listen as onEvent, pickFile, pickFolder, pickSaveFile } from "../tauri.js";
 import { register, show } from "../router.js";
 import { store, subscribe, update } from "../store.js";
 import { ask, call, toast, toggle } from "../ui.js";
@@ -646,6 +646,7 @@ function clipsSection() {
         (on) => save({ clip_audio: on }),
         "Only the VN's sound: not Discord or your music.",
       ),
+      recorderSection(),
     ),
   );
 
@@ -670,6 +671,70 @@ function clipsSection() {
       options,
     ),
   ];
+}
+
+function recorderSection() {
+  const body = el("div");
+  const box = el("div", { class: "recorder-section" }, el("span", { class: "recorder-title" }, "HD recorder"), body);
+
+  const download = async () => {
+    const label = el("span", {}, t("Downloading the HD recorder… {done} / {total} MB", { done: 0, total: 115 }));
+    const fill = el("i", { style: { width: "0%" } });
+    const cancel = el("button", { class: "btn secondary small" }, "Cancel");
+    cancel.onclick = () => invoke("cancel_recorder_download");
+    body.replaceChildren(
+      el("div", { class: "recorder-progress" }, el("span", { class: "hint-text" }, label), el("div", { class: "bar" }, fill), cancel),
+    );
+    const stop = await onEvent("recorder-progress", ({ payload }) => {
+      label.textContent = t("Downloading the HD recorder… {done} / {total} MB", payload);
+      fill.style.width = `${payload.percent}%`;
+    });
+    try {
+      await call("download_recorder");
+    } catch {
+    } finally {
+      stop();
+      render();
+    }
+  };
+
+  const render = async () => {
+    let status;
+    try {
+      status = await invoke("recorder_status");
+    } catch {
+      return;
+    }
+    if (status.ready) {
+      const remove = el("button", { class: "btn secondary small" }, "Remove");
+      remove.onclick = async () => {
+        if (await ask("HD recorder", "Remove the HD recorder? Clips go back to the basic one.", { yes: "Remove" })) {
+          await call("remove_recorder").catch(() => {});
+          render();
+        }
+      };
+      body.replaceChildren(
+        el("div", { class: "recorder-row" }, hint("Installed. Clips are filmed by your graphics card."), remove),
+      );
+      return;
+    }
+    const get = el("button", { class: "btn secondary small" }, "Download");
+    get.onclick = download;
+    body.replaceChildren(
+      el(
+        "div",
+        { class: "recorder-row" },
+        hint(
+          "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in " +
+            "memory. Downloads once: about 115 MB.",
+        ),
+        get,
+      ),
+    );
+  };
+
+  render();
+  return box;
 }
 
 function walkthroughSection() {

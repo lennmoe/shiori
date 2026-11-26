@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "Trình ghi HD",
+    "Downloading the HD recorder… {done} / {total} MB": "Đang tải trình ghi HD… {done} / {total} MB",
+    "Remove the HD recorder? Clips go back to the basic one.": "Gỡ trình ghi HD? Clip sẽ quay lại dùng trình ghi cơ bản.",
+    "Installed. Clips are filmed by your graphics card.": "Đã cài. Clip được quay bằng card đồ họa của bạn.",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "Clip sắc nét hơn, được quay bằng card đồ họa. Phát lại tức thì được lưu trên ổ đĩa thay vì bộ nhớ. Tải một lần: khoảng 115 MB.",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "Không tải được trình ghi HD. Clip vẫn dùng trình ghi cơ bản.",
+    "The HD recorder is missing.": "Không tìm thấy trình ghi HD.",
+    "Nothing was recorded yet.": "Chưa ghi được gì.",
     "Move left": "Chuyển sang trái",
     "Move right": "Chuyển sang phải",
     "When to hide them": "Khi nào ẩn",

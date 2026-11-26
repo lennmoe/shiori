@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "Grabador HD",
+    "Downloading the HD recorder… {done} / {total} MB": "Descargando el grabador HD… {done} / {total} MB",
+    "Remove the HD recorder? Clips go back to the basic one.": "¿Quitar el grabador HD? Los clips vuelven al grabador básico.",
+    "Installed. Clips are filmed by your graphics card.": "Instalado. Los clips los graba tu tarjeta gráfica.",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "Clips más nítidos, grabados por tu tarjeta gráfica. La repetición instantánea se guarda en tu disco en lugar de en la memoria. Se descarga una vez: unos 115 MB.",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "No se pudo descargar el grabador HD. Los clips siguen usando el básico.",
+    "The HD recorder is missing.": "Falta el grabador HD.",
+    "Nothing was recorded yet.": "Todavía no se ha grabado nada.",
     "Move left": "Mover a la izquierda",
     "Move right": "Mover a la derecha",
     "When to hide them": "Cuándo ocultarlas",

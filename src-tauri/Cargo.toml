@@ -44,6 +44,7 @@ features = [
   "Win32_Globalization",
   "Win32_Graphics_Dwm",
   "Win32_System_Performance",
+  "Win32_System_Pipes",
   "Win32_Graphics_Gdi",
   "Win32_Storage_EnhancedStorage",
   "Win32_Storage_FileSystem",

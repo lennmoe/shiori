@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -30,6 +30,7 @@ use windows_capture::settings::{
 };
 use windows_capture::window::Window;
 
+use crate::recorder;
 use crate::screenshots;
 use crate::state::Shared;
 use crate::ui_windows::{self, Toast};
@@ -68,7 +69,6 @@ struct Pipe {
     slot: Mutex<Option<Active>>,
     picture: Mutex<Picture>,
     target: Mutex<Option<Output>>,
-    hwnd: isize,
     view: isize,
     fps: u32,
     audio: bool,
@@ -94,6 +94,14 @@ fn bitrate(width: u32, height: u32, fps: u32, quality: f64) -> u32 {
     bits.clamp(4_000_000.0, 60_000_000.0) as u32
 }
 
+fn level_of(name: &str) -> u8 {
+    match name {
+        "normal" => 0,
+        "best" => 2,
+        _ => 1,
+    }
+}
+
 fn quality_of(name: &str) -> f64 {
     match name {
         "normal" => 0.15,
@@ -102,19 +110,26 @@ fn quality_of(name: &str) -> f64 {
     }
 }
 
-fn client_area(hwnd: isize, frame_width: u32, frame_height: u32) -> Option<(u32, u32, u32, u32)> {
-    let window = HWND(hwnd as *mut std::ffi::c_void);
+fn frame_bounds(hwnd: isize) -> Option<RECT> {
     let mut bounds = RECT::default();
-    let mut client = RECT::default();
-    let mut origin = POINT::default();
     unsafe {
         DwmGetWindowAttribute(
-            window,
+            HWND(hwnd as *mut std::ffi::c_void),
             DWMWA_EXTENDED_FRAME_BOUNDS,
             &mut bounds as *mut RECT as *mut std::ffi::c_void,
             std::mem::size_of::<RECT>() as u32,
         )
         .ok()?;
+    }
+    Some(bounds)
+}
+
+fn client_area(hwnd: isize, frame_width: u32, frame_height: u32) -> Option<(u32, u32, u32, u32)> {
+    let window = HWND(hwnd as *mut std::ffi::c_void);
+    let bounds = frame_bounds(hwnd)?;
+    let mut client = RECT::default();
+    let mut origin = POINT::default();
+    unsafe {
         GetClientRect(window, &mut client).ok()?;
         if !ClientToScreen(window, &mut origin).as_bool() {
             return None;
@@ -125,6 +140,14 @@ fn client_area(hwnd: isize, frame_width: u32, frame_height: u32) -> Option<(u32,
     let right = (left + client.right.max(0) as u32).min(frame_width);
     let bottom = (top + client.bottom.max(0) as u32).min(frame_height);
     (right > left + 16 && bottom > top + 16).then_some((left, top, right, bottom))
+}
+
+fn window_size(hwnd: isize) -> Option<recorder::Size> {
+    let mut client = RECT::default();
+    unsafe { GetClientRect(HWND(hwnd as *mut std::ffi::c_void), &mut client) }.ok()?;
+    let width = u32::try_from(client.right).ok().filter(|w| *w > 16)?;
+    let height = u32::try_from(client.bottom).ok().filter(|h| *h > 16)?;
+    Some(recorder::Size { width, height })
 }
 
 fn flip_into(picture: &Picture, width: u32, height: u32, out: &mut Vec<u8>) {
@@ -313,11 +336,29 @@ struct Tap {
     thread: JoinHandle<()>,
 }
 
-static LISTENERS: Mutex<Vec<Arc<Pipe>>> = Mutex::new(Vec::new());
+#[derive(Clone)]
+enum Ear {
+    Legacy(Arc<Pipe>),
+    Hd(Arc<recorder::Feed>),
+}
+
+impl Ear {
+    fn hear(&self, fresh: &[u8]) -> Result<(), String> {
+        match self {
+            Ear::Legacy(pipe) => pipe.hear(fresh),
+            Ear::Hd(feed) => {
+                feed.hear(fresh);
+                Ok(())
+            }
+        }
+    }
+}
+
+static LISTENERS: Mutex<Vec<(u64, Ear)>> = Mutex::new(Vec::new());
 static TAP: Mutex<Option<Tap>> = Mutex::new(None);
 
-fn listen(pid: u32, pipe: &Arc<Pipe>) {
-    LISTENERS.lock().unwrap().push(Arc::clone(pipe));
+fn listen(pid: u32, id: u64, ear: Ear) {
+    LISTENERS.lock().unwrap().push((id, ear));
     let mut tap = TAP.lock().unwrap();
     if tap.as_ref().is_some_and(|t| t.pid == pid && !t.thread.is_finished()) {
         return;
@@ -336,10 +377,10 @@ fn listen(pid: u32, pipe: &Arc<Pipe>) {
     *tap = Some(Tap { pid, stop, thread });
 }
 
-fn unlisten(pipe: &Arc<Pipe>) {
+fn unlisten(id: u64) {
     let empty = {
         let mut listeners = LISTENERS.lock().unwrap();
-        listeners.retain(|p| !Arc::ptr_eq(p, pipe));
+        listeners.retain(|(other, _)| *other != id);
         listeners.is_empty()
     };
     if empty {
@@ -372,8 +413,8 @@ fn record_audio(pid: u32, stop: &AtomicBool) -> Result<(), String> {
         }
         let whole = queue.len() / BLOCK * BLOCK;
         let fresh: Vec<u8> = queue.drain(..whole).collect();
-        for pipe in LISTENERS.lock().unwrap().iter() {
-            if let Err(error) = pipe.hear(&fresh) {
+        for (_, ear) in LISTENERS.lock().unwrap().iter() {
+            if let Err(error) = ear.hear(&fresh) {
                 crate::crash::note(format!("clip audio: {error}"));
             }
         }
@@ -382,12 +423,52 @@ fn record_audio(pid: u32, stop: &AtomicBool) -> Result<(), String> {
     Ok(())
 }
 
+enum Engine {
+    Legacy { control: CaptureControl<Recorder, String>, pipe: Arc<Pipe> },
+    Hd { capture: recorder::Capture, replay: Option<PathBuf> },
+}
+
 struct Session {
-    control: CaptureControl<Recorder, String>,
-    pipe: Arc<Pipe>,
+    engine: Engine,
+    id: u64,
+    hwnd: isize,
+    fps: u32,
+    audio: bool,
+    quality: f64,
     started: Instant,
     key: String,
 }
+
+impl Session {
+    fn closed(&self) -> bool {
+        match &self.engine {
+            Engine::Legacy { pipe, .. } => pipe.closed.load(Ordering::SeqCst),
+            Engine::Hd { capture, .. } => capture.closed(),
+        }
+    }
+
+    fn legacy(&self) -> Option<&Arc<Pipe>> {
+        match &self.engine {
+            Engine::Legacy { pipe, .. } => Some(pipe),
+            Engine::Hd { .. } => None,
+        }
+    }
+
+    fn ear(&self) -> Option<Ear> {
+        match &self.engine {
+            Engine::Legacy { pipe, .. } => Some(Ear::Legacy(Arc::clone(pipe))),
+            Engine::Hd { capture, .. } => capture.feed().map(Ear::Hd),
+        }
+    }
+}
+
+enum Target {
+    File(PathBuf),
+    Replay,
+}
+
+static SESSIONS: AtomicU64 = AtomicU64::new(0);
+static HD_FAILED: AtomicBool = AtomicBool::new(false);
 
 pub fn key_on(cfg: &crate::config::Config) -> bool {
     cfg.get("clip_enabled").and_then(Value::as_bool).unwrap_or(true)
@@ -410,6 +491,7 @@ struct ClipSettings {
     fps: u32,
     audio: bool,
     quality: f64,
+    level: u8,
     max: u64,
     replay: u64,
 }
@@ -422,6 +504,7 @@ fn settings_of(shared: &Shared) -> ClipSettings {
         fps: if number("clip_fps", 30) == 60 { 60 } else { 30 },
         audio: cfg.get("clip_audio").and_then(Value::as_bool).unwrap_or(true),
         quality: quality_of(&cfg.str("clip_quality")),
+        level: level_of(&cfg.str("clip_quality")),
         max: match number("clip_max_seconds", 60) {
             0 => u64::MAX,
             seconds => seconds.clamp(10, 3600),
@@ -430,7 +513,7 @@ fn settings_of(shared: &Shared) -> ClipSettings {
     }
 }
 
-fn open_session(shared: &Shared, target: Option<Output>, clip: &ClipSettings) -> Result<Session, String> {
+fn open_session(shared: &Shared, target: Target, clip: &ClipSettings) -> Result<Session, String> {
     let snap = shared.snapshot();
     if !snap.detected || snap.hwnd == 0 {
         return Err("No visual novel is running.".into());
@@ -438,12 +521,73 @@ fn open_session(shared: &Shared, target: Option<Output>, clip: &ClipSettings) ->
     if !GraphicsCaptureApi::is_supported().unwrap_or(false) {
         return Err("Clips need Windows 10 version 1903 or newer.".into());
     }
+    let view = crate::winapi::content_window(snap.hwnd);
+    let id = SESSIONS.fetch_add(1, Ordering::SeqCst) + 1;
+    let hd = recorder::exe(shared).and_then(|exe| match open_hd(shared, &exe, view, id, &target, clip) {
+        Ok(engine) => {
+            HD_FAILED.store(false, Ordering::SeqCst);
+            Some(engine)
+        }
+        Err(error) => {
+            HD_FAILED.store(true, Ordering::SeqCst);
+            crate::crash::note(format!("hd recorder: {error}"));
+            None
+        }
+    });
+    let engine = match hd {
+        Some(engine) => engine,
+        None => open_legacy(view, target, clip)?,
+    };
+    let session = Session {
+        engine,
+        id,
+        hwnd: snap.hwnd,
+        fps: clip.fps,
+        audio: clip.audio,
+        quality: clip.quality,
+        started: Instant::now(),
+        key: snap.key,
+    };
+    if clip.audio {
+        if let Some(ear) = session.ear() {
+            listen(snap.pid, id, ear);
+        }
+    }
+    Ok(session)
+}
+
+fn open_hd(shared: &Shared, exe: &Path, view: isize, id: u64, target: &Target, clip: &ClipSettings) -> Result<Engine, String> {
+    let size = window_size(view).ok_or("the window has no size")?;
+    let (target, replay) = match target {
+        Target::File(path) => (recorder::Target::File(path.clone()), None),
+        Target::Replay => {
+            let folder = recorder::replay_root(shared).join(id.to_string());
+            std::fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
+            (recorder::Target::Segments { folder: folder.clone(), keep: clip.replay }, Some(folder))
+        }
+    };
+    let options = recorder::Options { exe, view, size, fps: clip.fps, level: clip.level, audio: clip.audio, target };
+    match recorder::Capture::start(&options) {
+        Ok(capture) => Ok(Engine::Hd { capture, replay }),
+        Err(error) => {
+            if let Some(folder) = &replay {
+                let _ = std::fs::remove_dir_all(folder);
+            }
+            Err(error)
+        }
+    }
+}
+
+fn open_legacy(view: isize, target: Target, clip: &ClipSettings) -> Result<Engine, String> {
+    let target = match target {
+        Target::File(path) => Some(Output::File(path)),
+        Target::Replay => None,
+    };
     let pipe = Arc::new(Pipe {
         slot: Mutex::new(None),
         picture: Mutex::new(Picture::default()),
         target: Mutex::new(target),
-        hwnd: snap.hwnd,
-        view: crate::winapi::content_window(snap.hwnd),
+        view,
         fps: clip.fps,
         audio: clip.audio,
         quality: clip.quality,
@@ -465,16 +609,26 @@ fn open_session(shared: &Shared, target: Option<Output>, clip: &ClipSettings) ->
         Arc::clone(&pipe),
     );
     let control = Recorder::start_free_threaded(settings).map_err(|e| format!("couldn't film the window ({e})"))?;
-    if clip.audio {
-        listen(snap.pid, &pipe);
-    }
-    Ok(Session { control, pipe, started: Instant::now(), key: snap.key })
+    Ok(Engine::Legacy { control, pipe })
 }
 
-fn close_session(session: Session) -> Option<Active> {
-    unlisten(&session.pipe);
-    let _ = session.control.stop();
-    session.pipe.rotate(None).ok().flatten()
+fn close_session(session: Session) -> Result<bool, String> {
+    unlisten(session.id);
+    match session.engine {
+        Engine::Legacy { control, pipe } => {
+            let _ = control.stop();
+            match pipe.rotate(None) {
+                Ok(Some(active)) => active.encoder.finish().map(|()| true).map_err(|e| e.to_string()),
+                _ => Ok(false),
+            }
+        }
+        Engine::Hd { capture, replay: Some(folder) } => {
+            drop(capture);
+            let _ = std::fs::remove_dir_all(folder);
+            Ok(false)
+        }
+        Engine::Hd { capture, replay: None } => capture.finish().map(|()| true),
+    }
 }
 
 fn memory_bytes(stream: &InMemoryRandomAccessStream) -> Result<Vec<u8>, String> {
@@ -563,7 +717,7 @@ fn start(shared: &Arc<Shared>) -> Result<(), String> {
     let folder = clip_folder(shared, &key)?;
     let path = clip_name(&folder);
     let part = path.with_extension("recording.mp4");
-    let session = open_session(shared, Some(Output::File(part.clone())), &clip)?;
+    let session = open_session(shared, Target::File(part.clone()), &clip)?;
     crate::crash::note("clip started");
     *RECORDING.lock().unwrap() = Some((session, part, path));
 
@@ -588,7 +742,7 @@ fn watch(shared: Arc<Shared>, max: u64) {
             };
             let snap = shared.snapshot();
             let seconds = session.started.elapsed().as_secs();
-            let gone = session.pipe.closed.load(Ordering::SeqCst) || !snap.detected || snap.hwnd != session.pipe.hwnd;
+            let gone = session.closed() || !snap.detected || snap.hwnd != session.hwnd;
             (seconds, seconds >= max || gone)
         };
         if done {
@@ -608,13 +762,16 @@ fn stop(shared: &Arc<Shared>) -> Result<(), String> {
     };
     announce(shared);
     let (key, seconds) = (session.key.clone(), session.started.elapsed().as_secs());
-    let Some(active) = close_session(session) else {
-        let _ = std::fs::remove_file(&part);
-        return Err("Nothing moved on screen, so there's nothing to save.".into());
-    };
-    if let Err(error) = active.encoder.finish() {
-        let _ = std::fs::remove_file(&part);
-        return Err(format!("couldn't save the clip ({error})"));
+    match close_session(session) {
+        Ok(true) if part.is_file() => {}
+        Ok(_) => {
+            let _ = std::fs::remove_file(&part);
+            return Err("Nothing moved on screen, so there's nothing to save.".into());
+        }
+        Err(error) => {
+            let _ = std::fs::remove_file(&part);
+            return Err(format!("couldn't save the clip ({error})"));
+        }
     }
     std::fs::rename(&part, &path).map_err(|e| e.to_string())?;
     crate::crash::note("clip saved");
@@ -669,24 +826,24 @@ fn replay_tick(shared: &Arc<Shared>) {
 
     let stale = replay.as_ref().is_some_and(|r| {
         !wanted
-            || r.session.pipe.hwnd != snap.hwnd
-            || r.session.pipe.closed.load(Ordering::SeqCst)
-            || r.session.pipe.fps != clip.fps
-            || r.session.pipe.audio != clip.audio
-            || (r.session.pipe.quality - clip.quality).abs() > f64::EPSILON
+            || r.session.hwnd != snap.hwnd
+            || r.session.closed()
+            || r.session.fps != clip.fps
+            || r.session.audio != clip.audio
+            || (r.session.quality - clip.quality).abs() > f64::EPSILON
+            || (r.session.legacy().is_none() && r.keep != clip.replay)
+            || (r.session.legacy().is_some() && !HD_FAILED.load(Ordering::SeqCst) && recorder::exe(shared).is_some())
     });
     if stale {
         if let Some(old) = replay.take() {
             drop(replay);
-            if let Some(active) = close_session(old.session) {
-                let _ = active.encoder.finish();
-            }
+            let _ = close_session(old.session);
             announce(shared);
             return;
         }
     }
     if wanted && replay.is_none() {
-        match open_session(shared, None, &clip) {
+        match open_session(shared, Target::Replay, &clip) {
             Ok(session) => {
                 crate::crash::note("replay started");
                 *replay = Some(Replay { session, pieces: VecDeque::new(), keep: clip.replay });
@@ -701,12 +858,15 @@ fn replay_tick(shared: &Arc<Shared>) {
         return;
     };
     r.keep = clip.replay;
-    let due = r.session.pipe.slot.lock().unwrap().as_ref().is_some_and(|a| a.started.elapsed() >= SEGMENT);
+    let Some(pipe) = r.session.legacy().cloned() else {
+        return;
+    };
+    let due = pipe.slot.lock().unwrap().as_ref().is_some_and(|a| a.started.elapsed() >= SEGMENT);
     if due && !SAVING.load(Ordering::SeqCst) {
         let Ok(next) = InMemoryRandomAccessStream::new() else {
             return;
         };
-        if let Ok(Some(old)) = r.session.pipe.rotate(Some(Output::Memory(next))) {
+        if let Ok(Some(old)) = pipe.rotate(Some(Output::Memory(next))) {
             if let Some(piece) = finish_piece(old) {
                 r.pieces.push_back(piece);
             }
@@ -825,14 +985,49 @@ pub fn save_replay(shared: &Arc<Shared>) {
     }
 }
 
+fn save_hd_replay(shared: &Arc<Shared>, folder: &Path, keep: u64, key: String) -> Result<(PathBuf, String, u64), String> {
+    let exe = recorder::exe(shared).ok_or("The HD recorder is missing.")?;
+    toast(shared, "Saving the clip…", length_text(keep), true);
+    let work = shared.data_dir.join("cache").join("replay");
+    let _ = std::fs::remove_dir_all(&work);
+    let rendered = work.join("clip.mp4");
+    let result = recorder::save_replay(&exe, folder, keep, &work, &rendered).and_then(|seconds| {
+        let target = clip_folder(shared, &key)?;
+        let path = clip_name(&target);
+        if std::fs::rename(&rendered, &path).is_err() {
+            std::fs::copy(&rendered, &path).map_err(|e| e.to_string())?;
+        }
+        Ok((path, seconds))
+    });
+    let _ = std::fs::remove_dir_all(&work);
+    let (path, seconds) = result.map_err(|e| format!("couldn't save the clip ({e})"))?;
+    Ok((path, key, seconds))
+}
+
 fn save_replay_now(shared: &Arc<Shared>) -> Result<(PathBuf, String, u64), String> {
+    let hd = {
+        let replay = REPLAY.lock().unwrap();
+        let Some(r) = replay.as_ref() else {
+            return Err("Turn on “Instant replay” in Settings → Clips first.".into());
+        };
+        match &r.session.engine {
+            Engine::Hd { replay: Some(folder), .. } => Some((folder.clone(), r.keep, r.session.key.clone())),
+            _ => None,
+        }
+    };
+    if let Some((folder, keep, key)) = hd {
+        return save_hd_replay(shared, &folder, keep, key);
+    }
     let (pieces, keep, key, fps, quality) = {
         let mut replay = REPLAY.lock().unwrap();
         let Some(r) = replay.as_mut() else {
             return Err("Turn on “Instant replay” in Settings → Clips first.".into());
         };
+        let Some(pipe) = r.session.legacy().cloned() else {
+            return Err("Nothing was recorded yet.".into());
+        };
         let next = InMemoryRandomAccessStream::new().map_err(|e| e.to_string())?;
-        if let Ok(Some(old)) = r.session.pipe.rotate(Some(Output::Memory(next))) {
+        if let Ok(Some(old)) = pipe.rotate(Some(Output::Memory(next))) {
             if let Some(piece) = finish_piece(old) {
                 r.pieces.push_back(piece);
             }
@@ -841,7 +1036,7 @@ fn save_replay_now(shared: &Arc<Shared>) -> Result<(PathBuf, String, u64), Strin
         trim(&mut r.pieces, keep);
         let pieces: Vec<(Vec<u8>, Vec<u8>, f64)> =
             r.pieces.iter().map(|p| (p.bytes.clone(), p.pcm.clone(), p.seconds)).collect();
-        (pieces, keep, r.session.key.clone(), r.session.pipe.fps, r.session.pipe.quality)
+        (pieces, keep, r.session.key.clone(), r.session.fps, r.session.quality)
     };
     if pieces.is_empty() {
         return Err("Nothing moved on screen, so there's nothing to save.".into());
@@ -874,16 +1069,12 @@ fn save_replay_now(shared: &Arc<Shared>) -> Result<(PathBuf, String, u64), Strin
 
 pub fn stop_on_exit() {
     if let Some((session, part, path)) = RECORDING.lock().unwrap().take() {
-        if let Some(active) = close_session(session) {
-            if active.encoder.finish().is_ok() {
-                let _ = std::fs::rename(&part, &path);
-            }
+        if let Ok(true) = close_session(session) {
+            let _ = std::fs::rename(&part, &path);
         }
     }
     if let Some(replay) = REPLAY.lock().unwrap().take() {
-        if let Some(active) = close_session(replay.session) {
-            let _ = active.encoder.finish();
-        }
+        let _ = close_session(replay.session);
     }
 }
 

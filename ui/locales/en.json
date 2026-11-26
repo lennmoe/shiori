@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "HD recorder",
+    "Downloading the HD recorder… {done} / {total} MB": "Downloading the HD recorder… {done} / {total} MB",
+    "Remove the HD recorder? Clips go back to the basic one.": "Remove the HD recorder? Clips go back to the basic one.",
+    "Installed. Clips are filmed by your graphics card.": "Installed. Clips are filmed by your graphics card.",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "Couldn't download the HD recorder. Clips keep using the basic one.",
+    "The HD recorder is missing.": "The HD recorder is missing.",
+    "Nothing was recorded yet.": "Nothing was recorded yet.",
     "Move left": "Move left",
     "Move right": "Move right",
     "When to hide them": "When to hide them",

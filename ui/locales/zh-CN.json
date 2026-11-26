@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "高清录制器",
+    "Downloading the HD recorder… {done} / {total} MB": "正在下载高清录制器… {done} / {total} MB",
+    "Remove the HD recorder? Clips go back to the basic one.": "移除高清录制器？剪辑将改回基础录制。",
+    "Installed. Clips are filmed by your graphics card.": "已安装。剪辑由你的显卡录制。",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "更清晰的剪辑，由显卡录制。即时回放保存在硬盘上，而不是内存中。只需下载一次：约 115 MB。",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "无法下载高清录制器。剪辑继续使用基础录制。",
+    "The HD recorder is missing.": "找不到高清录制器。",
+    "Nothing was recorded yet.": "还没有录制任何内容。",
     "Move left": "左移",
     "Move right": "右移",
     "When to hide them": "何时隐藏",

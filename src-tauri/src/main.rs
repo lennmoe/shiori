@@ -28,11 +28,13 @@ mod images;
 mod launcher;
 mod crash;
 mod cutout;
+mod download;
 mod lang;
 mod mascot;
 mod mascot_pack;
 mod personalities;
 mod reco;
+mod recorder;
 mod screenshots;
 mod updater;
 mod walkthrough;
@@ -134,6 +136,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         updater::clean_leftovers();
     }
     cutout::clean_unfinished(&shared);
+    recorder::clean_unfinished(&shared);
     tray::build(app.handle())?;
     mascot::apply_settings(app.handle());
     mascot::start_chatter(app.handle());
@@ -285,6 +288,10 @@ fn main() {
             commands::popups::add_character_mascot,
             commands::popups::export_mascot,
             commands::popups::cutout_ready,
+            commands::screenshots::recorder_status,
+            commands::screenshots::download_recorder,
+            commands::screenshots::cancel_recorder_download,
+            commands::screenshots::remove_recorder,
             commands::popups::download_cutout,
             commands::popups::cancel_cutout_download,
             commands::popups::remove_cutout,

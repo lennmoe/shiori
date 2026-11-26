@@ -147,6 +147,14 @@
     }
   },
   "ui": {
+    "HD recorder": "HD-рекордер",
+    "Downloading the HD recorder… {done} / {total} MB": "Загрузка HD-рекордера… {done} / {total} МБ",
+    "Remove the HD recorder? Clips go back to the basic one.": "Удалить HD-рекордер? Клипы снова будут записываться обычным способом.",
+    "Installed. Clips are filmed by your graphics card.": "Установлен. Клипы записывает ваша видеокарта.",
+    "Sharper clips, filmed by your graphics card. Instant replay is kept on your disk instead of in memory. Downloads once: about 115 MB.": "Более чёткие клипы, которые записывает видеокарта. Мгновенный повтор хранится на диске, а не в памяти. Загружается один раз: около 115 МБ.",
+    "Couldn't download the HD recorder. Clips keep using the basic one.": "Не удалось загрузить HD-рекордер. Клипы по-прежнему записываются обычным способом.",
+    "The HD recorder is missing.": "HD-рекордер не найден.",
+    "Nothing was recorded yet.": "Пока ничего не записано.",
     "Move left": "Сдвинуть влево",
     "Move right": "Сдвинуть вправо",
     "When to hide them": "Когда прятать",
