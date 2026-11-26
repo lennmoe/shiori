@@ -14,13 +14,25 @@ pub async fn cloud_status(shared: SharedState<'_>) -> Result<Value, String> {
 }
 
 #[tauri::command]
-pub async fn cloud_login(shared: SharedState<'_>) -> Result<Value, String> {
+pub async fn cloud_login(shared: SharedState<'_>, app: AppHandle) -> Result<Value, String> {
     let shared = Arc::clone(&shared);
     blocking(move || {
         cloud::login(&shared)?;
-        cloud::status(&shared)
+        let status = cloud::status(&shared);
+        cloud::check_unread(&app, &shared);
+        status
     })
     .await
+}
+
+#[tauri::command]
+pub fn site_unread() -> u64 {
+    cloud::unread()
+}
+
+#[tauri::command]
+pub fn clear_site_unread(app: AppHandle) {
+    cloud::clear_unread(&app);
 }
 
 #[tauri::command]
@@ -73,10 +85,11 @@ pub async fn cloud_profile(shared: SharedState<'_>, public: bool) -> Result<Valu
 }
 
 #[tauri::command]
-pub async fn cloud_logout(shared: SharedState<'_>) -> Result<(), String> {
+pub async fn cloud_logout(shared: SharedState<'_>, app: AppHandle) -> Result<(), String> {
     let shared = Arc::clone(&shared);
     blocking(move || {
         cloud::logout(&shared);
+        cloud::clear_unread(&app);
         Ok(())
     })
     .await

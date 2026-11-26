@@ -596,6 +596,47 @@ pub fn start_profile_sync(shared: std::sync::Arc<Shared>) {
     });
 }
 
+const UNREAD_EVERY: Duration = Duration::from_secs(60);
+static UNREAD: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn fetch_unread(shared: &Shared) -> Option<u64> {
+    let Some(token) = token(shared) else {
+        return Some(0);
+    };
+    let reply = client(10).ok()?.get(format!("{}/unread", api())).bearer_auth(&token).send().ok()?;
+    if reply.status().as_u16() == 401 {
+        return Some(0);
+    }
+    reply.error_for_status().ok()?.json::<Value>().ok()?["unread"].as_u64()
+}
+
+pub fn unread() -> u64 {
+    UNREAD.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+pub fn check_unread(app: &tauri::AppHandle, shared: &Shared) {
+    use tauri::Emitter;
+    if let Some(count) = fetch_unread(shared) {
+        if UNREAD.swap(count, std::sync::atomic::Ordering::Relaxed) != count {
+            let _ = app.emit("site-unread", count);
+        }
+    }
+}
+
+pub fn clear_unread(app: &tauri::AppHandle) {
+    use tauri::Emitter;
+    if UNREAD.swap(0, std::sync::atomic::Ordering::Relaxed) != 0 {
+        let _ = app.emit("site-unread", 0);
+    }
+}
+
+pub fn start_unread_watch(app: tauri::AppHandle, shared: std::sync::Arc<Shared>) {
+    std::thread::spawn(move || loop {
+        check_unread(&app, &shared);
+        std::thread::sleep(UNREAD_EVERY);
+    });
+}
+
 fn stop_reading_on_site(shared: &Shared) {
     if !shared.config.lock().unwrap().bool(PROFILE) || token(shared).is_none() {
         return;

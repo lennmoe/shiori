@@ -144,6 +144,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     mascot::start_tuck_watch(app.handle());
     clip::start_replay_watch(&shared);
     cloud::start_profile_sync(Arc::clone(&shared));
+    cloud::start_unread_watch(app.handle().clone(), Arc::clone(&shared));
 
     if !start_minimized {
         ui_windows::show_main(app.handle());
@@ -313,6 +314,8 @@ fn main() {
             commands::cloud::cloud_delete,
             commands::cloud::cloud_logout,
             commands::cloud::cloud_profile,
+            commands::cloud::site_unread,
+            commands::cloud::clear_site_unread,
             commands::walkthrough::walkthrough_translate,
             commands::walkthrough::toggle_walkthrough_overlay,
             commands::popups::rename_mascot,

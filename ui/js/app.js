@@ -61,7 +61,20 @@ for (const button of $$("nav button")) {
 }
 
 $("#pause-btn").onclick = () => call("set_paused", { paused: !store.snapshot.paused });
-$("#community-btn").onclick = () => call("open_url", { url: COMMUNITY_URL });
+let siteUnread = 0;
+function renderUnread(count) {
+  siteUnread = Number(count) || 0;
+  const badge = $("#community-unread");
+  badge.hidden = !siteUnread;
+  badge.textContent = siteUnread > 99 ? "99+" : String(siteUnread);
+}
+$("#community-btn").onclick = () => {
+  const url = siteUnread ? `${COMMUNITY_URL}notifications` : COMMUNITY_URL;
+  if (siteUnread) {
+    invoke("clear_site_unread").catch(() => {});
+  }
+  call("open_url", { url });
+};
 $("#top-pause").onclick = () => call("set_paused", { paused: !store.snapshot.paused });
 $("#now-chip").onclick = () => show("home");
 $("#top-search").onclick = () => openSearch();
@@ -168,6 +181,8 @@ async function start() {
   await listen("navigate", (event) => show(event.payload));
   await listen("toast", (event) => update("notice", event.payload));
   await listen("clip-state", (event) => renderClip(event.payload));
+  await listen("site-unread", (event) => renderUnread(event.payload));
+  invoke("site_unread").then(renderUnread).catch(() => {});
   invoke("clip_state").then(renderClip).catch(() => {});
 
   const showedNotes = await showWhatsNewOnce();
