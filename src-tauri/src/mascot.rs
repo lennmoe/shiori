@@ -50,7 +50,6 @@ thread_local! {
 
 static GENERATION: AtomicU64 = AtomicU64::new(0);
 static REQUESTS: AtomicU64 = AtomicU64::new(0);
-static RESIZES: AtomicU64 = AtomicU64::new(0);
 static APPLYING: Mutex<()> = Mutex::new(());
 static LAST_SAID: AtomicU64 = AtomicU64::new(0);
 static LAST_SEEN: Mutex<Option<HashMap<String, Instant>>> = Mutex::new(None);
@@ -297,6 +296,58 @@ fn framed(shared: &Shared, id: &str, img: DynamicImage, height: u32) -> (RgbaIma
     let mut canvas = RgbaImage::new(character.width() + pad * 2, character.height());
     image::imageops::overlay(&mut canvas, &character, i64::from(pad), 0);
     (canvas, pad)
+}
+
+fn file_stamp(path: &Path) -> (u64, u64) {
+    let meta = std::fs::metadata(path).ok();
+    let modified = meta
+        .as_ref()
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |d| d.as_millis() as u64);
+    (modified, meta.map_or(0, |m| m.len()))
+}
+
+fn frame_key(shared: &Shared, id: &str, height: u32) -> Option<u64> {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    (id, height, 1u8).hash(&mut hasher);
+    if id == BUILT_IN_ID {
+        BUILT_IN.len().hash(&mut hasher);
+    } else {
+        let file = file_for(shared, id)?;
+        (&file, file_stamp(&file)).hash(&mut hasher);
+    }
+    if let Some(dir) = media_dir(shared, id, Media::Sprites) {
+        let mut moments: Vec<PathBuf> = std::fs::read_dir(dir).into_iter().flatten().flatten().map(|e| e.path()).collect();
+        moments.sort();
+        for file in moments.iter().flat_map(|moment| media_files(moment, Media::Sprites)) {
+            (&file, file_stamp(&file)).hash(&mut hasher);
+        }
+    }
+    Some(hasher.finish())
+}
+
+fn prepared(shared: &Shared, id: &str, height: u32) -> Option<(PathBuf, RgbaImage, u32)> {
+    let height = height.clamp(MIN_HEIGHT, MAX_HEIGHT);
+    let cache = shared.data_dir.join("cache");
+    let key = frame_key(shared, id, height)?;
+    let prefix = format!("frame_{key:016x}_");
+    let hit = std::fs::read_dir(&cache).into_iter().flatten().flatten().find_map(|entry| {
+        let name = entry.file_name().to_string_lossy().to_string();
+        let pad = name.strip_prefix(&prefix)?.strip_suffix(".png")?.parse::<u32>().ok()?;
+        let picture = image::open(entry.path()).ok()?.to_rgba8();
+        Some((entry.path(), picture, pad))
+    });
+    if hit.is_some() {
+        return hit;
+    }
+    let img = image_for(shared, id)?;
+    let (character, pad) = framed(shared, id, img, height);
+    let _ = std::fs::create_dir_all(&cache);
+    let file = cache.join(format!("{prefix}{pad}.png"));
+    character.save(&file).ok()?;
+    Some((file, character, pad))
 }
 
 pub fn content_share(label: &str) -> Option<(f64, f64)> {
@@ -872,6 +923,7 @@ fn apply_now(app: &AppHandle) {
     let wanted: Vec<String> = if enabled { shown_ids(&shared) } else { vec![] };
     let wanted_labels: Vec<String> = wanted.iter().map(|id| format!("{WINDOW_PREFIX}{id}")).collect();
     let forced: Vec<String> = std::mem::take(&mut *FORCE.lock().unwrap());
+    with_characters(|characters| characters.retain(|label, _| wanted_labels.contains(label)));
 
     let leaving: Vec<(String, tauri::WebviewWindow)> = app
         .webview_windows()
@@ -899,11 +951,30 @@ fn apply_now(app: &AppHandle) {
     }
 
     let cache = shared.data_dir.join("cache");
+    let missing: Vec<&String> = wanted
+        .iter()
+        .zip(&wanted_labels)
+        .filter(|(_, label)| app.get_webview_window(label).is_none())
+        .map(|(id, _)| id)
+        .collect();
+    let mut ready: HashMap<String, (PathBuf, RgbaImage, u32)> = std::thread::scope(|scope| {
+        let jobs: Vec<_> = missing
+            .iter()
+            .map(|id| {
+                let shared = &shared;
+                scope.spawn(move || (id.to_string(), prepared(shared, id, height_for(shared, id))))
+            })
+            .collect();
+        jobs.into_iter()
+            .filter_map(|job| job.join().ok())
+            .filter_map(|(id, frame)| Some((id, frame?)))
+            .collect()
+    });
     let mut offset = 0;
     for (id, label) in wanted.iter().zip(&wanted_labels) {
         if let Some(window) = app.get_webview_window(label) {
-            let _ = window.set_always_on_top(topmost);
             let _ = window.set_always_on_bottom(!topmost);
+            let _ = window.set_always_on_top(topmost);
             if positions.get(id).is_none() {
                 if let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size()) {
                     let center = (pos.x + size.width as i32 / 2, pos.y + size.height as i32 / 2);
@@ -914,16 +985,11 @@ fn apply_now(app: &AppHandle) {
             continue;
         }
 
-        let Some(img) = image_for(&shared, id) else {
+        let Some((file, character, pad)) = ready.remove(id) else {
             continue;
         };
-        let (character, pad) = framed(&shared, id, img, height_for(&shared, id));
         let (width, height) = (character.width(), character.height());
         let token = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
-        let file = cache.join(format!("mascot_{token}_{id}.png"));
-        if character.save(&file).is_err() {
-            continue;
-        }
         let (x, y) = saved_position(positions.get(id), width, height)
             .unwrap_or_else(|| {
                 let near = winapi::cursor_pos().unwrap_or((0, 0));
@@ -948,13 +1014,9 @@ pub fn resize(app: &AppHandle, id: &str, height: u32) -> Result<(), String> {
     let Some(window) = app.get_webview_window(&label) else {
         return Ok(());
     };
-    let img = image_for(&shared, id).ok_or("That mascot's image is gone.")?;
-    let (character, pad) = framed(&shared, id, img, height);
+    let (file, character, pad) = prepared(&shared, id, height).ok_or("That mascot's image is gone.")?;
     let (width, new_height) = (character.width(), character.height());
 
-    let n = RESIZES.fetch_add(1, Ordering::SeqCst);
-    let file = shared.data_dir.join("cache").join(format!("mascot_r{n}_{id}.png"));
-    character.save(&file).map_err(|e| e.to_string())?;
     let view_only = view_only_of(&shared, id);
     let token = token_of(&label).unwrap_or_else(|| GENERATION.fetch_add(1, Ordering::SeqCst) + 1);
     with_characters(|characters| {
@@ -975,7 +1037,7 @@ fn remove_old_pictures(cache: &Path) {
     let in_use: Vec<PathBuf> = with_characters(|characters| characters.values().map(|c| c.file.clone()).collect());
     for entry in std::fs::read_dir(cache).into_iter().flatten().flatten() {
         let name = entry.file_name().to_string_lossy().to_string();
-        let old_mascot = name.starts_with("mascot_") && !in_use.contains(&entry.path());
+        let old_mascot = (name.starts_with("mascot_") || name.starts_with("frame_")) && !in_use.contains(&entry.path());
         if (old_mascot || name.starts_with("sprite_")) && name.ends_with(".png") {
             let _ = std::fs::remove_file(entry.path());
         }
@@ -1064,6 +1126,7 @@ fn watch_webview(app: &AppHandle, window: &tauri::WebviewWindow, label: &str) {
 
 fn click_through_loop(app: &AppHandle, label: &str, token: u64) {
     let mut ignoring: Option<bool> = None;
+    let mut ticks = 0u32;
 
     while token_of(label) == Some(token) {
         std::thread::sleep(Duration::from_millis(40));
@@ -1071,6 +1134,10 @@ fn click_through_loop(app: &AppHandle, label: &str, token: u64) {
         let Some(window) = app.get_webview_window(label) else {
             return;
         };
+        ticks = ticks.wrapping_add(1);
+        if ticks % 50 == 0 {
+            keep_on_top(app, &window);
+        }
         let (Some((cx, cy)), Ok(pos)) = (winapi::cursor_pos(), window.outer_position()) else {
             continue;
         };
@@ -1093,6 +1160,18 @@ fn click_through_loop(app: &AppHandle, label: &str, token: u64) {
         if ignoring != Some(ignore) {
             let _ = window.set_ignore_cursor_events(ignore);
             ignoring = Some(ignore);
+        }
+    }
+}
+
+fn keep_on_top(app: &AppHandle, window: &tauri::WebviewWindow) {
+    if !shared(app).config.lock().unwrap().bool("mascot_topmost") {
+        return;
+    }
+    if let Ok(hwnd) = window.hwnd() {
+        if winapi::ensure_topmost(hwnd.0 as isize) {
+            crate::crash::note(format!("{} lost always-on-top", window.label()));
+            ui_windows::keep_balloon_above(app, window);
         }
     }
 }
@@ -1279,7 +1358,7 @@ fn say_at(
     }
     let labels: Vec<String> = with_characters(|characters| characters.keys().cloned().collect::<Vec<_>>())
         .into_iter()
-        .filter(|label| !silent(label))
+        .filter(|label| app.get_webview_window(label).is_some() && !silent(label))
         .collect();
     let label = match label {
         Some(label) if labels.iter().any(|l| l == label) => label.to_string(),

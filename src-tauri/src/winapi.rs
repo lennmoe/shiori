@@ -243,6 +243,15 @@ fn put_after(h: HWND, after: HWND) {
     }
 }
 
+pub fn ensure_topmost(h: isize) -> bool {
+    let window = HWND(h as *mut c_void);
+    if is_topmost(window) {
+        return false;
+    }
+    put_after(window, HWND_TOPMOST);
+    true
+}
+
 pub fn stack_above(h: isize, under: isize) {
     let (window, under) = (HWND(h as *mut c_void), HWND(under as *mut c_void));
     if is_topmost(under) {

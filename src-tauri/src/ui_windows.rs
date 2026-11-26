@@ -330,6 +330,15 @@ pub fn place_balloon(app: &AppHandle, width: u32, height: u32, anchor: Option<Ve
     }
 }
 
+pub fn keep_balloon_above(app: &AppHandle, mascot: &WebviewWindow) {
+    if crate::mascot::speaker().as_deref() != Some(mascot.label()) {
+        return;
+    }
+    if let Some(balloon) = app.get_webview_window("balloon").filter(|b| b.is_visible().unwrap_or(false)) {
+        raise(&balloon, mascot);
+    }
+}
+
 fn raise(window: &WebviewWindow, mascot: &WebviewWindow) {
     if let (Ok(hwnd), Ok(under)) = (window.hwnd(), mascot.hwnd()) {
         winapi::stack_above(hwnd.0 as isize, under.0 as isize);
