@@ -888,11 +888,32 @@ html.has-bg .now-chip {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+.shots-card .clip-groups {
+  grid-template-rows: auto 1fr;
+}
+
+.shots-card .clip-group {
+  grid-row: span 2;
+}
+
+.shots-card .clip-group:not(.clip-video) {
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  align-content: start;
 }
 
 @media (max-width: 900px) {
   .shots-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.shots-card .clip-group .field > select,
+.shots-card .clip-group .field > .hotkey-btn {
+  height: 38px;
+  box-sizing: border-box;
 }

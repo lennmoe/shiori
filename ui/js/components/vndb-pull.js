@@ -46,7 +46,7 @@ function describe(change) {
 
 function cover(item) {
   if (!item.cover || item.nsfw) {
-    return el("span", { class: "pull-cover empty" });
+    return el("span", { class: "pull-cover no-cover" });
   }
   return el("img", { class: "pull-cover", src: item.cover, alt: "", loading: "lazy" });
 }

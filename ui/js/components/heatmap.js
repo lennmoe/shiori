@@ -72,7 +72,7 @@ function legend(box) {
     };
     return el("label", {}, input, symbol + t(label));
   });
-  return el("div", { class: "heatmap-legend muted small-text" }, ...choices, el("span", { class: "labs-tag" }, "beta"));
+  return el("div", { class: "heatmap-legend muted small-text" }, ...choices);
 }
 
 export function drawHeatmap(container, days, marks = {}) {

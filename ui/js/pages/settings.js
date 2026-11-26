@@ -630,7 +630,7 @@ function clipsSection() {
 
   const videoGroup = el(
     "div",
-    { class: "clip-group" },
+    { class: "clip-group clip-video" },
     el("div", { class: "clip-group-title" }, "Video"),
     el(
       "div",
